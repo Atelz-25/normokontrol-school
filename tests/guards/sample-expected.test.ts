@@ -1,8 +1,11 @@
-// Сторож данных №2: эталон sample-v2.expected.json читается и сам себе не противоречит.
-// Тест по самому .docx пропускается, если файла нет: в нём персональные данные,
+// Эталон sample-v2.expected.json: сам себе не противоречит, а отчёт по реальному файлу
+// с ним совпадает. Тест по .docx пропускается, если файла нет: в нём персональные данные,
 // и в git (а значит и в CI) его нет. Тест никогда не печатает текст документа.
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { checkDocx, type RuleResult } from '../../src/core/engine/index.ts';
+import { BUILTIN_PROFILES } from '../../src/core/profiles/builtin.ts';
+import { readDocx } from '../../src/core/reader/index.ts';
 
 const root = new URL('../../', import.meta.url);
 const expectedUrl = new URL('fixtures/real/sample-v2.expected.json', root);
@@ -45,7 +48,7 @@ describe('fixtures/real/sample-v2.expected.json', () => {
   });
 
   // Инварианты из RULES-SCHOOL.md: если кто-то поправит одно число, а другое забудет,
-  // тест на этапе 1 сравнивал бы отчёт с противоречивым эталоном.
+  // отчёт сравнивался бы с противоречивым эталоном.
   it('каждый пустой абзац ровно в одной серии: PR-06 + PR-10 = VL-02', () => {
     expect(num('PR-06', 'single') + num('PR-10', 'emptyParagraphsInSeries')).toBe(
       num('VL-02', 'empty'),
@@ -80,13 +83,130 @@ describe('fixtures/real/sample-v2.expected.json', () => {
 describe.skipIf(!existsSync(docxUrl))(
   'fixtures/real/sample-v2.docx (личный файл, может отсутствовать)',
   () => {
-    it('это zip-архив .docx разумного размера с word/document.xml', () => {
+    it('это zip-архив .docx разумного размера', () => {
       const bytes = readFileSync(docxUrl);
       expect(statSync(docxUrl).size).toBeLessThan(25 * 1024 * 1024);
-      // Каждый zip начинается с сигнатуры локального заголовка "PK\x03\x04".
       expect([...bytes.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
-      // Имена записей в zip хранятся несжатыми, поэтому их видно без распаковки.
-      expect(bytes.includes('word/document.xml')).toBe(true);
+    });
+
+    // Отчёт строим один раз на все проверки ниже.
+    const profile = BUILTIN_PROFILES.find((p) => p.id === 'school-custom')!;
+    const report = existsSync(docxUrl) ? checkDocx(readFileSync(docxUrl), profile) : undefined;
+    const result = (ruleId: string): RuleResult => {
+      const found = report?.results.find((r) => r.ruleId === ruleId);
+      if (!found) throw new Error(`${ruleId} нет в отчёте`);
+      return found;
+    };
+    const paragraphs = (ruleId: string): number[] =>
+      result(ruleId).findings.map((f) => f.location.paragraphIndex ?? 0);
+
+    it('статусы реализованных правил совпадают с эталоном', () => {
+      const implemented = report!.results.filter(
+        (r) => !['not-implemented', 'disabled'].includes(r.status),
+      );
+      for (const r of implemented) {
+        const entry = exp[r.ruleId];
+        if (!entry || entry.status === 'info') continue;
+        expect(r.status, r.ruleId).toBe(entry.status);
+      }
+    });
+
+    it('поля и лист: числа из XML точно', () => {
+      for (const id of ['PG-02', 'PG-03', 'PG-04', 'PG-05'])
+        expect(result(id).metrics.actualMm, id).toBe(num(id, 'actualMm'));
+      expect(result('PG-06').metrics.sections).toBe(num('PG-06', 'sections'));
+    });
+
+    it('PR-06: 59 одиночных пустых абзацев, по зонам 3 / 9 / 47', () => {
+      const m = result('PR-06').metrics;
+      expect(m.single).toBe(num('PR-06', 'single'));
+      const zones = exp['PR-06']?.byZone as Record<string, number>;
+      expect(m.byZone).toEqual({
+        'title-page': zones['title-page'],
+        'front-matter': zones['passport-toc'],
+        body: zones.body,
+      });
+    });
+
+    it('PR-10: серии, их длины и серии перед заголовками частей', () => {
+      const m = result('PR-10').metrics;
+      for (const key of [
+        'series',
+        'emptyParagraphsInSeries',
+        'longest',
+        'emptyBeforePartHeadingsTotal',
+      ])
+        expect(m[key], key).toBe(num('PR-10', key));
+      expect(m.seriesBeforePartHeadings).toEqual(exp['PR-10']?.seriesBeforePartHeadings);
+      const zones = exp['PR-10']?.byZone as Record<string, number>;
+      expect(m.byZone).toEqual({
+        'title-page': zones['title-page'],
+        'front-matter': zones['passport-toc'],
+        body: zones.body,
+      });
+    });
+
+    it('PB-01: нужен разрыв перед 8 частями, разрывов нет', () => {
+      const m = result('PB-01').metrics;
+      for (const key of [
+        'headingsNeedingBreak',
+        'headingsWithBreak',
+        'hardBreaks',
+        'pageBreakBefore',
+        'sectionBreaks',
+      ])
+        expect(m[key], key).toBe(num('PB-01', key));
+      expect(m.ids).toEqual(exp['PB-01']?.ids);
+    });
+
+    it('PR-03: те же 10 абзацев из 37', () => {
+      const e = exp['PR-03']!;
+      expect(result('PR-03').checked).toBe(num('PR-03', 'of'));
+      expect(paragraphs('PR-03').sort((a, b) => a - b)).toEqual(
+        [...(e.noIndent as number[]), ...(e['shortIndent(0.63cm)'] as number[])].sort(
+          (a, b) => a - b,
+        ),
+      );
+    });
+
+    it('PR-09: 74 из 115', () => {
+      expect(result('PR-09').affected).toBe(num('PR-09', 'withRightIndent'));
+      expect(result('PR-09').checked).toBe(num('PR-09', 'of'));
+    });
+
+    it('PR-08: таблица паспорта без замечаний, 29 абзацев с текстом', () => {
+      expect(result('PR-08').findings).toHaveLength(0);
+      expect(result('PR-08').metrics.cellParagraphs).toBe(num('PR-08', 'cellParagraphs'));
+    });
+
+    it('нет ложных срабатываний PR-01, FT-02 и PR-08 на таблице паспорта', () => {
+      // Номера абзацев таблицы берём из модели документа, а не пишем руками.
+      const table = readDocx(readFileSync(docxUrl)).tables[0]!;
+      const passportCells = new Set<number>();
+      for (let i = table.firstParagraph; i <= table.lastParagraph; i++) passportCells.add(i);
+      expect(passportCells.size).toBe(32);
+      for (const id of ['PR-01', 'FT-02', 'PR-08'])
+        expect(
+          paragraphs(id).filter((i) => passportCells.has(i)),
+          id,
+        ).toEqual([]);
+    });
+
+    it('PR-02: те же абзацы, что в эталоне (строки содержания, заголовки, паспорт)', () => {
+      const e = exp['PR-02']!;
+      const expected = [
+        ...(e['toc-entry paragraphs with 10pt after'] as number[]),
+        ...(e['headings (warning)'] as number[]),
+        ...(e['passport heading before=12pt'] as number[]),
+      ].sort((a, b) => a - b);
+      expect(paragraphs('PR-02').sort((a, b) => a - b)).toEqual(expected);
+    });
+
+    it('PR-05: только строка из 69 пробелов (#16); TY-03: 8 дефисов', () => {
+      const e = exp['PR-05']?.paragraphOfSpaces as { paragraph: number; length: number };
+      expect(paragraphs('PR-05')).toEqual([e.paragraph]);
+      expect(result('PR-05').findings[0]?.message).toContain(String(e.length));
+      expect(result('TY-03').metrics.count).toBe(num('TY-03', 'count'));
     });
   },
 );

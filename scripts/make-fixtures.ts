@@ -1,8 +1,17 @@
 // Генератор синтетических фикстур fixtures/<RULE-ID>/{good,bad}.docx (бриф, раздел 12).
-// Заготовка этапа 0: настоящая генерация появится на этапе 1 вместе с zip-библиотекой.
 // Запуск: npm run fixtures (Node 22+ сам понимает TypeScript без сборки).
+// Файлы нужны, чтобы открыть их в Word и увидеть, что именно проверяет правило;
+// тесты собирают те же документы в памяти.
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { FIXTURES } from './lib/fixtures.ts';
 
-const planned = ['PB-01', 'PR-10', 'PR-06', 'PR-09', 'PR-03', 'PR-08'];
+const root = new URL('../fixtures/', import.meta.url);
 
-console.log('Генератор фикстур пока пустой (этап 0).');
-console.log(`На этапе 1 появятся фикстуры для: ${planned.join(', ')}.`);
+for (const [ruleId, pair] of Object.entries(FIXTURES)) {
+  const dir = new URL(`${ruleId}/`, root);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(new URL('good.docx', dir), pair.good());
+  writeFileSync(new URL('bad.docx', dir), pair.bad());
+}
+
+console.log(`Готово: ${Object.keys(FIXTURES).length} пар good/bad в fixtures/.`);
