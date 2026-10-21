@@ -80,6 +80,7 @@ export interface DocOptions {
   numbering?: string; // содержимое numbering.xml без корневого элемента
   comments?: string[]; // тексты примечаний
   extraParts?: Record<string, string>;
+  binaryParts?: Record<string, Uint8Array>;
 }
 
 export const SCHOOL_RPR =
@@ -133,7 +134,11 @@ export function buildDocx(options: DocOptions): Uint8Array {
         .join('') +
       '</w:comments>';
   Object.assign(files, options.extraParts ?? {});
-  return zipSync(
-    Object.fromEntries(Object.entries(files).map(([name, text]) => [name, strToU8(text)])),
+  const entries: Record<string, Uint8Array | [Uint8Array, { level: 0 }]> = Object.fromEntries(
+    Object.entries(files).map(([name, text]) => [name, strToU8(text)]),
   );
+  // Двоичные части (картинки) кладём без сжатия, как Word кладёт PNG и JPEG.
+  for (const [name, data] of Object.entries(options.binaryParts ?? {}))
+    entries[name] = [data, { level: 0 }];
+  return zipSync(entries);
 }
