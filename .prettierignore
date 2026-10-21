@@ -1,0 +1,8 @@
+dist
+coverage
+node_modules
+package-lock.json
+# Документы и данные пишутся вручную, их формат сохраняем как есть
+*.md
+profiles
+fixtures

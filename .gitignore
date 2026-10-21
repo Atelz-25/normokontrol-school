@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+
+# Реальные работы содержат персональные данные: никогда не коммитим
+fixtures/real/*.docx
+fixtures/real/*.pdf

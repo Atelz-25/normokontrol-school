@@ -1,0 +1,45 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #555555;
+  --focus: #0b57d0;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --fg: #f0f0f0;
+    --muted: #b8b8b8;
+    --focus: #8ab4f8;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

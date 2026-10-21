@@ -1,0 +1,282 @@
+{
+  "file": "fixtures/real/sample-v2.docx",
+  "profile": "profiles/school-custom.json",
+  "comment": "Числа из XML (поля, интервалы, пустые абзацы, знаки) сравнивать точно. Страницы получены в LibreOffice и в Word могут отличаться.",
+  "libreOfficePages": {
+    "original": 13,
+    "afterRemovingEmptiesAndAddingBreaks": 12
+  },
+  "expected": {
+    "PG-02": {
+      "status": "fail",
+      "actualMm": 15.0,
+      "expected": 30
+    },
+    "PG-03": {
+      "status": "pass",
+      "actualMm": 15.0,
+      "expected": [
+        10,
+        15
+      ]
+    },
+    "PG-04": {
+      "status": "pass",
+      "actualMm": 20.0,
+      "expected": 20
+    },
+    "PG-05": {
+      "status": "pass",
+      "actualMm": 20.0,
+      "expected": 20
+    },
+    "PG-01": {
+      "status": "pass",
+      "widthMm": 210.0,
+      "heightMm": 297.0
+    },
+    "PG-06": {
+      "status": "pass",
+      "sections": 1
+    },
+    "FT-01": {
+      "status": "pass"
+    },
+    "FT-02": {
+      "status": "pass",
+      "charsBy12pt": 14253,
+      "charsBy14pt(headings, excluded)": 216
+    },
+    "PR-01": {
+      "status": "pass",
+      "proseParagraphs": 37,
+      "lineSpacing": {
+        "1.5": 37
+      }
+    },
+    "PR-04": {
+      "status": "pass",
+      "justified": 37,
+      "of": 37
+    },
+    "PR-02": {
+      "status": "fail",
+      "toc-entry paragraphs with 10pt after": [
+        85,
+        87,
+        89,
+        91,
+        93,
+        95,
+        97,
+        99,
+        101
+      ],
+      "headings (warning)": [
+        111,
+        156,
+        158,
+        207,
+        273
+      ],
+      "passport heading before=12pt": [
+        51
+      ]
+    },
+    "PR-03": {
+      "status": "fail",
+      "violations": 10,
+      "of": 37,
+      "noIndent": [
+        124,
+        163,
+        165,
+        174,
+        237,
+        260,
+        263,
+        269
+      ],
+      "shortIndent(0.63cm)": [
+        185,
+        256
+      ],
+      "okIndent(1.27cm)": 27
+    },
+    "PR-09": {
+      "status": "fail",
+      "withRightIndent": 74,
+      "of": 115
+    },
+    "PR-08": {
+      "status": "pass",
+      "cellParagraphs": 29,
+      "note": "ложных срабатываний быть не должно"
+    },
+    "PR-06": {
+      "status": "fail",
+      "single": 59,
+      "byZone": {
+        "title-page": 3,
+        "passport-toc": 9,
+        "body": 47
+      }
+    },
+    "PR-10": {
+      "status": "fail",
+      "series": 14,
+      "emptyParagraphsInSeries": 124,
+      "longest": 31,
+      "byZone": {
+        "title-page": 5,
+        "passport-toc": 1,
+        "body": 8
+      },
+      "seriesBeforePartHeadings": {
+        "111": 9,
+        "156": 5,
+        "207": 18,
+        "273": 3,
+        "316": 31,
+        "345": 19
+      },
+      "emptyBeforePartHeadingsTotal": 85
+    },
+    "VL-02": {
+      "status": "info",
+      "empty": 183,
+      "of": 313,
+      "share": 0.585,
+      "textChars": 14477,
+      "pagesBy1800": 8.0,
+      "physicalPagesLibreOffice": 13
+    },
+    "ST-08": {
+      "status": "pass",
+      "partHeadings": {
+        "passport": 51,
+        "toc": 85,
+        "intro": 111,
+        "main": 156,
+        "theory": 158,
+        "practice": 207,
+        "conclusion": 273,
+        "literature": 316,
+        "appendix": 345
+      }
+    },
+    "ST-02": {
+      "status": "pass",
+      "headingParagraph": 85
+    },
+    "ST-05": {
+      "status": "pass",
+      "headingParagraph": 111
+    },
+    "ST-06": {
+      "status": "pass",
+      "headingParagraph": 273
+    },
+    "ST-07": {
+      "status": "pass",
+      "headingParagraph": 316
+    },
+    "PB-01": {
+      "status": "fail",
+      "headingsNeedingBreak": 8,
+      "headingsWithBreak": 0,
+      "ids": [
+        "passport",
+        "toc",
+        "intro",
+        "main",
+        "practice",
+        "conclusion",
+        "literature",
+        "appendix"
+      ],
+      "hardBreaks": 0,
+      "pageBreakBefore": 0,
+      "sectionBreaks": 0
+    },
+    "PS-01": {
+      "status": "pass",
+      "fieldsFound": 11,
+      "of": 11
+    },
+    "ST-10": {
+      "status": "fail",
+      "phrase": "Пояснительная записка"
+    },
+    "FN-01": {
+      "status": "not-tested",
+      "patternAcceptsExample": true,
+      "patternAcceptsChatFileName": false
+    },
+    "TH-01": {
+      "status": "fail",
+      "chars": 1777,
+      "pages": 0.99,
+      "missingToMin": 3623,
+      "missingToRecommended": 5423
+    },
+    "TH-02": {
+      "status": "pass",
+      "citations": 5
+    },
+    "TH-03": {
+      "status": "info",
+      "topics": {
+        "История кино": 0,
+        "Сценарий и его написание": 1,
+        "Подбор актёров": 2,
+        "Как менялось кино: от немого до современного": 0
+      }
+    },
+    "CN-01": {
+      "status": "pass"
+    },
+    "CN-02": {
+      "status": "pass"
+    },
+    "CN-03": {
+      "status": "fail"
+    },
+    "CN-04": {
+      "status": "fail"
+    },
+    "CN-05": {
+      "status": "fail"
+    },
+    "AP-01": {
+      "status": "fail",
+      "referenceParagraphs": [
+        260
+      ],
+      "paragraphsAfterAppendixHeading": 0
+    },
+    "TY-03": {
+      "status": "fail",
+      "count": 8
+    },
+    "DC-02": {
+      "status": "info",
+      "runs": 57,
+      "paragraphs": 32,
+      "colors": {
+        "white": 57
+      }
+    },
+    "TB-01..04": {
+      "status": "not-applicable",
+      "note": "таблица паспорта исключена (passport-table)"
+    },
+    "PR-05": {
+      "status": "fail",
+      "paragraphOfSpaces": {
+        "paragraph": 16,
+        "length": 69
+      }
+    }
+  }
+}
