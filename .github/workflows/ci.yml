@@ -21,3 +21,16 @@ jobs:
       # lint + format:check + typecheck + тесты с покрытием + сборка.
       # Тесты по fixtures/real/*.docx здесь пропускаются: файлов в репозитории нет.
       - run: npm run check
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Загрузка, приватность (нет внешних запросов), доступность, файл 10 МБ.
+      - run: npm run test:e2e
