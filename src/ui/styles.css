@@ -1,8 +1,17 @@
+/* Цвета подобраны с контрастом не ниже 4,5:1 (WCAG 2.1 AA) в обеих темах. */
 :root {
   --bg: #ffffff;
   --fg: #1a1a1a;
   --muted: #555555;
+  --line: #c8c8c8;
+  --surface: #f4f5f7;
   --focus: #0b57d0;
+  --accent: #0b57d0;
+  --accent-fg: #ffffff;
+  --error: #b3261e;
+  --warning: #8a5a00;
+  --info: #1f5f8b;
+  --ok: #1e6b35;
   font-family: system-ui, sans-serif;
   line-height: 1.5;
 }
@@ -12,7 +21,15 @@
     --bg: #121212;
     --fg: #f0f0f0;
     --muted: #b8b8b8;
+    --line: #444444;
+    --surface: #1e1f22;
     --focus: #8ab4f8;
+    --accent: #8ab4f8;
+    --accent-fg: #0b1a33;
+    --error: #ffb4ab;
+    --warning: #ffcf70;
+    --info: #9ecaff;
+    --ok: #8fd5a6;
   }
 }
 
@@ -23,13 +40,213 @@ body {
 }
 
 main {
-  max-width: 48rem;
+  max-width: 52rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 1rem 3rem;
+}
+
+h1 {
+  margin-bottom: 0.25rem;
 }
 
 .muted {
   color: var(--muted);
+}
+
+.privacy {
+  font-weight: 600;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+  margin: 1.5rem 0;
+}
+
+select,
+button {
+  font: inherit;
+}
+
+select {
+  max-width: 100%;
+  padding: 0.4rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.drop {
+  padding: 2rem 1rem;
+  text-align: center;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.drop.over {
+  border-color: var(--accent);
+}
+
+.drop-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+button.primary {
+  padding: 0.6rem 1.2rem;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button.link {
+  padding: 0;
+  color: var(--accent);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.status {
+  min-height: 1.5em;
+  margin-top: 1rem;
+}
+
+.status.error {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.counters {
+  font-weight: 600;
+}
+
+.block {
+  padding: 0.5rem 1rem 1rem;
+  margin: 1rem 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.checklist {
+  padding-left: 1.5rem;
+}
+
+.checklist li {
+  margin: 0.35rem 0;
+}
+
+.mark {
+  display: inline-block;
+  width: 1.2em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.mark-ok {
+  color: var(--ok);
+}
+
+.mark-bad {
+  color: var(--error);
+}
+
+.mark-later {
+  color: var(--muted);
+}
+
+a {
+  color: var(--accent);
+}
+
+.card {
+  padding: 0.5rem 1rem 1rem;
+  margin: 1rem 0;
+  border-left: 4px solid var(--line);
+  background: var(--surface);
+  border-radius: 6px;
+}
+
+.card.sev-error {
+  border-left-color: var(--error);
+}
+
+.card.sev-warning {
+  border-left-color: var(--warning);
+}
+
+.card.sev-info {
+  border-left-color: var(--info);
+}
+
+.card h3 {
+  font-size: 1.05rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 0.4rem;
+  font-size: 0.85rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+
+.badge-error {
+  color: var(--error);
+}
+
+.badge-warning {
+  color: var(--warning);
+}
+
+.badge-info {
+  color: var(--info);
+}
+
+.note {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.places {
+  padding-left: 1.2rem;
+}
+
+.places li {
+  margin: 0.3rem 0;
+}
+
+.place {
+  font-weight: 600;
+  margin-right: 0.4rem;
+}
+
+.excerpt {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+details {
+  margin: 0.4rem 0;
+}
+
+summary {
+  cursor: pointer;
 }
 
 :focus-visible {
