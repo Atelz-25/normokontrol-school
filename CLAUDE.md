@@ -32,6 +32,9 @@ npm run lint         # ESLint
 npm run format       # Prettier (запись)
 npm run typecheck    # tsc --noEmit
 npm run check        # lint + format:check + typecheck + test + build — должен проходить перед концом этапа
+npm run test:e2e     # Playwright по собранной версии (нужен `npx playwright install chromium`)
+npm run fixtures     # пересоздать fixtures/<RULE-ID>/{good,bad}.docx
+npm run docs:rules   # пересоздать docs/RULES.md из реестра правил
 ```
 
 ## Слои (без циклов, ядро не знает про DOM)
@@ -46,6 +49,11 @@ npm run check        # lint + format:check + typecheck + test + build — дол
 - Номера страниц не выдумываем: «абзац №N, раздел …», а «примерно стр. N» только по `lastRenderedPageBreak`.
 - Значения с `confidence: "unconfirmed"` живут только в JSON-профиле, в код не зашиваются.
 - Номер абзаца (`Paragraph.index`) — порядковый номер `w:p` при обходе документа в глубину, включая ячейки таблиц, с 1.
+
+## Ловушки инструментов
+
+- Инструмент записи файлов превращает экранированные символы вроде ` ` в настоящие (невидимые) символы. После записи кода с такими экранированиями проверь их (`grep -rn 'u00a0' src`) и верни экранирование.
+- Скрипты в `scripts/` запускаются Node без сборки (type stripping): в импортируемом ими коде нельзя использовать `enum`, `namespace` и параметры-свойства конструктора (`constructor(private x)`).
 
 ## Приватность
 
