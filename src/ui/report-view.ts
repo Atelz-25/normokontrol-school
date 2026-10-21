@@ -14,7 +14,9 @@ const titleOf = (ruleId: string): string => RULE_TEXTS[ruleId]?.title ?? ruleId;
 
 function statusLine(result: RuleResult | undefined, ruleId: string): string {
   if (!result || result.status === 'not-implemented') return ru.stageLater(plannedStage(ruleId));
-  if (result.status === 'fail') return result.summary ?? STATUS_NAMES.fail;
+  // У правил по разделам (поля) группового текста нет: показываем само замечание.
+  if (result.status === 'fail')
+    return result.summary ?? result.findings[0]?.message ?? STATUS_NAMES.fail;
   return STATUS_NAMES[result.status];
 }
 
@@ -44,12 +46,14 @@ function priorityBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLEle
   if (!ids || ids.length === 0) return undefined;
   const items = ids.map((id) => {
     const result = byId.get(id);
+    const name = RULE_TEXTS[id] ? `${titleOf(id)} (${id})` : id;
     return el(
       'li',
       {},
       mark(statusMark([result?.status === 'not-implemented' ? undefined : result])),
       ' ',
-      el('a', { href: `#rule-${id}` }, `${titleOf(id)} (${id})`),
+      // Ссылка ведёт к карточке, а карточки есть только у правил с замечаниями.
+      result?.status === 'fail' ? el('a', { href: `#rule-${id}` }, name) : name,
       ': ',
       statusLine(result, id),
     );

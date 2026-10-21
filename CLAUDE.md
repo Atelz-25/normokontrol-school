@@ -32,7 +32,8 @@ npm run lint         # ESLint
 npm run format       # Prettier (запись)
 npm run typecheck    # tsc --noEmit
 npm run check        # lint + format:check + typecheck + test + build — должен проходить перед концом этапа
-npm run test:e2e     # Playwright по собранной версии (нужен `npx playwright install chromium`)
+npm run test:e2e     # Playwright по собранной версии (нужен `npx playwright install chromium`;
+                     # если браузер не скачивается, PW_CHANNEL=msedge — запуск в установленном Edge)
 npm run fixtures     # пересоздать fixtures/<RULE-ID>/{good,bad}.docx
 npm run docs:rules   # пересоздать docs/RULES.md из реестра правил
 ```

@@ -90,24 +90,32 @@ test('файл 10 МБ: проверка завершается, страниц�
   expect(big.length).toBeGreaterThan(9.5 * 1024 * 1024);
 
   await page.goto('./');
-  // Меряем самую долгую паузу между кадрами: если главный поток занят, кадры не рисуются.
+  // «Длинная задача» — когда главный поток занят дольше 50 мс и страница не отвечает.
+  // Считаем только задачи после выбора файла: передача 10 МБ из Playwright в страницу
+  // (это не наш код) идёт раньше.
   await page.evaluate(() => {
-    const w = window as unknown as { maxGap: number };
-    w.maxGap = 0;
-    let last = performance.now();
-    const tick = (now: number): void => {
-      w.maxGap = Math.max(w.maxGap, now - last);
-      last = now;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    const w = window as unknown as { longest: number; chosenAt: number };
+    w.longest = 0;
+    w.chosenAt = Infinity;
+    document.getElementById('file')?.addEventListener(
+      'change',
+      () => {
+        w.chosenAt = performance.now();
+      },
+      { capture: true },
+    );
+    new PerformanceObserver((list) => {
+      for (const task of list.getEntries()) {
+        if (task.startTime > w.chosenAt) w.longest = Math.max(w.longest, task.duration);
+      }
+    }).observe({ type: 'longtask' });
   });
   const started = Date.now();
   await upload(page, 'большая.docx', big);
   await expect(page.getByRole('status')).toContainText('Готово', { timeout: 30_000 });
-  const maxGap = await page.evaluate(() => (window as unknown as { maxGap: number }).maxGap);
+  const longest = await page.evaluate(() => (window as unknown as { longest: number }).longest);
   console.log(
-    `10 МБ: ${Date.now() - started} мс, самая долгая пауза кадров ${Math.round(maxGap)} мс`,
+    `10 МБ: ${Date.now() - started} мс, самая длинная задача главного потока ${Math.round(longest)} мс`,
   );
-  expect(maxGap).toBeLessThan(500);
+  expect(longest).toBeLessThan(200);
 });

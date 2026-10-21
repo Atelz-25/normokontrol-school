@@ -34,7 +34,15 @@ const select = el(
 const profileHint = el('p', { class: 'muted', id: 'profile-hint' }, profile.description ?? '');
 select.setAttribute('aria-describedby', 'profile-hint');
 
-const input = el('input', { type: 'file', id: 'file', accept: '.docx', class: 'visually-hidden' });
+// Поле скрыто (его открывает кнопка), но у него должна быть подпись для экранного диктора.
+const input = el('input', {
+  type: 'file',
+  id: 'file',
+  accept: '.docx',
+  class: 'visually-hidden',
+  'aria-label': ru.chooseFile,
+  tabindex: '-1',
+});
 const chooseButton = el('button', { type: 'button', class: 'primary' }, ru.chooseFile);
 const drop = el(
   'div',

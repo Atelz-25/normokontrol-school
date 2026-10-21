@@ -20,7 +20,7 @@ export const ru = {
   recheck: 'Проверить новую версию',
   reportTitle: 'Результат проверки',
   counters: (errors: number, warnings: number, infos: number): string =>
-    `Ошибок: ${errors} · замечаний: ${warnings} · советов: ${infos}`,
+    `Правил с ошибками: ${errors} · с замечаниями: ${warnings} · с советами: ${infos}`,
   notChecked: (count: number): string =>
     `Ещё ${count} правил профиля пока не проверяются: они появятся на следующих этапах.`,
   docStats: (paragraphs: number, empty: number, pages?: number): string =>
