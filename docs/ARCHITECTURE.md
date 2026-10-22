@@ -56,3 +56,15 @@ Web Worker: src/worker/check.worker.ts
 | `src/ui/storage.ts`, `export.ts` | свои профили в `localStorage`; скачать JSON, скопировать список |
 
 Отчёт (`Report`) теперь содержит группы замечаний (текст работы, содержание, титульный лист), паспорт документа и упрощённый текст абзацев для предпросмотра. Колонтитулы читаются как маленькие документы теми же функциями, что и основной текст.
+
+## Что добавили этапы 3–5
+
+| Файл | Зачем |
+|---|---|
+| `src/core/rules/content.ts`, `references.ts`, `figures-tables.ts` | содержание (TH-02/03, CN-*, AP-01, ST-09), список литературы (RF-*), рисунки и таблицы (FG-*, TB-*) |
+| `src/core/engine/compare.ts` | сравнение двух версий работы по смыслу замечаний |
+| `src/core/fixer/` | автоисправление: правки XML в порядке схемы OOXML, сборка нового архива |
+| `src/worker/protocol.ts`, `src/ui/worker-client.ts` | запросы к Web Worker с номерами: проверка и исправление |
+| `src/ui/fix-panel.ts`, `src/ui/teacher.ts` | панель исправления, режим учителя с CSV |
+| `scripts/evaluate.ts` | точность и полнота по разметке человека |
+| `public/sw.js`, `public/manifest.webmanifest` | офлайн-режим |

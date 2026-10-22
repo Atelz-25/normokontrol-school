@@ -36,6 +36,7 @@ npm run test:e2e     # Playwright по собранной версии (нуже
                      # если браузер не скачивается, PW_CHANNEL=msedge — запуск в установленном Edge)
 npm run fixtures     # пересоздать fixtures/<RULE-ID>/{good,bad}.docx
 npm run docs:rules   # пересоздать docs/RULES.md из реестра правил
+npm run evaluate -- <папка> <разметка.csv>   # точность и полнота (docs/EVALUATION.md)
 ```
 
 ## Слои (без циклов, ядро не знает про DOM)
