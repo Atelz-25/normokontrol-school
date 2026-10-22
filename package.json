@@ -23,7 +23,8 @@
     "docs:rules": "node scripts/gen-rules-doc.ts",
     "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:coverage && npm run build",
     "test:e2e": "playwright test",
-    "evaluate": "node scripts/evaluate.ts"
+    "evaluate": "node scripts/evaluate.ts",
+    "evaluate:synthetic": "node scripts/evaluate-synthetic.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

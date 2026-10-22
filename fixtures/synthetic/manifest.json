@@ -1,0 +1,188 @@
+{
+ "00-clean": [],
+ "01-single_empty": [
+  "single_empty"
+ ],
+ "02-spaces_only_empty": [
+  "spaces_only_empty"
+ ],
+ "03-fake_page_break": [
+  "fake_page_break(II.ОСНОВНАЯ ,4)"
+ ],
+ "04-missing_break": [
+  "missing_break(II.ОСНОВНАЯ )"
+ ],
+ "05-margin_left": [
+  "margin_left"
+ ],
+ "06-margin_right": [
+  "margin_right"
+ ],
+ "07-indent": [
+  "indent"
+ ],
+ "08-spaces_indent": [
+  "spaces_indent"
+ ],
+ "09-right_indent": [
+  "right_indent"
+ ],
+ "10-spacing_after": [
+  "spacing_after"
+ ],
+ "11-line_single": [
+  "line_single"
+ ],
+ "12-font_family": [
+  "font_family"
+ ],
+ "13-font_size": [
+  "font_size"
+ ],
+ "14-align": [
+  "align"
+ ],
+ "15-hyphen_dash": [
+  "hyphen_dash"
+ ],
+ "16-space_before_comma": [
+  "space_before_comma"
+ ],
+ "17-passport_spacing": [
+  "passport_spacing"
+ ],
+ "18-title_empties": [
+  "title_empties"
+ ],
+ "19-hard_break": [
+  "trap_hard_break(V.ПРИЛОЖЕНИЕ)"
+ ],
+ "20-indent_127": [
+  "trap_indent_127"
+ ],
+ "21-margin_right_10": [
+  "trap_margin_right_10"
+ ],
+ "22-style_inheritance": [
+  "trap_style_inheritance"
+ ],
+ "23-docdefaults": [
+  "trap_docdefaults"
+ ],
+ "24-compound_hyphen": [
+  "trap_compound_hyphen"
+ ],
+ "25-mix": [
+  "line_single",
+  "passport_spacing",
+  "missing_break(II.ОСНОВНАЯ )",
+  "trap_indent_127"
+ ],
+ "26-mix": [
+  "line_single",
+  "fake_page_break(II.II.ПРАКТИ,7)",
+  "spacing_after",
+  "trap_docdefaults"
+ ],
+ "27-mix": [
+  "passport_spacing",
+  "missing_break(I.ВВЕДЕНИЕ)",
+  "align",
+  "trap_docdefaults"
+ ],
+ "28-mix": [
+  "passport_spacing",
+  "space_before_comma",
+  "align",
+  "right_indent",
+  "line_single",
+  "single_empty",
+  "trap_margin_right_10"
+ ],
+ "29-mix": [
+  "trap_style_inheritance",
+  "single_empty",
+  "fake_page_break(II.II.ПРАКТИ,5)",
+  "title_empties",
+  "spaces_indent",
+  "spacing_after",
+  "right_indent"
+ ],
+ "30-mix": [
+  "margin_right",
+  "margin_left",
+  "spacing_after",
+  "right_indent",
+  "indent",
+  "align",
+  "trap_hard_break(IV.ЛИТЕРАТУР)"
+ ],
+ "31-mix": [
+  "align",
+  "line_single",
+  "hyphen_dash",
+  "spacing_after",
+  "trap_compound_hyphen"
+ ],
+ "32-mix": [
+  "font_size",
+  "right_indent",
+  "align",
+  "passport_spacing",
+  "trap_hard_break(V.ПРИЛОЖЕНИЕ)"
+ ],
+ "33-mix": [
+  "align",
+  "margin_right",
+  "single_empty",
+  "passport_spacing",
+  "title_empties",
+  "trap_indent_127"
+ ],
+ "34-mix": [
+  "missing_break(III.ЗАКЛЮЧИТ)",
+  "passport_spacing",
+  "line_single",
+  "margin_left",
+  "trap_compound_hyphen"
+ ],
+ "35-mix": [
+  "line_single",
+  "indent",
+  "hyphen_dash",
+  "passport_spacing",
+  "title_empties",
+  "spaces_only_empty",
+  "trap_docdefaults"
+ ],
+ "36-mix": [
+  "missing_break(II.ОСНОВНАЯ )",
+  "title_empties",
+  "spaces_only_empty",
+  "right_indent",
+  "trap_margin_right_10"
+ ],
+ "37-mix": [
+  "align",
+  "right_indent",
+  "line_single",
+  "fake_page_break(V.ПРИЛОЖЕНИЕ,6)",
+  "space_before_comma",
+  "spacing_after",
+  "trap_compound_hyphen"
+ ],
+ "38-mix": [
+  "font_family",
+  "title_empties",
+  "hyphen_dash",
+  "line_single",
+  "trap_margin_right_10"
+ ],
+ "39-mix": [
+  "spacing_after",
+  "spaces_only_empty",
+  "font_size",
+  "indent",
+  "trap_docdefaults"
+ ]
+}

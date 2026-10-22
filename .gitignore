@@ -9,3 +9,6 @@ playwright-report/
 # Реальные работы содержат персональные данные: никогда не коммитим
 fixtures/real/*.docx
 fixtures/real/*.pdf
+
+# Вывод npm run evaluate:synthetic, пересоздаётся при каждом запуске
+fixtures/synthetic/findings.json

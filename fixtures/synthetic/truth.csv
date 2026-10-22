@@ -1,0 +1,164 @@
+file,rule,paragraph,expected,severity,note
+01-single_empty.docx,PR-06,92,finding,error,одиночный пустой абзац между абзацами
+01-single_empty.docx,PR-06,67,finding,error,одиночный пустой абзац между абзацами
+02-spaces_only_empty.docx,PR-06,93,finding,error,абзац из одних пробелов = пустой
+03-fake_page_break.docx,PB-01,72,finding,error,"нет разрыва, вместо него 4 пустых абзацев"
+03-fake_page_break.docx,PR-10,68,finding,error,серия из 4 пустых абзацев перед заголовком
+04-missing_break.docx,PB-01,68,finding,error,нет разрыва страницы перед частью
+05-margin_left.docx,PG-02,,finding,error,левое поле 20 мм
+06-margin_right.docx,PG-03,,finding,error,правое поле 20 мм
+07-indent.docx,PR-03,92,finding,error,красная строка 0 см
+08-spaces_indent.docx,PR-05,112,finding,error,отступ пробелами в начале абзаца
+09-right_indent.docx,PR-09,58,finding,error,"правый отступ 0,5 см"
+09-right_indent.docx,PR-09,79,finding,error,"правый отступ 0,5 см"
+10-spacing_after.docx,PR-02,93,finding,error,интервал после 10 pt
+10-spacing_after.docx,PR-02,80,finding,error,интервал после 10 pt
+10-spacing_after.docx,PR-02,113,finding,error,интервал после 10 pt
+11-line_single.docx,PR-01,79,finding,error,одинарный интервал
+11-line_single.docx,PR-01,56,finding,error,одинарный интервал
+12-font_family.docx,FT-01,105,finding,error,шрифт Arial
+12-font_family.docx,FT-03,105,finding,warning,"посторонний шрифт Arial (то же нарушение, второе правило)"
+13-font_size.docx,FT-02,55,finding,error,размер 14 pt в основном тексте
+14-align.docx,PR-04,80,finding,error,выравнивание по левому краю
+15-hyphen_dash.docx,TY-03,58,finding,warning,дефис вместо тире
+16-space_before_comma.docx,TY-02,55,finding,warning,пробел перед запятой
+17-passport_spacing.docx,PR-08,25,finding,error,"в таблице паспорта интервал 1,5"
+17-passport_spacing.docx,PR-08,26,finding,error,"в таблице паспорта интервал 1,5"
+18-title_empties.docx,PR-10,6,finding,warning,3 пустых на титульном листе (только замечание)
+19-hard_break.docx,PB-01,124,pass,,TRAP: разрыв символом в конце предыдущего абзаца — это правильно
+20-indent_127.docx,PR-03,58,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+20-indent_127.docx,PR-03,115,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+20-indent_127.docx,PR-03,89,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+21-margin_right_10.docx,PG-03,,pass,,TRAP: правое поле 10 мм разрешено (oneOf 10/15)
+22-style_inheritance.docx,PR-01,,pass,,"TRAP: наследование BodyText→Normal, интервал фактически 1,5"
+22-style_inheritance.docx,PR-03,,pass,,"TRAP: наследование, отступ фактически 1,25"
+22-style_inheritance.docx,PR-04,,pass,,"TRAP: наследование, фактически по ширине"
+23-docdefaults.docx,PR-02,,pass,,"TRAP: в docDefaults после 10 pt, но Normal задаёт 0"
+24-compound_hyphen.docx,TY-03,81,pass,,TRAP: дефис в сложных словах — правильно
+25-mix.docx,PR-01,94,finding,error,одинарный интервал
+25-mix.docx,PR-08,43,finding,error,"в таблице паспорта интервал 1,5"
+25-mix.docx,PR-08,44,finding,error,"в таблице паспорта интервал 1,5"
+25-mix.docx,PB-01,68,finding,error,нет разрыва страницы перед частью
+25-mix.docx,PR-03,77,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+25-mix.docx,PR-03,114,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+25-mix.docx,PR-03,83,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+26-mix.docx,PR-01,66,finding,error,одинарный интервал
+26-mix.docx,PB-01,102,finding,error,"нет разрыва, вместо него 7 пустых абзацев"
+26-mix.docx,PR-10,95,finding,error,серия из 7 пустых абзацев перед заголовком
+26-mix.docx,PR-02,118,finding,error,интервал после 10 pt
+26-mix.docx,PR-02,,pass,,"TRAP: в docDefaults после 10 pt, но Normal задаёт 0"
+27-mix.docx,PR-08,43,finding,error,"в таблице паспорта интервал 1,5"
+27-mix.docx,PR-08,44,finding,error,"в таблице паспорта интервал 1,5"
+27-mix.docx,PB-01,54,finding,error,нет разрыва страницы перед частью
+27-mix.docx,PR-04,55,finding,error,выравнивание по левому краю
+27-mix.docx,PR-02,,pass,,"TRAP: в docDefaults после 10 pt, но Normal задаёт 0"
+28-mix.docx,PR-08,43,finding,error,"в таблице паспорта интервал 1,5"
+28-mix.docx,PR-08,44,finding,error,"в таблице паспорта интервал 1,5"
+28-mix.docx,TY-02,110,finding,warning,пробел перед запятой
+28-mix.docx,PR-04,81,finding,error,выравнивание по левому краю
+28-mix.docx,PR-09,84,finding,error,"правый отступ 0,5 см"
+28-mix.docx,PR-09,94,finding,error,"правый отступ 0,5 см"
+28-mix.docx,PR-09,73,finding,error,"правый отступ 0,5 см"
+28-mix.docx,PR-09,80,finding,error,"правый отступ 0,5 см"
+28-mix.docx,PR-01,57,finding,error,одинарный интервал
+28-mix.docx,PR-01,88,finding,error,одинарный интервал
+28-mix.docx,PR-01,63,finding,error,одинарный интервал
+28-mix.docx,PR-06,89,finding,error,одиночный пустой абзац между абзацами
+28-mix.docx,PG-03,,pass,,TRAP: правое поле 10 мм разрешено (oneOf 10/15)
+29-mix.docx,PR-01,,pass,,"TRAP: наследование BodyText→Normal, интервал фактически 1,5"
+29-mix.docx,PR-03,,pass,,"TRAP: наследование, отступ фактически 1,25"
+29-mix.docx,PR-04,,pass,,"TRAP: наследование, фактически по ширине"
+29-mix.docx,PR-06,124,finding,error,одиночный пустой абзац между абзацами
+29-mix.docx,PR-06,62,finding,error,одиночный пустой абзац между абзацами
+29-mix.docx,PB-01,106,finding,error,"нет разрыва, вместо него 5 пустых абзацев"
+29-mix.docx,PR-10,101,finding,error,серия из 5 пустых абзацев перед заголовком
+29-mix.docx,PR-10,13,finding,warning,5 пустых на титульном листе (только замечание)
+29-mix.docx,PR-05,82,finding,error,отступ пробелами в начале абзаца
+29-mix.docx,PR-02,125,finding,error,интервал после 10 pt
+29-mix.docx,PR-09,91,finding,error,"правый отступ 0,5 см"
+29-mix.docx,PR-09,109,finding,error,"правый отступ 0,5 см"
+29-mix.docx,PR-09,81,finding,error,"правый отступ 0,5 см"
+30-mix.docx,PG-03,,finding,error,правое поле 20 мм
+30-mix.docx,PG-02,,finding,error,левое поле 20 мм
+30-mix.docx,PR-02,76,finding,error,интервал после 10 pt
+30-mix.docx,PR-02,107,finding,error,интервал после 10 pt
+30-mix.docx,PR-09,56,finding,error,"правый отступ 0,5 см"
+30-mix.docx,PR-09,114,finding,error,"правый отступ 0,5 см"
+30-mix.docx,PR-03,97,finding,error,красная строка 0.63 см
+30-mix.docx,PR-04,92,finding,error,выравнивание по левому краю
+30-mix.docx,PB-01,117,pass,,TRAP: разрыв символом в конце предыдущего абзаца — это правильно
+31-mix.docx,PR-04,91,finding,error,выравнивание по левому краю
+31-mix.docx,PR-01,99,finding,error,одинарный интервал
+31-mix.docx,TY-03,82,finding,warning,дефис вместо тире
+31-mix.docx,PR-02,74,finding,error,интервал после 10 pt
+31-mix.docx,PR-02,67,finding,error,интервал после 10 pt
+31-mix.docx,PR-02,94,finding,error,интервал после 10 pt
+31-mix.docx,TY-03,65,pass,,TRAP: дефис в сложных словах — правильно
+32-mix.docx,FT-02,108,finding,error,размер 14 pt в основном тексте
+32-mix.docx,PR-09,98,finding,error,"правый отступ 0,5 см"
+32-mix.docx,PR-09,91,finding,error,"правый отступ 0,5 см"
+32-mix.docx,PR-09,88,finding,error,"правый отступ 0,5 см"
+32-mix.docx,PR-04,57,finding,error,выравнивание по левому краю
+32-mix.docx,PR-08,21,finding,error,"в таблице паспорта интервал 1,5"
+32-mix.docx,PR-08,22,finding,error,"в таблице паспорта интервал 1,5"
+32-mix.docx,PB-01,124,pass,,TRAP: разрыв символом в конце предыдущего абзаца — это правильно
+33-mix.docx,PR-04,103,finding,error,выравнивание по левому краю
+33-mix.docx,PG-03,,finding,error,правое поле 20 мм
+33-mix.docx,PR-06,76,finding,error,одиночный пустой абзац между абзацами
+33-mix.docx,PR-06,115,finding,error,одиночный пустой абзац между абзацами
+33-mix.docx,PR-06,80,finding,error,одиночный пустой абзац между абзацами
+33-mix.docx,PR-08,41,finding,error,"в таблице паспорта интервал 1,5"
+33-mix.docx,PR-08,42,finding,error,"в таблице паспорта интервал 1,5"
+33-mix.docx,PR-10,8,finding,warning,4 пустых на титульном листе (только замечание)
+33-mix.docx,PR-03,59,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+33-mix.docx,PR-03,90,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+33-mix.docx,PR-03,77,pass,,"TRAP: 1,27 см входит в допуск ±0,1"
+34-mix.docx,PB-01,110,finding,error,нет разрыва страницы перед частью
+34-mix.docx,PR-08,39,finding,error,"в таблице паспорта интервал 1,5"
+34-mix.docx,PR-08,40,finding,error,"в таблице паспорта интервал 1,5"
+34-mix.docx,PR-01,92,finding,error,одинарный интервал
+34-mix.docx,PR-01,55,finding,error,одинарный интервал
+34-mix.docx,PG-02,,finding,error,левое поле 20 мм
+34-mix.docx,TY-03,90,pass,,TRAP: дефис в сложных словах — правильно
+35-mix.docx,PR-01,118,finding,error,одинарный интервал
+35-mix.docx,PR-03,95,finding,error,красная строка 0.63 см
+35-mix.docx,PR-03,116,finding,error,красная строка 0 см
+35-mix.docx,TY-03,85,finding,warning,дефис вместо тире
+35-mix.docx,PR-08,26,finding,error,"в таблице паспорта интервал 1,5"
+35-mix.docx,PR-08,27,finding,error,"в таблице паспорта интервал 1,5"
+35-mix.docx,PR-10,14,finding,warning,5 пустых на титульном листе (только замечание)
+35-mix.docx,PR-06,117,finding,error,абзац из одних пробелов = пустой
+35-mix.docx,PR-02,,pass,,"TRAP: в docDefaults после 10 pt, но Normal задаёт 0"
+36-mix.docx,PB-01,72,finding,error,нет разрыва страницы перед частью
+36-mix.docx,PR-10,13,finding,warning,4 пустых на титульном листе (только замечание)
+36-mix.docx,PR-06,94,finding,error,абзац из одних пробелов = пустой
+36-mix.docx,PR-09,79,finding,error,"правый отступ 0,5 см"
+36-mix.docx,PR-09,119,finding,error,"правый отступ 0,5 см"
+36-mix.docx,PR-09,76,finding,error,"правый отступ 0,5 см"
+36-mix.docx,PG-03,,pass,,TRAP: правое поле 10 мм разрешено (oneOf 10/15)
+37-mix.docx,PR-04,75,finding,error,выравнивание по левому краю
+37-mix.docx,PR-09,105,finding,error,"правый отступ 0,5 см"
+37-mix.docx,PR-09,75,finding,error,"правый отступ 0,5 см"
+37-mix.docx,PR-09,112,finding,error,"правый отступ 0,5 см"
+37-mix.docx,PR-09,89,finding,error,"правый отступ 0,5 см"
+37-mix.docx,PR-01,99,finding,error,одинарный интервал
+37-mix.docx,PB-01,130,finding,error,"нет разрыва, вместо него 6 пустых абзацев"
+37-mix.docx,PR-10,124,finding,error,серия из 6 пустых абзацев перед заголовком
+37-mix.docx,TY-02,109,finding,warning,пробел перед запятой
+37-mix.docx,PR-02,93,finding,error,интервал после 10 pt
+37-mix.docx,PR-02,58,finding,error,интервал после 10 pt
+37-mix.docx,TY-03,77,pass,,TRAP: дефис в сложных словах — правильно
+38-mix.docx,FT-01,75,finding,error,шрифт Arial
+38-mix.docx,FT-03,75,finding,warning,"посторонний шрифт Arial (то же нарушение, второе правило)"
+38-mix.docx,PR-10,12,finding,warning,3 пустых на титульном листе (только замечание)
+38-mix.docx,TY-03,61,finding,warning,дефис вместо тире
+38-mix.docx,PR-01,80,finding,error,одинарный интервал
+38-mix.docx,PR-01,92,finding,error,одинарный интервал
+38-mix.docx,PR-01,97,finding,error,одинарный интервал
+38-mix.docx,PG-03,,pass,,TRAP: правое поле 10 мм разрешено (oneOf 10/15)
+39-mix.docx,PR-02,73,finding,error,интервал после 10 pt
+39-mix.docx,PR-02,82,finding,error,интервал после 10 pt
+39-mix.docx,PR-06,108,finding,error,абзац из одних пробелов = пустой
+39-mix.docx,FT-02,77,finding,error,размер 14 pt в основном тексте
+39-mix.docx,PR-03,113,finding,error,красная строка 0 см
+39-mix.docx,PR-02,,pass,,"TRAP: в docDefaults после 10 pt, но Normal задаёт 0"
