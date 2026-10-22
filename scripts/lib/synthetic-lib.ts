@@ -8,6 +8,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkDocx } from '../../src/core/engine/index.ts';
 import type { Profile } from '../../src/core/profiles/types.ts';
+import { readDocx } from '../../src/core/reader/index.ts';
 
 export interface TruthRow {
   file: string;
@@ -112,6 +113,25 @@ export function collectFindings(dir: string, profile: Profile): FoundRow[] {
     }
   }
   return out;
+}
+
+// VL-02 (доля пустых абзацев) в truth.csv не размечен: генератор о нём не знает. Дописываем
+// разметку сами по тому же условию, что в профиле: замечание ожидается, если пустых абзацев
+// вне таблиц больше порога warnIfEmptyShareAbove. Пустые абзацы считает модуль чтения
+// (Paragraph.isEmpty), а не само правило, поэтому сравнение не сводится к «правило согласно с собой».
+export function emptyShareTruth(dir: string, profile: Profile): TruthRow[] {
+  const threshold = profile.rules['VL-02']?.params.warnIfEmptyShareAbove;
+  if (typeof threshold !== 'number') return [];
+  const files = readdirSync(dir)
+    .filter((name) => name.endsWith('.docx'))
+    .sort();
+  return files.flatMap((file): TruthRow[] => {
+    const outside = readDocx(readFileSync(join(dir, file))).paragraphs.filter((p) => !p.table);
+    const share = outside.filter((p) => p.isEmpty).length / Math.max(1, outside.length);
+    if (share <= threshold) return [];
+    const note = `пустых абзацев ${Math.round(share * 100)} % > ${Math.round(threshold * 100)} %`;
+    return [{ file, rule: 'VL-02', paragraph: '', expected: 'finding', severity: 'info', note }];
+  });
 }
 
 const keyOf = (r: { file: string; rule: string; paragraph: number | string }): string =>

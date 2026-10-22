@@ -8,6 +8,7 @@ import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID } from '../src/core/profiles/built
 import {
   collectFindings,
   compareSynthetic,
+  emptyShareTruth,
   formatSynthetic,
   parseTruth,
 } from './lib/synthetic-lib.ts';
@@ -18,5 +19,9 @@ if (!profile) throw new Error(`Нет встроенного профиля ${DE
 const found = collectFindings(`${root}/docs`, profile);
 writeFileSync(`${root}/findings.json`, JSON.stringify(found, null, 1) + '\n');
 
-const truth = parseTruth(readFileSync(`${root}/truth.csv`, 'utf8'));
+// truth.csv плюс разметка VL-02 по доле пустых абзацев (её генератор не считает).
+const truth = [
+  ...parseTruth(readFileSync(`${root}/truth.csv`, 'utf8')),
+  ...emptyShareTruth(`${root}/docs`, profile),
+];
 console.log(formatSynthetic(compareSynthetic(truth, found)));
