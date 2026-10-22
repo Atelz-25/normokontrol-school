@@ -84,3 +84,33 @@ export function readArchive(bytes: Uint8Array, limits = DEFAULT_LIMITS): Map<str
   }
   return parts;
 }
+
+// Для автоисправления нужен весь архив (картинки тоже), чтобы собрать новый файл,
+// не потеряв ни одной части. Лимиты те же, что при чтении.
+export function readAllEntries(
+  bytes: Uint8Array,
+  limits = DEFAULT_LIMITS,
+): Record<string, Uint8Array> {
+  if (bytes.length > limits.maxFileBytes) throw new DocxError('too-large');
+  detectByMagic(bytes);
+  let entries = 0;
+  let total = 0;
+  try {
+    return unzipSync(bytes, {
+      filter: (file) => {
+        entries += 1;
+        total += file.originalSize;
+        if (
+          entries > limits.maxEntries ||
+          total > limits.maxTotalBytes ||
+          file.originalSize > limits.maxEntryBytes
+        )
+          throw new DocxError('zip-limits');
+        return true;
+      },
+    });
+  } catch (error) {
+    if (error instanceof DocxError) throw error;
+    throw new DocxError('broken', 'zip');
+  }
+}
