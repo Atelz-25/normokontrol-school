@@ -106,7 +106,8 @@ const partBreaks: Rule = {
     return {
       checked: needing.length,
       findings,
-      unit: 'occurrences',
+      // Проверяем заголовки частей: доля «без разрыва» идёт в оценку.
+      unit: 'paragraphs',
       summary: summary.breaks(missing.length, needing.length),
       metrics: {
         headingsNeedingBreak: needing.length,

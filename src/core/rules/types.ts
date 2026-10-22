@@ -18,6 +18,7 @@ export interface Finding {
     approxPage?: number; // только если в файле есть lastRenderedPageBreak
     excerpt?: string;
     group?: FindingGroup; // титульный лист или содержание; без группы — текст работы
+    ranges?: [start: number, end: number][]; // точные места в тексте абзаца (типографика)
   };
   autoFixable: boolean;
 }

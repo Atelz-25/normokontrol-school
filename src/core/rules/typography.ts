@@ -1,26 +1,37 @@
 // Типографика этапа 1: двойные пробелы, пробелы у знаков препинания, дефис вместо тире.
+// Каждое найденное место запоминаем с позицией в тексте, чтобы предпросмотр подсветил
+// именно его, а не весь абзац.
 import { msg, summary } from '../../i18n/rules-ru.ts';
 import type { Paragraph } from '../model/types.ts';
 import { finding } from './helpers.ts';
 import type { CheckContext, Finding, Rule, RuleOutcome } from './types.ts';
 
+type Range = [start: number, end: number];
+
 // Титульный лист и строки ручного содержания выравнивают пробелами по-своему: их не трогаем.
 const textParagraphs = (ctx: CheckContext): Paragraph[] =>
   ctx.doc.paragraphs.filter((p) => !p.isEmpty && p.role !== 'title-page' && p.role !== 'toc-entry');
 
+// Все совпадения шаблона (с флагом g) как отрезки текста.
+function rangesOf(text: string, pattern: RegExp): Range[] {
+  return [...text.matchAll(pattern)].map((m) => [m.index, m.index + m[0].length]);
+}
+
 function countMatches(
   ctx: CheckContext,
-  count: (text: string, p: Paragraph) => number,
+  find: (text: string, p: Paragraph) => Range[],
   message: (n: number) => string,
 ): RuleOutcome {
   const paragraphs = textParagraphs(ctx);
   const findings: Finding[] = [];
   let total = 0;
   for (const p of paragraphs) {
-    const n = count(p.text, p);
-    if (n === 0) continue;
-    total += n;
-    findings.push(finding(ctx, true, message(n), { paragraph: p }));
+    const ranges = find(p.text, p).sort((a, b) => a[0] - b[0]);
+    if (ranges.length === 0) continue;
+    total += ranges.length;
+    const f = finding(ctx, true, message(ranges.length), { paragraph: p });
+    f.location.ranges = ranges;
+    findings.push(f);
   }
   return {
     checked: paragraphs.length,
@@ -31,20 +42,19 @@ function countMatches(
   };
 }
 
-const matchCount = (text: string, pattern: RegExp): number => (text.match(pattern) ?? []).length;
-
 const doubleSpaces: Rule = {
   id: 'TY-01',
   category: 'typography',
   stage: 1,
   autoFixable: true,
   defaultParams: {},
-  check: (ctx) =>
-    countMatches(ctx, (text) => matchCount(text, /(?<=\S) {2,}(?=\S)/g), msg.doubleSpaces),
+  check: (ctx) => countMatches(ctx, (text) => rangesOf(text, /(?<=\S) {2,}(?=\S)/g), msg.doubleSpaces),
 };
 
-// Ссылки и адреса (https://…, www.…) пропускаем: там свои правила записи.
-const withoutUrls = (text: string): string => text.replace(/\b(?:https?:\/\/|www\.)\S+/gi, ' ');
+// Ссылки и адреса (https://…, www.…) пропускаем: там свои правила записи. Заменяем их
+// пробелами той же длины, чтобы позиции остальных мест в тексте не сдвинулись.
+const withoutUrls = (text: string): string =>
+  text.replace(/\b(?:https?:\/\/|www\.)\S+/gi, (url) => ' '.repeat(url.length));
 
 const punctuation: Rule = {
   id: 'TY-02',
@@ -64,11 +74,11 @@ const punctuation: Rule = {
         const spaceBeforeDot = /(?<=[\p{L}\d]) +\.(?![\p{L}\d.])/gu;
         // Двоеточие внутри слова (w:p, 10:30) пробела после себя не требует.
         const noSpaceAfter = /(?:[,;!?]|(?<![\p{L}\d]):)(?=\p{L})/gu;
-        return (
-          matchCount(clean, before) +
-          matchCount(clean, spaceBeforeDot) +
-          matchCount(clean, noSpaceAfter)
-        );
+        return [
+          ...rangesOf(clean, before),
+          ...rangesOf(clean, spaceBeforeDot),
+          ...rangesOf(clean, noSpaceAfter),
+        ];
       },
       msg.punctuation,
     ),
@@ -82,11 +92,7 @@ const hyphenDash: Rule = {
   autoFixable: true,
   defaultParams: {},
   check: (ctx) =>
-    countMatches(
-      ctx,
-      (text) => matchCount(text, /(?<=\S)[ \u00a0]-[ \u00a0](?=\S)/g),
-      msg.hyphenDash,
-    ),
+    countMatches(ctx, (text) => rangesOf(text, /(?<=\S)[ \u00a0]-[ \u00a0](?=\S)/g), msg.hyphenDash),
 };
 
 export const typographyRules: Rule[] = [doubleSpaces, punctuation, hyphenDash];

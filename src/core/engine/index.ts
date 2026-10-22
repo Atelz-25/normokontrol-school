@@ -4,6 +4,7 @@ import { classify, type Classification } from '../classify/index.ts';
 import type { DocModel } from '../model/types.ts';
 import type { Profile, Severity } from '../profiles/types.ts';
 import { readDocx } from '../reader/index.ts';
+import { documentPassport, previewParagraphs, type DocumentPassport, type PreviewParagraph } from './passport.ts';
 import { RULES_BY_ID } from '../rules/registry.ts';
 import type { Category, Finding, FindingGroup } from '../rules/types.ts';
 import { summary as summaryText } from '../../i18n/rules-ru.ts';
@@ -46,6 +47,8 @@ export interface Report {
   profileId: string;
   results: RuleResult[];
   stats: DocumentStats;
+  passport: DocumentPassport;
+  preview: PreviewParagraph[];
 }
 
 function documentStats(doc: DocModel): DocumentStats {
@@ -158,7 +161,13 @@ export function checkModel(doc: DocModel, profile: Profile, options: CheckOption
     }
   });
 
-  return { profileId: profile.id, results, stats: documentStats(doc) };
+  return {
+    profileId: profile.id,
+    results,
+    stats: documentStats(doc),
+    passport: documentPassport(doc),
+    preview: previewParagraphs(doc),
+  };
 }
 
 export function checkDocx(bytes: Uint8Array, profile: Profile, options: CheckOptions = {}): Report {
