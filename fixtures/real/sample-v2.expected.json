@@ -293,14 +293,9 @@
       "note": "таблица паспорта исключена (passport-table)"
     },
     "PR-05": {
-      "status": "fail",
-      "paragraphOfSpaces": {
-        "paragraph": 16,
-        "length": 69
-      },
-      "byGroup": {
-        "title-page": 1
-      }
+      "status": "pass",
+      "count": 0,
+      "note": "Абзац №16 из 69 пробелов — пустой абзац: его считают PR-06/PR-10 (59 одиночных + 124 в сериях = 183 пустых), PR-05 о нём не сообщает."
     }
   }
 }

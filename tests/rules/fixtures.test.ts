@@ -79,7 +79,7 @@ describe('детали правил', () => {
     expect(result.findings[0]?.message).toContain('10 пустых абзацев');
   });
 
-  it('PR-05: строка из пробелов и отступ пробелами', () => {
+  it('PR-05: отступ пробелами и табуляцией перед текстом', () => {
     expect(resultFor(FIXTURES['PR-05']!.bad(), 'PR-05').affected).toBe(2);
   });
 });

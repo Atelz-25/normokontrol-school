@@ -157,11 +157,10 @@ const spaceIndent: Rule = {
     if (!bool(params, 'forbidSpacesTabsAsIndent', true))
       return { checked: 0, findings: [], unit: 'paragraphs' };
     const paragraphs = ctx.doc.paragraphs.filter((p) => !p.table && p.role !== 'toc-entry');
+    // Абзац из одних пробелов — это пустой абзац: о нём сообщают PR-06/PR-10, и исправляется он
+    // одним действием (удалить). Второе замечание на то же место было бы шумом, поэтому
+    // PR-05 смотрит только на пробелы и табуляции перед текстом.
     return perParagraph(paragraphs, (p) => {
-      const spaces = (p.text.match(/[ \u00a0]/g) ?? []).length;
-      if (p.isEmpty && spaces >= 3 && p.text.trim() === '') {
-        return finding(ctx, true, msg.spacesLine(p.text.length), { paragraph: p, excerpt: '' });
-      }
       if (!p.isEmpty && /^( {2,}|\t)/.test(p.text))
         return finding(ctx, true, msg.leadingWhitespace(), { paragraph: p });
       return undefined;

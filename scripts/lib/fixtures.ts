@@ -146,7 +146,7 @@ export const FIXTURES: Record<string, FixturePair> = {
   },
   'PR-05': {
     good: () => doc(BODY),
-    bad: () => doc([p(T1), p(`     ${T2}`), p(' '.repeat(40))]),
+    bad: () => doc([p(T1), p(`     ${T2}`), p(`\t${T3}`)]),
   },
   'PR-06': {
     good: () => doc(BODY),

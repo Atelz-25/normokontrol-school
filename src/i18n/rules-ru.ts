@@ -599,7 +599,6 @@ export const msg = {
   indentSpread: (values: string): string => `Сейчас в тексте встречаются отступы: ${values}.`,
   align: (actual: string): string =>
     `Выравнивание «${ALIGN_NAMES[actual] ?? actual}», нужно по ширине.`,
-  spacesLine: (length: number): string => `Строка из ${length} пробелов вместо настройки отступов.`,
   leadingWhitespace: (): string => 'Отступ сделан пробелами или табуляцией.',
   emptyParagraph: (numbered: boolean): string =>
     numbered ? 'Пустой пункт списка между абзацами.' : 'Пустой абзац между абзацами.',

@@ -255,7 +255,7 @@ export function fixDocx(
     for (const name of ['end', 'rightChars', 'endChars']) removeAttr(ind, name);
     count('PR-09');
   }
-  // PR-05: убираем пробелы и табуляции в начале абзаца (строку из одних пробелов — целиком).
+  // PR-05: убираем пробелы и табуляции в начале абзаца.
   for (const index of findings('PR-05')) {
     const p = at(index);
     if (!p) continue;

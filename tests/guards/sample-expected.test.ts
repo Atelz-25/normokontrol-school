@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { checkDocx, type RuleResult } from '../../src/core/engine/index.ts';
 import { BUILTIN_PROFILES } from '../../src/core/profiles/builtin.ts';
 import { readDocx } from '../../src/core/reader/index.ts';
+import { emptySeries } from '../../src/core/rules/empty.ts';
 
 const root = new URL('../../', import.meta.url);
 const expectedUrl = new URL('fixtures/real/sample-v2.expected.json', root);
@@ -138,12 +139,12 @@ describe.skipIf(!existsSync(docxUrl))(
     });
 
     it('группы отчёта: текст работы, содержание, титульный лист', () => {
-      for (const id of ['PR-02', 'PR-05', 'PR-06', 'PR-09', 'PR-10']) {
+      for (const id of ['PR-02', 'PR-06', 'PR-09', 'PR-10']) {
         const groups = Object.fromEntries(result(id).groups.map((g) => [g.key, g.findings.length]));
         expect(groups, id).toEqual(exp[id]?.byGroup);
       }
       // На титульном листе серьёзность мягче (titlePageSeverity в профиле).
-      for (const id of ['PR-05', 'PR-06', 'PR-10'])
+      for (const id of ['PR-06', 'PR-10'])
         expect(result(id).groups.find((g) => g.key === 'title-page')?.severity, id).toBe('warning');
       // Разрыв перед частью — замечание к документу, а не «к содержанию».
       expect(result('PB-01').groups.map((g) => g.key)).toEqual(['main']);
@@ -205,10 +206,9 @@ describe.skipIf(!existsSync(docxUrl))(
       expect(paragraphs('PR-02').sort((a, b) => a - b)).toEqual(expected);
     });
 
-    it('PR-05: только строка из 69 пробелов (#16); TY-03: 8 дефисов', () => {
-      const e = exp['PR-05']?.paragraphOfSpaces as { paragraph: number; length: number };
-      expect(paragraphs('PR-05')).toEqual([e.paragraph]);
-      expect(result('PR-05').findings[0]?.message).toContain(String(e.length));
+    it('PR-05: 0 (строка из 69 пробелов #16 — пустой абзац, а не отступ); TY-03: 8 дефисов', () => {
+      expect(result('PR-05').status).toBe(exp['PR-05']?.status);
+      expect(result('PR-05').findings).toHaveLength(num('PR-05', 'count'));
       expect(result('TY-03').metrics.count).toBe(num('TY-03', 'count'));
     });
 
@@ -225,6 +225,17 @@ describe.skipIf(!existsSync(docxUrl))(
       const m = result('TH-01').metrics;
       for (const key of ['chars', 'pages', 'missingToMin', 'missingToRecommended'])
         expect(m[key], key).toBe(num('TH-01', key));
+    });
+
+    it('пустых абзацев 183 = одиночные PR-06 + в сериях PR-10; абзац из пробелов #16 среди них', () => {
+      const single = result('PR-06').findings.map((f) => f.location.paragraphIndex);
+      const inSeries = result('PR-10').metrics.emptyParagraphsInSeries as number;
+      expect(single.length + inSeries).toBe(num('VL-02', 'empty'));
+      const doc = readDocx(readFileSync(docxUrl));
+      const seriesIndexes = emptySeries(doc)
+        .flat()
+        .map((p) => p.index);
+      expect(single.includes(16) || seriesIndexes.includes(16)).toBe(true);
     });
 
     it('VL-02: 183 пустых из 313, 14 477 знаков ≈ 8,0 страницы', () => {
