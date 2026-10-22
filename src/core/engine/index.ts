@@ -4,7 +4,12 @@ import { classify, type Classification } from '../classify/index.ts';
 import type { DocModel } from '../model/types.ts';
 import type { Profile, Severity } from '../profiles/types.ts';
 import { readDocx } from '../reader/index.ts';
-import { documentPassport, previewParagraphs, type DocumentPassport, type PreviewParagraph } from './passport.ts';
+import {
+  documentPassport,
+  previewParagraphs,
+  type DocumentPassport,
+  type PreviewParagraph,
+} from './passport.ts';
 import { RULES_BY_ID } from '../rules/registry.ts';
 import type { Category, Finding, FindingGroup } from '../rules/types.ts';
 import { summary as summaryText } from '../../i18n/rules-ru.ts';

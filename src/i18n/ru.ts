@@ -54,6 +54,86 @@ export const ru = {
   googleDocs:
     'Ссылку на Google Документ проверить нельзя. Откройте документ и выберите Файл → Скачать → Microsoft Word (.docx), затем загрузите скачанный файл.',
   workerFailed: 'Проверка неожиданно остановилась. Обновите страницу и попробуйте ещё раз.',
+
+  // Оценка и паспорт документа (этап 2)
+  scoreTitle: 'Оценка оформления',
+  score: (total: number): string => `${total} из 100`,
+  scoreNone: 'Оценивать нечего: ни одно правило не применимо.',
+  scoreHow: 'Как считается оценка',
+  scoreFormula:
+    'Вес правила: ошибка — 3, замечание — 2, совет — 0 (советы в оценку не входят). Для правил по абзацам балл = 1 − доля абзацев с замечаниями; для остальных — 1, если замечаний нет, и 0, если есть. Оценка = 100 × сумма (вес × балл) ÷ сумма весов. Титульный лист и содержание считаются отдельными строками со своей серьёзностью. Подробно — docs/SCORING.md в репозитории.',
+  scoreCategory: (name: string, earned: number, possible: number): string =>
+    `${name}: ${Math.round(earned * 10) / 10} из ${possible}`,
+  passportTitle: 'Паспорт документа',
+  passportLines: (p: {
+    words: number;
+    chars: number;
+    charsNoSpaces: number;
+    pagesBy1800: number;
+    approxPages?: number;
+    paragraphs: number;
+    emptyParagraphs: number;
+    sections: number;
+    headings: number;
+    figures: number;
+    tables: number;
+    sources: number;
+  }): string[] => [
+    `Слов: ${p.words}; знаков с пробелами: ${p.chars}, без пробелов: ${p.charsNoSpaces}.`,
+    `Объём по тексту: примерно ${String(p.pagesBy1800).replace('.', ',')} стр. (1 800 знаков на страницу).` +
+      (p.approxPages ? ` По отметкам Word: примерно ${p.approxPages} стр.` : ''),
+    `Абзацев вне таблиц: ${p.paragraphs}, из них пустых: ${p.emptyParagraphs}.`,
+    `Разделов: ${p.sections}; заголовков: ${p.headings}; рисунков: ${p.figures}; таблиц: ${p.tables}; источников: ${p.sources}.`,
+  ],
+  pdfReminderTitle: 'Перед сдачей',
+
+  // Эвристики
+  dismiss: 'Здесь это есть',
+  dismissHint: 'Отметка действует, пока открыта страница, и убирает правило из оценки.',
+  dismissed: 'Вы отметили: «здесь это есть». Правило не входит в оценку.',
+  undismiss: 'Вернуть замечание',
+
+  // Предпросмотр
+  previewTitle: 'Текст работы',
+  previewHint: 'Упрощённый вид по абзацам, не копия Word. Пустые абзацы показаны знаком ¶.',
+  previewEmpty: '¶',
+  previewTable: 'ячейка таблицы',
+  showInText: 'Показать в тексте',
+
+  // Экспорт
+  print: 'Печать / PDF',
+  downloadJson: 'Скачать JSON',
+  copyList: 'Скопировать список замечаний',
+  copied: 'Список замечаний скопирован.',
+  copyFailed: 'Не удалось скопировать: браузер не разрешил доступ к буферу обмена.',
+  reportFileName: 'отчёт-нормоконтроль.json',
+
+  // Редактор требований
+  editProfile: 'Редактор требований',
+  closeEditor: 'Закрыть редактор',
+  editorTitle: 'Редактор требований',
+  editorIntro:
+    'Здесь можно включить или выключить правило, поменять серьёзность и числа. Изменения сохраняются в этом браузере как ваш профиль.',
+  editorName: 'Название профиля',
+  editorEnabled: 'включено',
+  editorSeverity: 'серьёзность',
+  editorParams: 'параметры',
+  editorJsonHint: 'список или объект в формате JSON',
+  editorListHint: 'по одному значению в строке',
+  editorPending: 'Пока не проверяются (значения сохраняются в профиле)',
+  editorApply: 'Применить',
+  editorReset: 'Сбросить по умолчанию',
+  editorSave: 'Сохранить в файл',
+  editorLoad: 'Загрузить из файла',
+  editorShare: 'Скопировать ссылку на профиль',
+  editorShared:
+    'Ссылка на профиль скопирована. Профиль записан в адресе после «#» и не отправляется на сервер.',
+  editorApplied: (title: string): string => `Профиль «${title}» применён.`,
+  editorInvalid: 'В профиле есть ошибки:',
+  editorBadJson: (name: string): string => `Параметр «${name}»: это не JSON.`,
+  customSuffix: '(мой)',
+  hashProfile: (title: string): string => `Профиль из ссылки: «${title}».`,
+  hashProfileBroken: 'Ссылка на профиль повреждена, профиль не загружен.',
 } as const;
 
 export const SEVERITY_NAMES: Record<Severity, string> = {

@@ -1,14 +1,25 @@
-// Отчёт: блоки школы («снижали баллы», «пять пунктов») и карточки замечаний.
+// Отчёт: оценка, блоки школы («снижали баллы», «пять пунктов»), паспорт документа,
+// карточки замечаний и напоминание перед сдачей. Только DOM API и textContent.
 import type { Report, ResultGroup, RuleResult } from '../core/engine/index.ts';
+import { computeScore } from '../core/engine/score.ts';
 import type { Profile, Severity } from '../core/profiles/types.ts';
 import { plannedStage } from '../core/rules/planned.ts';
 import type { Finding } from '../core/rules/types.ts';
-import { RULE_TEXTS } from '../i18n/rules-ru.ts';
+import { CATEGORY_NAMES, RULE_TEXTS } from '../i18n/rules-ru.ts';
 import { GROUP_NAMES, SEVERITY_NAMES, STATUS_NAMES, ru } from '../i18n/ru.ts';
 import { disclosure, el } from './dom.ts';
 
 const EXAMPLES = 5; // сколько мест показывать до кнопки «Показать все»
 const SEVERITY_ORDER: Severity[] = ['error', 'warning', 'info'];
+
+export interface ReportActions {
+  dismissed: ReadonlySet<string>; // эвристики, где отмечено «здесь это есть»
+  onToggleDismiss: (ruleId: string) => void;
+  onShow: (paragraphIndex: number) => void;
+  onPrint: () => void;
+  onDownload: () => void;
+  onCopy: () => void;
+}
 
 const titleOf = (ruleId: string): string => RULE_TEXTS[ruleId]?.title ?? ruleId;
 
@@ -88,6 +99,43 @@ function boardBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLElemen
   );
 }
 
+function scoreBlock(report: Report, dismissed: ReadonlySet<string>): HTMLElement {
+  const score = computeScore(report, dismissed);
+  const categories = Object.entries(score.byCategory).map(([category, value]) =>
+    el(
+      'li',
+      {},
+      ru.scoreCategory(CATEGORY_NAMES[category] ?? category, value.earned, value.possible),
+    ),
+  );
+  return el(
+    'section',
+    { class: 'block score', 'aria-labelledby': 'score-title' },
+    el('h2', { id: 'score-title' }, ru.scoreTitle),
+    el(
+      'p',
+      { class: 'score-value' },
+      score.total === undefined ? ru.scoreNone : ru.score(score.total),
+    ),
+    el(
+      'details',
+      {},
+      el('summary', {}, ru.scoreHow),
+      el('p', {}, ru.scoreFormula),
+      el('ul', {}, ...categories),
+    ),
+  );
+}
+
+function passportBlock(report: Report): HTMLElement {
+  return el(
+    'details',
+    { class: 'block passport' },
+    el('summary', {}, ru.passportTitle),
+    ...ru.passportLines(report.passport).map((line) => el('p', {}, line)),
+  );
+}
+
 function placeText(f: Finding, showSection: boolean): string {
   const parts: string[] = [];
   const { paragraphIndex, sectionIndex, approxPage } = f.location;
@@ -98,13 +146,35 @@ function placeText(f: Finding, showSection: boolean): string {
   return parts.length > 0 ? parts.join(', ') : ru.wholeDocument;
 }
 
-function placeItem(f: Finding, showSection: boolean): HTMLElement {
+function placeItem(
+  f: Finding,
+  showSection: boolean,
+  actions: ReportActions,
+  extra: boolean,
+): HTMLElement {
+  const index = f.location.paragraphIndex;
+  let show: HTMLButtonElement | undefined;
+  if (index !== undefined) {
+    show = el(
+      'button',
+      {
+        type: 'button',
+        class: 'link show',
+        'aria-label': `${ru.showInText}: ${ru.paragraph(index)}`,
+      },
+      ru.showInText,
+    );
+    show.addEventListener('click', () => {
+      actions.onShow(index);
+    });
+  }
   return el(
     'li',
-    {},
+    { class: extra ? 'extra' : '' },
     el('span', { class: 'place' }, placeText(f, showSection)),
     f.location.excerpt ? el('q', { class: 'excerpt' }, f.location.excerpt) : undefined,
-    el('span', {}, ` ${f.message}`),
+    el('span', {}, ` ${f.message} `),
+    show,
   );
 }
 
@@ -114,37 +184,54 @@ function ruleCard(
   group: ResultGroup,
   profile: Profile,
   showSection: boolean,
+  actions: ReportActions,
 ): HTMLElement {
   const text = RULE_TEXTS[result.ruleId];
   const config = profile.rules[result.ruleId];
   const findings = group.findings;
-  const list = el('ul', { class: 'places' });
-  const renderPlaces = (all: boolean): void => {
-    const shown = all ? findings : findings.slice(0, EXAMPLES);
-    list.replaceChildren(...shown.map((f) => placeItem(f, showSection)));
-  };
-  renderPlaces(false);
+  const id = group.key === 'main' ? `rule-${result.ruleId}` : `rule-${result.ruleId}-${group.key}`;
+  const dismissed = actions.dismissed.has(result.ruleId);
 
+  // Все места в списке сразу; лишние скрыты классом extra (при печати видны все).
+  const list = el(
+    'ul',
+    { class: 'places', id: `${id}-places` },
+    ...findings.map((f, i) => placeItem(f, showSection, actions, i >= EXAMPLES)),
+  );
   let toggle: HTMLButtonElement | undefined;
   if (findings.length > EXAMPLES) {
-    let expanded = false;
     toggle = el(
       'button',
-      { type: 'button', class: 'link', 'aria-expanded': 'false' },
+      {
+        type: 'button',
+        class: 'link no-print',
+        'aria-expanded': 'false',
+        'aria-controls': list.id,
+      },
       ru.showAll(findings.length),
     );
     toggle.addEventListener('click', () => {
-      expanded = !expanded;
-      renderPlaces(expanded);
+      const expanded = list.classList.toggle('expanded');
       toggle?.setAttribute('aria-expanded', String(expanded));
       if (toggle) toggle.textContent = expanded ? ru.showLess : ru.showAll(findings.length);
     });
   }
 
-  const id = group.key === 'main' ? `rule-${result.ruleId}` : `rule-${result.ruleId}-${group.key}`;
+  let dismissButton: HTMLButtonElement | undefined;
+  if (result.heuristic) {
+    dismissButton = el(
+      'button',
+      { type: 'button', class: 'secondary no-print', 'aria-describedby': `${id}-dismiss-hint` },
+      dismissed ? ru.undismiss : ru.dismiss,
+    );
+    dismissButton.addEventListener('click', () => {
+      actions.onToggleDismiss(result.ruleId);
+    });
+  }
+
   return el(
     'article',
-    { class: `card sev-${group.severity}`, id, tabindex: '-1' },
+    { class: `card sev-${group.severity}${dismissed ? ' dismissed' : ''}`, id, tabindex: '-1' },
     el(
       'h3',
       {},
@@ -154,13 +241,18 @@ function ruleCard(
       el('span', { class: 'muted' }, `(${result.ruleId})`),
       group.key === 'main' ? undefined : ` — ${GROUP_NAMES[group.key]}`,
     ),
+    dismissed ? el('p', { class: 'note' }, ru.dismissed) : undefined,
     group.summary ? el('p', {}, group.summary) : undefined,
     result.heuristic ? el('p', { class: 'note' }, ru.heuristic) : undefined,
     config?.confidence === 'unconfirmed' ? el('p', { class: 'note' }, ru.unconfirmed) : undefined,
-    list,
-    toggle,
+    dismissed ? undefined : list,
+    dismissed ? undefined : toggle,
     text ? disclosure(ru.why, `${text.why} ${ru.typicalNote}`) : undefined,
     text ? disclosure(ru.how, text.howToFixWord) : undefined,
+    dismissButton,
+    dismissButton
+      ? el('p', { class: 'muted no-print', id: `${id}-dismiss-hint` }, ru.dismissHint)
+      : undefined,
   );
 }
 
@@ -174,7 +266,26 @@ function sortResults(results: RuleResult[], profile: Profile): RuleResult[] {
   return [...results].sort((a, b) => rank(a) - rank(b) || a.ruleId.localeCompare(b.ruleId));
 }
 
-export function renderReport(report: Report, profile: Profile): HTMLElement {
+function toolbar(actions: ReportActions): HTMLElement {
+  const button = (label: string, action: () => void): HTMLButtonElement => {
+    const b = el('button', { type: 'button', class: 'secondary' }, label);
+    b.addEventListener('click', action);
+    return b;
+  };
+  return el(
+    'div',
+    { class: 'toolbar no-print' },
+    button(ru.print, actions.onPrint),
+    button(ru.downloadJson, actions.onDownload),
+    button(ru.copyList, actions.onCopy),
+  );
+}
+
+export function renderReport(
+  report: Report,
+  profile: Profile,
+  actions: ReportActions,
+): HTMLElement {
   const byId = new Map(report.results.map((r) => [r.ruleId, r]));
   const failed = sortResults(
     report.results.filter((r) => r.status === 'fail'),
@@ -187,35 +298,51 @@ export function renderReport(report: Report, profile: Profile): HTMLElement {
     );
   const ordered = [...cards('main'), ...cards('toc'), ...cards('title-page')];
   // Счётчики — по тексту работы и содержанию; титульный лист отдельной строкой.
-  const counted = ordered.filter(([, g]) => g.key !== 'title-page');
+  const counted = ordered.filter(
+    ([r, g]) => g.key !== 'title-page' && !actions.dismissed.has(r.ruleId),
+  );
   const count = (severity: Severity): number =>
     new Set(counted.filter(([, g]) => g.severity === severity).map(([r]) => r.ruleId)).size;
   const titleFindings = cards('title-page').reduce((sum, [, g]) => sum + g.findings.length, 0);
   const notImplemented = report.results.filter((r) => r.status === 'not-implemented').length;
   const showSection = report.stats.sections > 1;
+  const reminder = byId.get('OUT-01');
+  // OUT-01 — напоминание, а не проверка: текст из профиля или из справки правила.
+  const message = reminder?.metrics.message;
+  const reminderText =
+    reminder?.status !== 'pass'
+      ? ''
+      : typeof message === 'string' && message !== ''
+        ? message
+        : (RULE_TEXTS['OUT-01']?.howToFixWord ?? '');
 
-  const heading = el('h2', { id: 'report-title', tabindex: '-1' }, ru.reportTitle);
   return el(
     'section',
     { class: 'report', 'aria-labelledby': 'report-title' },
-    heading,
+    el('h2', { id: 'report-title', tabindex: '-1' }, ru.reportTitle),
+    toolbar(actions),
+    scoreBlock(report, actions.dismissed),
     el('p', { class: 'counters' }, ru.counters(count('error'), count('warning'), count('info'))),
     titleFindings > 0 ? el('p', {}, ru.titlePageLine(titleFindings)) : undefined,
-    el(
-      'p',
-      { class: 'muted' },
-      ru.docStats(report.stats.paragraphs, report.stats.emptyParagraphs, report.stats.approxPages),
-    ),
     notImplemented > 0 ? el('p', { class: 'muted' }, ru.notChecked(notImplemented)) : undefined,
     priorityBlock(profile, byId),
     boardBlock(profile, byId),
+    passportBlock(report),
     el('h2', {}, ru.findingsTitle),
     ordered.length === 0
       ? el('p', {}, ru.noFindings)
       : el(
           'div',
           { class: 'cards' },
-          ...ordered.map(([r, g]) => ruleCard(r, g, profile, showSection)),
+          ...ordered.map(([r, g]) => ruleCard(r, g, profile, showSection, actions)),
         ),
+    reminderText
+      ? el(
+          'section',
+          { class: 'block reminder', 'aria-labelledby': 'reminder-title' },
+          el('h2', { id: 'reminder-title' }, ru.pdfReminderTitle),
+          el('p', {}, reminderText),
+        )
+      : undefined,
   );
 }

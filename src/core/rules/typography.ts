@@ -48,7 +48,8 @@ const doubleSpaces: Rule = {
   stage: 1,
   autoFixable: true,
   defaultParams: {},
-  check: (ctx) => countMatches(ctx, (text) => rangesOf(text, /(?<=\S) {2,}(?=\S)/g), msg.doubleSpaces),
+  check: (ctx) =>
+    countMatches(ctx, (text) => rangesOf(text, /(?<=\S) {2,}(?=\S)/g), msg.doubleSpaces),
 };
 
 // Ссылки и адреса (https://…, www.…) пропускаем: там свои правила записи. Заменяем их
@@ -92,7 +93,11 @@ const hyphenDash: Rule = {
   autoFixable: true,
   defaultParams: {},
   check: (ctx) =>
-    countMatches(ctx, (text) => rangesOf(text, /(?<=\S)[ \u00a0]-[ \u00a0](?=\S)/g), msg.hyphenDash),
+    countMatches(
+      ctx,
+      (text) => rangesOf(text, /(?<=\S)[ \u00a0]-[ \u00a0](?=\S)/g),
+      msg.hyphenDash,
+    ),
 };
 
 export const typographyRules: Rule[] = [doubleSpaces, punctuation, hyphenDash];

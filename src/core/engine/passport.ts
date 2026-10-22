@@ -43,7 +43,9 @@ export function documentPassport(doc: DocModel): DocumentPassport {
     paragraphs: outside.length,
     emptyParagraphs: outside.filter((p) => p.isEmpty).length,
     sections: doc.sections.length,
-    headings: doc.paragraphs.filter((p) => HEADING_ROLES.has(p.role) && !p.text.trim().endsWith(':')).length,
+    headings: doc.paragraphs.filter(
+      (p) => HEADING_ROLES.has(p.role) && !p.text.trim().endsWith(':'),
+    ).length,
     figures: doc.paragraphs.filter((p) => p.containsDrawing).length,
     tables: doc.tables.length,
     sources: doc.paragraphs.filter((p) => p.role === 'source-item').length,

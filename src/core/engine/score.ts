@@ -33,7 +33,9 @@ const PROPORTIONAL = new Set(['paragraphs', 'sections']);
 function earnedFor(result: RuleResult, group: ResultGroup | undefined): number {
   if (!group || group.findings.length === 0) return 1;
   if (!PROPORTIONAL.has(result.unit ?? '') || result.checked === 0) return 0;
-  const affected = new Set(group.findings.map((f) => f.location.paragraphIndex ?? f.location.sectionIndex)).size;
+  const affected = new Set(
+    group.findings.map((f) => f.location.paragraphIndex ?? f.location.sectionIndex),
+  ).size;
   return Math.max(0, 1 - affected / result.checked);
 }
 
@@ -41,7 +43,8 @@ function earnedFor(result: RuleResult, group: ResultGroup | undefined): number {
 export function computeScore(report: Report, dismissed: ReadonlySet<string> = new Set()): Score {
   const items: ScoreItem[] = [];
   for (const result of report.results) {
-    if ((result.status !== 'pass' && result.status !== 'fail') || dismissed.has(result.ruleId)) continue;
+    if ((result.status !== 'pass' && result.status !== 'fail') || dismissed.has(result.ruleId))
+      continue;
     const category = result.category ?? 'other';
     const main = result.groups.find((g) => g.key === 'main');
     // Основная строка правила есть всегда, даже если все замечания на титуле или в содержании.
@@ -76,5 +79,9 @@ export function computeScore(report: Report, dismissed: ReadonlySet<string> = ne
     bucket.earned += item.weight * item.earned;
     bucket.possible += item.weight;
   }
-  return { total: possible > 0 ? Math.round((100 * earned) / possible) : undefined, items, byCategory };
+  return {
+    total: possible > 0 ? Math.round((100 * earned) / possible) : undefined,
+    items,
+    byCategory,
+  };
 }
