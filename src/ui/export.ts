@@ -4,8 +4,12 @@ import type { Report } from '../core/engine/index.ts';
 import { RULE_TEXTS } from '../i18n/rules-ru.ts';
 import { GROUP_NAMES, SEVERITY_NAMES, ru } from '../i18n/ru.ts';
 
-export function downloadFile(name: string, text: string, type = 'application/json'): void {
-  const url = URL.createObjectURL(new Blob([text], { type }));
+export function downloadFile(
+  name: string,
+  data: string | ArrayBuffer,
+  type = 'application/json',
+): void {
+  const url = URL.createObjectURL(new Blob([data], { type }));
   const link = document.createElement('a');
   link.href = url;
   link.download = name;

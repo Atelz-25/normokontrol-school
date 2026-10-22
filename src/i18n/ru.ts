@@ -144,6 +144,45 @@ export const ru = {
     `Оценка: было ${before}, стало ${after} (${after >= before ? '+' : ''}${after - before}).`,
   compareFixed: 'Что исправлено',
   compareAdded: 'Что появилось нового',
+
+  // Автоисправление (этап 4)
+  fixTitle: 'Исправить автоматически',
+  fixIntro:
+    'Программа может сама исправить безопасные вещи: поля, шрифт, интервалы, отступы, пустые абзацы, разрывы страниц, простую типографику. Исходный файл не меняется: получится новый файл «…_исправлено.docx». Отметьте, что исправить:',
+  fixRuleLine: (title: string, id: string, count: number): string =>
+    `${title} (${id}): ${count} ${plural(count, ['место', 'места', 'мест'])}`,
+  fixButton: 'Исправить и скачать',
+  fixNothing: 'Отметьте хотя бы одно правило.',
+  fixWorking: 'Исправляю…',
+  fixDone: (fixed: number, manual: number): string =>
+    `Исправлено автоматически: ${fixed} ${plural(fixed, ['место', 'места', 'мест'])}; требует ручной правки: ${manual}. Проверьте документ глазами перед сдачей.`,
+  fixNumbered: 'Удалены пустые пункты списка: проверьте нумерацию списков.',
+  fixFailed: 'Исправить файл не удалось, исходный файл не изменён.',
+  fixCheckNew: 'Проверить исправленный файл',
+  fixedName: (name: string): string => `${name.replace(/\.docx$/i, '')}_исправлено.docx`,
+
+  // Режим учителя (этап 4)
+  teacherOpen: 'Режим учителя',
+  teacherClose: 'Закрыть режим учителя',
+  teacherTitle: 'Режим учителя: несколько работ',
+  teacherIntro:
+    'Выберите сразу несколько файлов .docx. Каждая работа проверяется по выбранным требованиям; файлы никуда не отправляются.',
+  teacherChoose: 'Выбрать файлы',
+  teacherProgress: (done: number, total: number): string => `Проверено ${done} из ${total}…`,
+  teacherDone: (total: number): string => `Проверено работ: ${total}.`,
+  teacherColumns: [
+    'Файл',
+    'Оценка',
+    'Ошибок',
+    'Замечаний',
+    'Три главные проблемы',
+    '',
+  ] as readonly string[],
+  teacherSortBy: (column: string): string => `Сортировать по столбцу «${column}»`,
+  teacherOpenReport: 'Открыть отчёт',
+  teacherBroken: 'не читается',
+  teacherCsv: 'Скачать таблицу CSV',
+  teacherCsvName: 'работы-нормоконтроль.csv',
   hashProfile: (title: string): string => `Профиль из ссылки: «${title}».`,
   hashProfileBroken: 'Ссылка на профиль повреждена, профиль не загружен.',
 } as const;

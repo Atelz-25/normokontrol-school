@@ -17,12 +17,12 @@ import {
   saveCustomProfiles,
   saveSelectedId,
 } from './ui/storage.ts';
-import type { CheckRequest, CheckResponse } from './worker/protocol.ts';
+import { renderFixPanel } from './ui/fix-panel.ts';
+import { renderTeacher } from './ui/teacher.ts';
+import { check, fix } from './ui/worker-client.ts';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('нет элемента #app');
-
-const worker = new Worker(new URL('./worker/check.worker.ts', import.meta.url), { type: 'module' });
 
 // --- состояние -------------------------------------------------------------
 let customProfiles: Profile[] = loadCustomProfiles();
@@ -52,6 +52,7 @@ let requestId = 0;
 const status = el('p', { class: 'status', role: 'status', 'aria-live': 'polite' });
 const results = el('div', { class: 'results' });
 const editorSlot = el('div', { class: 'editor-slot' });
+const teacherSlot = el('div', { class: 'teacher-slot no-print' });
 
 const select = el('select', { id: 'profile', 'aria-describedby': 'profile-hint' });
 const profileHint = el('p', { class: 'muted', id: 'profile-hint' });
@@ -70,6 +71,11 @@ const editButton = el(
   'button',
   { type: 'button', class: 'secondary', 'aria-expanded': 'false' },
   ru.editProfile,
+);
+const teacherButton = el(
+  'button',
+  { type: 'button', class: 'secondary', 'aria-expanded': 'false' },
+  ru.teacherOpen,
 );
 
 const input = el('input', {
@@ -103,10 +109,11 @@ root.replaceChildren(
       el('label', { for: 'profile' }, ru.profileLabel),
       select,
       profileHint,
-      el('div', {}, editButton),
+      el('div', { class: 'toolbar' }, editButton, teacherButton),
     ),
   ),
   editorSlot,
+  teacherSlot,
   drop,
   status,
   results,
@@ -153,38 +160,67 @@ function renderResults(): void {
     },
     previousReport,
   );
-  results.replaceChildren(el('div', { class: 'results-grid' }, view, preview.element));
+  const fixPanel = renderFixPanel(report, (ruleIds) => {
+    void runFix(ruleIds);
+  });
+  results.replaceChildren(
+    el('div', { class: 'results-grid' }, el('div', {}, view, fixPanel), preview.element),
+  );
 }
 
 // --- проверка -------------------------------------------------------------
 function runCheck(): void {
   if (!lastFile) return;
+  const file = lastFile;
   requestId += 1;
-  showMessage(ru.checking(lastFile.name));
+  const id = requestId;
+  showMessage(ru.checking(file.name));
   results.replaceChildren();
-  // Копию буфера отдаём Worker'у «насовсем» (transfer): так не тратится время на копирование.
-  const bytes = lastFile.bytes.slice(0);
-  const request: CheckRequest = { id: requestId, bytes, profile, fileName: lastFile.name };
-  worker.postMessage(request, [bytes]);
+  void check(file.bytes, profile, file.name).then((response) => {
+    if (id !== requestId) return; // ответ на старый запрос: пользователь уже выбрал другое
+    if (!response.ok) {
+      lastReport = undefined;
+      showMessage(docxErrorText(response.code), true);
+      return;
+    }
+    lastReport = response.report;
+    showMessage(ru.checked(file.name));
+    renderResults();
+    document.getElementById('report-title')?.focus();
+  });
 }
 
-worker.addEventListener('message', (event: MessageEvent<CheckResponse>) => {
-  const response = event.data;
-  if (response.id !== requestId || !lastFile) return; // ответ на старый запрос
+// --- автоисправление ------------------------------------------------------
+async function runFix(ruleIds: string[]): Promise<void> {
+  if (!lastFile || !lastReport) return;
+  const file = lastFile;
+  const before = lastReport;
+  const response = await fix(file.bytes, profile, file.name, ruleIds);
   if (!response.ok) {
-    lastReport = undefined;
-    showMessage(docxErrorText(response.code), true);
+    showMessage(ru.fixFailed, true);
     return;
   }
+  const name = ru.fixedName(file.name);
+  // Исходный файл не меняется: исправленный скачивается как новый файл.
+  downloadFile(
+    name,
+    response.bytes,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  );
+  const fixedCount = Object.values(response.applied).reduce((a, b) => a + b, 0);
+  const manual = response.report.results
+    .filter((r) => ruleIds.includes(r.ruleId) && r.status === 'fail')
+    .reduce((sum, r) => sum + r.findings.length, 0);
+  showMessage(
+    `${ru.fixDone(fixedCount, manual)}${response.notes.includes('numbered-empties') ? ` ${ru.fixNumbered}` : ''}`,
+  );
+  // Исправленный файл становится «новой версией»: отчёт покажет, что исправлено.
+  previousReport = before;
+  lastFile = { name, bytes: response.bytes };
   lastReport = response.report;
-  showMessage(ru.checked(lastFile.name));
+  dismissed.clear();
   renderResults();
-  document.getElementById('report-title')?.focus();
-});
-
-worker.addEventListener('error', () => {
-  showMessage(ru.workerFailed, true);
-});
+}
 
 async function acceptFile(file: File): Promise<void> {
   const hint = extensionHint(file.name);
@@ -236,6 +272,33 @@ editButton.addEventListener('click', () => {
   editorSlot.replaceChildren(editor);
   editButton.setAttribute('aria-expanded', 'true');
   document.getElementById('editor-title')?.focus();
+});
+
+// --- режим учителя --------------------------------------------------------
+teacherButton.addEventListener('click', () => {
+  if (teacherSlot.childElementCount > 0) {
+    teacherSlot.replaceChildren();
+    teacherButton.setAttribute('aria-expanded', 'false');
+    teacherButton.textContent = ru.teacherOpen;
+    return;
+  }
+  teacherSlot.replaceChildren(
+    renderTeacher(
+      () => profile,
+      (name, bytes, report) => {
+        previousReport = undefined;
+        lastFile = { name, bytes };
+        lastReport = report;
+        dismissed.clear();
+        showMessage(ru.checked(name));
+        renderResults();
+        document.getElementById('report-title')?.focus();
+      },
+    ),
+  );
+  teacherButton.setAttribute('aria-expanded', 'true');
+  teacherButton.textContent = ru.teacherClose;
+  document.getElementById('teacher-title')?.focus();
 });
 
 // --- профиль из ссылки #profile=… -----------------------------------------

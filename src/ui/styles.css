@@ -463,3 +463,29 @@ textarea.json {
     color: #000;
   }
 }
+
+/* Режим учителя (этап 4) */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.teacher-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.teacher-table th,
+.teacher-table td {
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.teacher-table th[aria-sort='ascending'] button::after {
+  content: ' ▲';
+}
+
+.teacher-table th[aria-sort='descending'] button::after {
+  content: ' ▼';
+}
