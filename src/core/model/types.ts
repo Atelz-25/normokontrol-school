@@ -75,6 +75,8 @@ export interface Paragraph {
   list?: ListInfo;
   fields: FieldInfo[];
   containsDrawing: boolean;
+  // Рисунки: «в тексте» (inline) или с обтеканием (anchor) и ширина, если известна.
+  drawings: { anchored: boolean; widthMm?: number }[];
   isEmpty: boolean;
   // Разрыв страницы <w:br w:type="page"/>: в начале абзаца (до текста) и в конце (после текста).
   pageBreakAtStart: boolean;
@@ -101,6 +103,8 @@ export interface Table {
   lastParagraph: number;
   firstColumnTexts: string[];
   cells: string[][]; // текст каждой ячейки, по строкам
+  widthMm?: number; // ширина по сетке столбцов
+  headerRepeat: boolean; // первая строка повторяется на каждой странице
   role: TableRole;
 }
 
@@ -134,6 +138,6 @@ export interface DocModel {
   revisions: number; // w:ins, w:del и подобные
   comments: number;
   hasLastRenderedPageBreaks: boolean;
-  properties: { title?: string; creator?: string };
+  properties: { title?: string; creator?: string; created?: string; modified?: string };
   headerFooters: Record<string, HeaderFooter>;
 }

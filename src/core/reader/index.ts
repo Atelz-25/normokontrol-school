@@ -59,6 +59,8 @@ export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMI
       comments: comments ? comments.getElementsByTagNameNS(NS.w, 'comment').length : 0,
       title: first(core, NS.dc, 'title'),
       creator: first(core, NS.dc, 'creator'),
+      created: first(core, NS.dcterms, 'created'),
+      modified: first(core, NS.dcterms, 'modified'),
       rels,
       headerFooterRoots,
     });

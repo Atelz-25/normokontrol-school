@@ -60,6 +60,9 @@ interface TableContext {
 export const BLANK_CHARS = /[ \u00a0\t]/g;
 export const isBlankText = (text: string): boolean => text.replace(BLANK_CHARS, '') === '';
 
+// 1 мм = 36 000 EMU (единица размеров рисунков в DrawingML).
+const EMU_PER_MM = 36000;
+
 function fieldType(instruction: string): string {
   return instruction.trim().split(/\s+/)[0]?.toUpperCase() ?? '';
 }
@@ -70,6 +73,7 @@ class ParagraphBuilder {
   runs: Run[] = [];
   fields: FieldInfo[] = [];
   containsDrawing = false;
+  drawings: { anchored: boolean; widthMm?: number }[] = [];
   pageBreakAtStart = false;
   pageBreakAtEnd = false;
   renderedBreaks = 0;
@@ -130,13 +134,29 @@ class ParagraphBuilder {
       this.fields.push({ type: field.type, instruction: field.instruction.trim() });
   }
 
+  // Рисунок: wp:inline — «в тексте», wp:anchor — с обтеканием. Ширина — в wp:extent (EMU).
+  private addDrawing(drawing: XmlElement | undefined): void {
+    this.containsDrawing = true;
+    const inline = drawing ? children(drawing, NS.wp, 'inline')[0] : undefined;
+    const anchor = drawing ? children(drawing, NS.wp, 'anchor')[0] : undefined;
+    const frame = inline ?? anchor;
+    const extent = frame ? children(frame, NS.wp, 'extent')[0] : undefined;
+    const cx = Number(extent?.getAttribute('cx') ?? Number.NaN);
+    this.drawings.push({
+      anchored: anchor !== undefined,
+      widthMm: Number.isFinite(cx) ? round(cx / EMU_PER_MM, 1) : undefined,
+    });
+  }
+
   run(run: XmlElement, inHyperlink: boolean): void {
     const rPr = this.runRPr(run);
     for (let node = run.firstChild; node; node = node.nextSibling) {
       if (!isElement(node)) continue;
       if (node.namespaceURI === NS.mc && node.localName === 'AlternateContent') {
-        // Внутри обычно рисунок в двух вариантах; нам важен только факт рисунка.
-        this.containsDrawing = true;
+        // Внутри обычно рисунок в двух вариантах: смотрим только первый (Choice).
+        const choice = children(node, NS.mc, 'Choice')[0] ?? children(node, NS.mc, 'Fallback')[0];
+        const drawing = choice ? children(choice, NS.w, 'drawing')[0] : undefined;
+        this.addDrawing(drawing);
         continue;
       }
       if (node.namespaceURI !== NS.w) continue;
@@ -170,9 +190,11 @@ class ParagraphBuilder {
           if (isBlankText(this.text)) this.renderedBreakAtStart = true;
           break;
         case 'drawing':
+          this.addDrawing(node);
+          break;
         case 'pict':
         case 'object':
-          this.containsDrawing = true;
+          this.addDrawing(undefined);
           break;
         case 'fldChar':
           if (wAttr(node, 'fldCharType') !== 'begin') this.finishInstruction();
@@ -336,6 +358,7 @@ function paragraph(state: WalkState, el: XmlElement, table?: TableContext): void
         : undefined,
     fields: builder.fields,
     containsDrawing: builder.containsDrawing,
+    drawings: builder.drawings,
     isEmpty,
     pageBreakAtStart: builder.pageBreakAtStart,
     pageBreakAtEnd: builder.pageBreakAtEnd,
@@ -359,6 +382,7 @@ function tableElement(state: WalkState, el: XmlElement): void {
     lastParagraph: state.paragraphs.length,
     firstColumnTexts: [],
     cells: [],
+    headerRepeat: false,
     role: 'generic',
   };
   state.tables.push(record);
@@ -376,6 +400,12 @@ function tableElement(state: WalkState, el: XmlElement): void {
     record.firstColumnTexts.push(rowTexts[0] ?? '');
   });
   record.lastParagraph = state.paragraphs.length;
+  // Ширина таблицы — сумма ширин столбцов из w:tblGrid (в twips).
+  const grid = wChild(el, 'tblGrid');
+  const widths = grid ? children(grid, NS.w, 'gridCol').map((col) => wNum(col, 'w') ?? 0) : [];
+  if (widths.length > 0) record.widthMm = round(twipsToMm(widths.reduce((a, b) => a + b, 0)), 1);
+  const firstRow = children(el, NS.w, 'tr')[0];
+  record.headerRepeat = wChild(wChild(firstRow, 'trPr'), 'tblHeader') !== undefined;
 }
 
 // Блочный уровень: абзацы, таблицы и обёртки вокруг них.
@@ -456,6 +486,8 @@ export interface ModelExtra {
   comments: number;
   title?: string;
   creator?: string;
+  created?: string;
+  modified?: string;
   rels: Map<string, string>; // rId → имя части (word/footer1.xml)
   headerFooterRoots: Map<string, XmlElement>;
 }
@@ -496,7 +528,12 @@ export function buildModel(
     revisions,
     comments: Math.max(extra.comments, commentRefs),
     hasLastRenderedPageBreaks: state.renderedBreaks > 0,
-    properties: { title: extra.title, creator: extra.creator },
+    properties: {
+      title: extra.title,
+      creator: extra.creator,
+      created: extra.created,
+      modified: extra.modified,
+    },
     headerFooters,
   };
 }

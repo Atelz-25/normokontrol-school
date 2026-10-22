@@ -216,6 +216,8 @@ export function classify(doc: DocModel, input: StructureInput = {}): Classificat
     if (CAPTION_TABLE.test(text) || p.fields.some((f) => f.type === 'SEQ'))
       return { role: 'caption-table' };
     if (p.list?.visible) return { role: 'list-item' };
+    // Абзац, в котором только рисунок, — не текст: красная строка и интервалы к нему не относятся.
+    if (p.containsDrawing && p.text.trim() === '') return { role: 'other' };
     if (p.runs.length > 0 && p.runs.every((r) => MONOSPACE.test(r.font))) return { role: 'code' };
     if (p.zone !== 'body') return { role: 'other' };
     if (looksLikeSubHeading(p)) return { role: 'sub-heading', heuristic: true };
