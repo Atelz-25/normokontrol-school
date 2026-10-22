@@ -42,6 +42,8 @@ let profile: Profile =
 // Последний файл держим в памяти, чтобы при смене профиля проверить его заново.
 let lastFile: { name: string; bytes: ArrayBuffer } | undefined;
 let lastReport: Report | undefined;
+// Отчёт по прошлой версии файла — для сравнения «было / стало» (этап 3).
+let previousReport: Report | undefined;
 // Отметки «здесь это есть» — только в памяти, на время работы со страницей (решение В7).
 const dismissed = new Set<string>();
 let requestId = 0;
@@ -122,30 +124,35 @@ function renderResults(): void {
   if (!lastReport) return;
   const report = lastReport;
   const preview = renderPreview(report, dismissed);
-  const view = renderReport(report, profile, {
-    dismissed,
-    onToggleDismiss: (ruleId) => {
-      if (dismissed.has(ruleId)) dismissed.delete(ruleId);
-      else dismissed.add(ruleId);
-      renderResults();
-      document.getElementById(`rule-${ruleId}`)?.focus();
+  const view = renderReport(
+    report,
+    profile,
+    {
+      dismissed,
+      onToggleDismiss: (ruleId) => {
+        if (dismissed.has(ruleId)) dismissed.delete(ruleId);
+        else dismissed.add(ruleId);
+        renderResults();
+        document.getElementById(`rule-${ruleId}`)?.focus();
+      },
+      onShow: (index) => {
+        preview.show(index);
+      },
+      onPrint: () => {
+        window.print();
+      },
+      onDownload: () => {
+        // Текст абзацев (preview) в JSON не кладём: отчёт и так большой.
+        downloadFile(ru.reportFileName, JSON.stringify({ ...report, preview: undefined }, null, 2));
+      },
+      onCopy: () => {
+        void copyText(findingsAsText(report, dismissed)).then((ok) => {
+          showMessage(ok ? ru.copied : ru.copyFailed, !ok);
+        });
+      },
     },
-    onShow: (index) => {
-      preview.show(index);
-    },
-    onPrint: () => {
-      window.print();
-    },
-    onDownload: () => {
-      // Текст абзацев (preview) в JSON не кладём: отчёт и так большой.
-      downloadFile(ru.reportFileName, JSON.stringify({ ...report, preview: undefined }, null, 2));
-    },
-    onCopy: () => {
-      void copyText(findingsAsText(report, dismissed)).then((ok) => {
-        showMessage(ok ? ru.copied : ru.copyFailed, !ok);
-      });
-    },
-  });
+    previousReport,
+  );
   results.replaceChildren(el('div', { class: 'results-grid' }, view, preview.element));
 }
 
@@ -186,12 +193,16 @@ async function acceptFile(file: File): Promise<void> {
     results.replaceChildren();
     return;
   }
+  // Новая версия работы: прошлый отчёт оставляем для сравнения, отметки начинаем заново.
+  previousReport = lastReport;
   lastFile = { name: file.name, bytes: await file.arrayBuffer() };
-  dismissed.clear(); // новая версия работы — отметки начинаем заново
+  dismissed.clear();
   runCheck();
 }
 
 function selectProfile(next: Profile): void {
+  // С другими требованиями сравнивать версии нечестно: сравнение начинаем заново.
+  previousReport = undefined;
   profile = next;
   saveSelectedId(profile.id);
   fillProfiles();

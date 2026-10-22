@@ -187,6 +187,30 @@ export function renderProfileEditor(base: Profile, handlers: EditorHandlers): HT
       else byCategory.set(category, [...(byCategory.get(category) ?? []), row]);
     }
 
+    // «Темы проекта» (решение В4): по одной на строке, «Название: слово1, слово2».
+    const topicsArea = el('textarea', {
+      id: 'editor-topics',
+      rows: '5',
+      'aria-describedby': 'editor-topics-hint',
+    });
+    topicsArea.value = (profile.structure?.projectTopics ?? [])
+      .map((t) => `${t.title}: ${t.keywords.join(', ')}`)
+      .join('\n');
+    const readTopics = (): { title: string; keywords: string[] }[] =>
+      topicsArea.value
+        .split('\n')
+        .map((line) => {
+          const [title = '', words = ''] = line.split(':');
+          return {
+            title: title.trim(),
+            keywords: words
+              .split(',')
+              .map((w) => w.trim())
+              .filter(Boolean),
+          };
+        })
+        .filter((topic) => topic.title !== '');
+
     const collect = (): Profile | undefined => {
       const rules: Record<string, RuleConfig> = {};
       for (const row of rows) {
@@ -194,7 +218,19 @@ export function renderProfileEditor(base: Profile, handlers: EditorHandlers): HT
         if (!config) return undefined;
         rules[row.ruleId] = config;
       }
-      return { ...profile, title: name.value.trim() || profile.title, rules };
+      const topics = readTopics();
+      // TH-03 получает темы и напрямую: ссылка topicsFrom уже развёрнута при загрузке профиля.
+      const th03 = rules['TH-03'];
+      if (th03) rules['TH-03'] = { ...th03, params: { ...th03.params, topics } };
+      const structure = profile.structure
+        ? { ...profile.structure, projectTopics: topics }
+        : undefined;
+      return {
+        ...profile,
+        title: name.value.trim() || profile.title,
+        rules,
+        ...(structure ? { structure } : {}),
+      };
     };
 
     const validated = (): Profile | undefined => {
@@ -250,6 +286,13 @@ export function renderProfileEditor(base: Profile, handlers: EditorHandlers): HT
       el('h2', { id: 'editor-title', tabindex: '-1' }, ru.editorTitle),
       el('p', { class: 'muted' }, ru.editorIntro),
       el('div', { class: 'field' }, el('label', { for: nameId }, ru.editorName), name),
+      el(
+        'div',
+        { class: 'field' },
+        el('label', { for: 'editor-topics' }, ru.editorTopics),
+        topicsArea,
+        el('span', { class: 'muted', id: 'editor-topics-hint' }, ru.editorTopicsHint),
+      ),
       el(
         'div',
         { class: 'toolbar' },

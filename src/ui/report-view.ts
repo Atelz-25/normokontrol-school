@@ -1,6 +1,7 @@
 // Отчёт: оценка, блоки школы («снижали баллы», «пять пунктов»), паспорт документа,
 // карточки замечаний и напоминание перед сдачей. Только DOM API и textContent.
 import type { Report, ResultGroup, RuleResult } from '../core/engine/index.ts';
+import { compareReports } from '../core/engine/compare.ts';
 import { computeScore } from '../core/engine/score.ts';
 import type { Profile, Severity } from '../core/profiles/types.ts';
 import { plannedStage } from '../core/rules/planned.ts';
@@ -124,6 +125,32 @@ function scoreBlock(report: Report, dismissed: ReadonlySet<string>): HTMLElement
       el('p', {}, ru.scoreFormula),
       el('ul', {}, ...categories),
     ),
+  );
+}
+
+// Сравнение с прошлой проверенной версией: что исправлено, что осталось, что появилось.
+function comparisonBlock(
+  previous: Report,
+  report: Report,
+  dismissed: ReadonlySet<string>,
+): HTMLElement {
+  const cmp = compareReports(previous, report, dismissed);
+  const list = (items: Finding[]): HTMLElement =>
+    el('ul', {}, ...items.slice(0, 30).map((f) => el('li', {}, `${f.ruleId}: ${f.message}`)));
+  return el(
+    'section',
+    { class: 'block compare', 'aria-labelledby': 'compare-title' },
+    el('h2', { id: 'compare-title' }, ru.compareTitle),
+    el('p', {}, ru.compareSummary(cmp.fixed.length, cmp.remaining.length, cmp.added.length)),
+    cmp.scoreBefore !== undefined && cmp.scoreAfter !== undefined
+      ? el('p', {}, ru.compareScore(cmp.scoreBefore, cmp.scoreAfter))
+      : undefined,
+    cmp.fixed.length > 0
+      ? el('details', {}, el('summary', {}, ru.compareFixed), list(cmp.fixed))
+      : undefined,
+    cmp.added.length > 0
+      ? el('details', {}, el('summary', {}, ru.compareAdded), list(cmp.added))
+      : undefined,
   );
 }
 
@@ -285,6 +312,7 @@ export function renderReport(
   report: Report,
   profile: Profile,
   actions: ReportActions,
+  previous?: Report,
 ): HTMLElement {
   const byId = new Map(report.results.map((r) => [r.ruleId, r]));
   const failed = sortResults(
@@ -322,6 +350,7 @@ export function renderReport(
     el('h2', { id: 'report-title', tabindex: '-1' }, ru.reportTitle),
     toolbar(actions),
     scoreBlock(report, actions.dismissed),
+    previous ? comparisonBlock(previous, report, actions.dismissed) : undefined,
     el('p', { class: 'counters' }, ru.counters(count('error'), count('warning'), count('info'))),
     titleFindings > 0 ? el('p', {}, ru.titlePageLine(titleFindings)) : undefined,
     notImplemented > 0 ? el('p', { class: 'muted' }, ru.notChecked(notImplemented)) : undefined,
