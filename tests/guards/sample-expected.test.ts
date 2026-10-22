@@ -120,12 +120,7 @@ describe.skipIf(!existsSync(docxUrl))(
     it('PR-06: 59 одиночных пустых абзацев, по зонам 3 / 9 / 47', () => {
       const m = result('PR-06').metrics;
       expect(m.single).toBe(num('PR-06', 'single'));
-      const zones = exp['PR-06']?.byZone as Record<string, number>;
-      expect(m.byZone).toEqual({
-        'title-page': zones['title-page'],
-        'front-matter': zones['passport-toc'],
-        body: zones.body,
-      });
+      expect(m.byZone).toEqual(exp['PR-06']?.byZone);
     });
 
     it('PR-10: серии, их длины и серии перед заголовками частей', () => {
@@ -138,12 +133,19 @@ describe.skipIf(!existsSync(docxUrl))(
       ])
         expect(m[key], key).toBe(num('PR-10', key));
       expect(m.seriesBeforePartHeadings).toEqual(exp['PR-10']?.seriesBeforePartHeadings);
-      const zones = exp['PR-10']?.byZone as Record<string, number>;
-      expect(m.byZone).toEqual({
-        'title-page': zones['title-page'],
-        'front-matter': zones['passport-toc'],
-        body: zones.body,
-      });
+      expect(m.byZone).toEqual(exp['PR-10']?.byZone);
+    });
+
+    it('группы отчёта: текст работы, содержание, титульный лист', () => {
+      for (const id of ['PR-02', 'PR-05', 'PR-06', 'PR-09', 'PR-10']) {
+        const groups = Object.fromEntries(result(id).groups.map((g) => [g.key, g.findings.length]));
+        expect(groups, id).toEqual(exp[id]?.byGroup);
+      }
+      // На титульном листе серьёзность мягче (titlePageSeverity в профиле).
+      for (const id of ['PR-05', 'PR-06', 'PR-10'])
+        expect(result(id).groups.find((g) => g.key === 'title-page')?.severity, id).toBe('warning');
+      // Разрыв перед частью — замечание к документу, а не «к содержанию».
+      expect(result('PB-01').groups.map((g) => g.key)).toEqual(['main']);
     });
 
     it('PB-01: нужен разрыв перед 8 частями, разрывов нет', () => {

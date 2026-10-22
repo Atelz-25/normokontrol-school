@@ -1,7 +1,7 @@
 {
   "file": "fixtures/real/sample-v2.docx",
   "profile": "profiles/school-custom.json",
-  "comment": "Числа из XML (поля, интервалы, пустые абзацы, знаки) сравнивать точно. Страницы получены в LibreOffice и в Word могут отличаться.",
+  "comment": "Числа из XML (поля, интервалы, пустые абзацы, знаки) сравнивать точно. Страницы получены в LibreOffice и в Word могут отличаться. Разбивки byZone и byGroup показывают, в какой части документа и в какой группе отчёта находятся замечания.",
   "libreOfficePages": {
     "original": 13,
     "afterRemovingEmptiesAndAddingBreaks": 12
@@ -81,7 +81,11 @@
       ],
       "passport heading before=12pt": [
         51
-      ]
+      ],
+      "byGroup": {
+        "main": 6,
+        "toc": 9
+      }
     },
     "PR-03": {
       "status": "fail",
@@ -106,7 +110,11 @@
     "PR-09": {
       "status": "fail",
       "withRightIndent": 74,
-      "of": 115
+      "of": 115,
+      "byGroup": {
+        "main": 65,
+        "toc": 9
+      }
     },
     "PR-08": {
       "status": "pass",
@@ -118,8 +126,12 @@
       "single": 59,
       "byZone": {
         "title-page": 3,
-        "passport-toc": 9,
+        "front-matter": 9,
         "body": 47
+      },
+      "byGroup": {
+        "main": 56,
+        "title-page": 3
       }
     },
     "PR-10": {
@@ -129,7 +141,7 @@
       "longest": 31,
       "byZone": {
         "title-page": 5,
-        "passport-toc": 1,
+        "front-matter": 1,
         "body": 8
       },
       "seriesBeforePartHeadings": {
@@ -140,7 +152,11 @@
         "316": 31,
         "345": 19
       },
-      "emptyBeforePartHeadingsTotal": 85
+      "emptyBeforePartHeadingsTotal": 85,
+      "byGroup": {
+        "main": 9,
+        "title-page": 5
+      }
     },
     "VL-02": {
       "status": "info",
@@ -276,6 +292,9 @@
       "paragraphOfSpaces": {
         "paragraph": 16,
         "length": 69
+      },
+      "byGroup": {
+        "title-page": 1
       }
     }
   }
