@@ -51,6 +51,12 @@ npm run test:e2e
 npm run evaluate -- <папка с .docx> <разметка.csv>
 ```
 
+Проверка на синтетическом наборе из 40 файлов с известными ошибками и ловушками (`fixtures/synthetic/`):
+
+```bash
+npm run evaluate:synthetic
+```
+
 Все команды и соглашения — в [CLAUDE.md](CLAUDE.md).
 
 ## Структура

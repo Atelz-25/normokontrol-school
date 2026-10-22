@@ -37,6 +37,7 @@ npm run test:e2e     # Playwright по собранной версии (нуже
 npm run fixtures     # пересоздать fixtures/<RULE-ID>/{good,bad}.docx
 npm run docs:rules   # пересоздать docs/RULES.md из реестра правил
 npm run evaluate -- <папка> <разметка.csv>   # точность и полнота (docs/EVALUATION.md)
+npm run evaluate:synthetic   # то же на синтетическом наборе fixtures/synthetic
 ```
 
 ## Слои (без циклов, ядро не знает про DOM)
