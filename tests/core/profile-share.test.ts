@@ -1,7 +1,12 @@
 // Ссылка на профиль и миграции схемы.
 import { describe, expect, it } from 'vitest';
 import { BUILTIN_PROFILES } from '../../src/core/profiles/builtin.ts';
-import { loadProfile, migrateProfile, profileFromHash, profileToHash } from '../../src/core/profiles/index.ts';
+import {
+  loadProfile,
+  migrateProfile,
+  profileFromHash,
+  profileToHash,
+} from '../../src/core/profiles/index.ts';
 
 describe('#profile=… в адресе', () => {
   it('профиль школы проходит туда и обратно без изменений', () => {
@@ -22,8 +27,14 @@ describe('#profile=… в адресе', () => {
 
 describe('миграции', () => {
   it('профиль прогоняется через шаги до текущей версии', () => {
-    const migrations = { 0: (p: Record<string, unknown>) => ({ ...p, schemaVersion: 1, title: 'Переведён' }) };
-    expect(migrateProfile({ schemaVersion: 0, id: 'x' }, migrations)).toEqual({ schemaVersion: 1, id: 'x', title: 'Переведён' });
+    const migrations = {
+      0: (p: Record<string, unknown>) => ({ ...p, schemaVersion: 1, title: 'Переведён' }),
+    };
+    expect(migrateProfile({ schemaVersion: 0, id: 'x' }, migrations)).toEqual({
+      schemaVersion: 1,
+      id: 'x',
+      title: 'Переведён',
+    });
   });
 
   it('без нужного шага профиль не меняется, а загрузчик сообщает о версии', () => {

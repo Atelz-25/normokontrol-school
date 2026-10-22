@@ -12,7 +12,10 @@ const profile = (rules: Record<string, RuleConfig>): Profile => ({
   title: 'Тест',
   rules,
 });
-const on = (severity: RuleConfig['severity'], params: Record<string, unknown> = {}): RuleConfig => ({
+const on = (
+  severity: RuleConfig['severity'],
+  params: Record<string, unknown> = {},
+): RuleConfig => ({
   enabled: true,
   severity,
   params,
@@ -24,7 +27,11 @@ describe('оценка', () => {
     // Итог = 100 × (3 × 1/3 + 2 × 1) / (3 + 2) = 100 × 3 / 5 = 60.
     const report = checkDocx(
       FIXTURES['PR-03']!.bad(),
-      profile({ 'PR-03': on('error', { appliesTo: ['body'] }), 'TY-03': on('warning'), 'DC-01': on('info') }),
+      profile({
+        'PR-03': on('error', { appliesTo: ['body'] }),
+        'TY-03': on('warning'),
+        'DC-01': on('info'),
+      }),
     );
     const score = computeScore(report);
     expect(score.total).toBe(60);
@@ -33,28 +40,46 @@ describe('оценка', () => {
   });
 
   it('правило по документу: 1 или 0', () => {
-    const report = checkDocx(FIXTURES['DC-01']!.bad(), profile({ 'DC-01': on('error'), 'PG-02': on('error') }));
+    const report = checkDocx(
+      FIXTURES['DC-01']!.bad(),
+      profile({ 'DC-01': on('error'), 'PG-02': on('error') }),
+    );
     // DC-01 провалено (0 из 3), PG-02 пройдено (3 из 3): 100 × 3 / 6 = 50.
     expect(computeScore(report).total).toBe(50);
   });
 
   it('неприменимые и не реализованные правила не входят в оценку', () => {
-    const report = checkDocx(FIXTURES['PR-06']!.good(), profile({ 'PR-08': on('error'), 'XX-01': on('error'), 'PR-06': on('error') }));
+    const report = checkDocx(
+      FIXTURES['PR-06']!.good(),
+      profile({ 'PR-08': on('error'), 'XX-01': on('error'), 'PR-06': on('error') }),
+    );
     expect(computeScore(report).items.map((i) => i.ruleId)).toEqual(['PR-06']);
     expect(computeScore(report).total).toBe(100);
   });
 
   it('отметка «здесь это есть» убирает эвристическое правило из оценки', () => {
-    const report = checkDocx(FIXTURES['DC-01']!.bad(), profile({ 'DC-01': on('error'), 'PG-02': on('error') }));
+    const report = checkDocx(
+      FIXTURES['DC-01']!.bad(),
+      profile({ 'DC-01': on('error'), 'PG-02': on('error') }),
+    );
     expect(computeScore(report, new Set(['DC-01'])).total).toBe(100);
   });
 
   it('титульный лист — отдельная строка со своей серьёзностью', () => {
     // Три пустых абзаца подряд на титульном листе (до разрыва) и ничего в тексте.
     const bytes = buildDocx({
-      body: [p('Титул'), ...emptyRun(3), '<w:p><w:r><w:br w:type="page"/></w:r></w:p>', p('Введение'), p('Текст работы.')],
+      body: [
+        p('Титул'),
+        ...emptyRun(3),
+        '<w:p><w:r><w:br w:type="page"/></w:r></w:p>',
+        p('Введение'),
+        p('Текст работы.'),
+      ],
     });
-    const report = checkDocx(bytes, profile({ 'PR-10': on('error', { titlePageSeverity: 'warning' }) }));
+    const report = checkDocx(
+      bytes,
+      profile({ 'PR-10': on('error', { titlePageSeverity: 'warning' }) }),
+    );
     const items = computeScore(report).items.map((i) => `${i.group}:${i.severity}:${i.earned}`);
     // Основная строка (ошибка) чистая, строка титульного листа (замечание) провалена.
     expect(items).toEqual(['main:error:1', 'title-page:warning:0']);
