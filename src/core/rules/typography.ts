@@ -10,14 +10,14 @@ const textParagraphs = (ctx: CheckContext): Paragraph[] =>
 
 function countMatches(
   ctx: CheckContext,
-  count: (text: string) => number,
+  count: (text: string, p: Paragraph) => number,
   message: (n: number) => string,
 ): RuleOutcome {
   const paragraphs = textParagraphs(ctx);
   const findings: Finding[] = [];
   let total = 0;
   for (const p of paragraphs) {
-    const n = count(p.text);
+    const n = count(p.text, p);
     if (n === 0) continue;
     total += n;
     findings.push(finding(ctx, true, message(n), { paragraph: p }));
@@ -55,12 +55,20 @@ const punctuation: Rule = {
   check: (ctx) =>
     countMatches(
       ctx,
-      (text) => {
+      (text, p) => {
         const clean = withoutUrls(text);
-        const spaceBefore =
-          matchCount(clean, /(?<=\S) +[,;:!?]/g) + matchCount(clean, /(?<=[\p{L}\d]) +\.(?!\.)/gu);
-        const noSpaceAfter = matchCount(clean, /[,;:!?](?=\p{L})/gu);
-        return spaceBefore + noSpaceAfter;
+        // В списке литературы « : » и « ; » — норма ГОСТ Р 7.0.100 («Москва : Стандартинформ»).
+        const before = p.role === 'source-item' ? /(?<=\S) +[,!?]/g : /(?<=\S) +[,;:!?]/g;
+        // Пробел перед точкой — ошибка, только если за точкой не идут буквы или цифры:
+        // « .docx» и «Node.js» — имена файлов, а не конец предложения.
+        const spaceBeforeDot = /(?<=[\p{L}\d]) +\.(?![\p{L}\d.])/gu;
+        // Двоеточие внутри слова (w:p, 10:30) пробела после себя не требует.
+        const noSpaceAfter = /(?:[,;!?]|(?<![\p{L}\d]):)(?=\p{L})/gu;
+        return (
+          matchCount(clean, before) +
+          matchCount(clean, spaceBeforeDot) +
+          matchCount(clean, noSpaceAfter)
+        );
       },
       msg.punctuation,
     ),
