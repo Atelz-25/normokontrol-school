@@ -93,7 +93,13 @@ const partBreaks: Rule = {
         prev?.approxPage !== undefined &&
         (heading.approxPage ?? 0) > prev.approxPage;
       findings.push(
-        finding(ctx, true, msg.noPageBreak(part.title, empties, approxTop), { paragraph: heading }),
+        finding(
+          ctx,
+          true,
+          msg.noPageBreak(part.title, empties, approxTop),
+          { paragraph: heading },
+          { ungrouped: true },
+        ),
       );
     }
 

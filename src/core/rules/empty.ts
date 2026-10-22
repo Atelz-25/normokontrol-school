@@ -5,7 +5,6 @@
 // пустой абзац не считается дважды (RULES-SCHOOL, PR-06).
 import { msg, summary } from '../../i18n/rules-ru.ts';
 import type { DocModel, Paragraph, Zone } from '../model/types.ts';
-import type { Severity } from '../profiles/types.ts';
 import { finding } from './helpers.ts';
 import { num, str } from './params.ts';
 import type { Finding, Rule } from './types.ts';
@@ -33,9 +32,6 @@ export function emptySeries(doc: DocModel): Paragraph[][] {
   return series;
 }
 
-const severityParam = (value: unknown): Severity | undefined =>
-  value === 'error' || value === 'warning' || value === 'info' ? value : undefined;
-
 function countByZone(items: { zone: Zone }[]): Record<string, number> {
   const result: Record<string, number> = {};
   for (const item of items) result[item.zone] = (result[item.zone] ?? 0) + 1;
@@ -51,22 +47,13 @@ const singleEmpty: Rule = {
   defaultParams: { runs: 'all' },
   check(ctx, params) {
     const mode = str(params, 'runs', 'all');
-    const titleSeverity = severityParam(params.titlePageSeverity);
     const series = emptySeries(ctx.doc);
     const empties =
       mode === 'single'
         ? series.filter((s) => s.length === 1).flat()
         : series.flat().filter((p) => p.zone === 'body');
     const findings: Finding[] = empties.map((p) =>
-      finding(
-        ctx,
-        true,
-        msg.emptyParagraph(p.list !== undefined),
-        { paragraph: p, excerpt: '' },
-        {
-          severity: p.zone === 'title-page' ? titleSeverity : undefined,
-        },
-      ),
+      finding(ctx, true, msg.emptyParagraph(p.list !== undefined), { paragraph: p, excerpt: '' }),
     );
     const outside = ctx.doc.paragraphs.filter((p) => !p.table).length;
     return {
@@ -91,7 +78,6 @@ const emptyRuns: Rule = {
   defaultParams: { minRunLength: 2 },
   check(ctx, params) {
     const minRun = num(params, 'minRunLength', 2);
-    const titleSeverity = severityParam(params.titlePageSeverity);
     const { doc } = ctx;
     const series = emptySeries(doc).filter((s) => s.length >= minRun);
 
@@ -103,16 +89,9 @@ const emptyRuns: Rule = {
       const next = doc.paragraphs[last.index]; // абзац сразу после серии
       const heading = next?.role === 'part-heading' ? next : undefined;
       if (heading) beforeHeadings[String(heading.index)] = run.length;
+      const title = heading?.text.replace(/\s+/g, ' ').trim();
       findings.push(
-        finding(
-          ctx,
-          true,
-          msg.emptySeries(run.length, heading?.text.replace(/\s+/g, ' ').trim()),
-          { paragraph: first, excerpt: '' },
-          {
-            severity: first.zone === 'title-page' ? titleSeverity : undefined,
-          },
-        ),
+        finding(ctx, true, msg.emptySeries(run.length, title), { paragraph: first, excerpt: '' }),
       );
     }
     const inSeries = series.reduce((sum, run) => sum + run.length, 0);

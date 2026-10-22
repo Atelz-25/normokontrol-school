@@ -3,6 +3,7 @@
 import type { RuleStatus } from '../core/engine/index.ts';
 import type { ProfileError, Severity } from '../core/profiles/types.ts';
 import type { DocxErrorCode } from '../core/reader/errors.ts';
+import { plural } from './rules-ru.ts';
 
 export const ru = {
   appTitle: 'Нормоконтроль',
@@ -22,7 +23,9 @@ export const ru = {
   counters: (errors: number, warnings: number, infos: number): string =>
     `Правил с ошибками: ${errors} · с замечаниями: ${warnings} · с советами: ${infos}`,
   notChecked: (count: number): string =>
-    `Ещё ${count} правил профиля пока не проверяются: они появятся на следующих этапах.`,
+    `Ещё ${count} ${plural(count, ['правило профиля пока не проверяется', 'правила профиля пока не проверяются', 'правил профиля пока не проверяются'])}: они появятся на следующих этапах.`,
+  titlePageLine: (count: number): string =>
+    `Отдельно — титульный лист: ${count} ${plural(count, ['замечание', 'замечания', 'замечаний'])} (они в конце списка).`,
   docStats: (paragraphs: number, empty: number, pages?: number): string =>
     `Абзацев вне таблиц: ${paragraphs}, из них пустых: ${empty}.` +
     (pages
@@ -58,6 +61,11 @@ export const SEVERITY_NAMES: Record<Severity, string> = {
   warning: 'замечание',
   info: 'совет',
 };
+
+export const GROUP_NAMES = {
+  toc: 'в содержании',
+  'title-page': 'на титульном листе',
+} as const;
 
 export const STATUS_NAMES: Record<RuleStatus, string> = {
   pass: 'в порядке',

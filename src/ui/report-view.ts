@@ -1,10 +1,10 @@
 // Отчёт: блоки школы («снижали баллы», «пять пунктов») и карточки замечаний.
-import type { Report, RuleResult } from '../core/engine/index.ts';
+import type { Report, ResultGroup, RuleResult } from '../core/engine/index.ts';
 import type { Profile, Severity } from '../core/profiles/types.ts';
 import { plannedStage } from '../core/rules/planned.ts';
 import type { Finding } from '../core/rules/types.ts';
 import { RULE_TEXTS } from '../i18n/rules-ru.ts';
-import { SEVERITY_NAMES, STATUS_NAMES, ru } from '../i18n/ru.ts';
+import { GROUP_NAMES, SEVERITY_NAMES, STATUS_NAMES, ru } from '../i18n/ru.ts';
 import { disclosure, el } from './dom.ts';
 
 const EXAMPLES = 5; // сколько мест показывать до кнопки «Показать все»
@@ -108,44 +108,53 @@ function placeItem(f: Finding, showSection: boolean): HTMLElement {
   );
 }
 
-function ruleCard(result: RuleResult, profile: Profile, showSection: boolean): HTMLElement {
+// Карточка — это одна группа замечаний одного правила (текст, содержание или титульный лист).
+function ruleCard(
+  result: RuleResult,
+  group: ResultGroup,
+  profile: Profile,
+  showSection: boolean,
+): HTMLElement {
   const text = RULE_TEXTS[result.ruleId];
   const config = profile.rules[result.ruleId];
+  const findings = group.findings;
   const list = el('ul', { class: 'places' });
   const renderPlaces = (all: boolean): void => {
-    const shown = all ? result.findings : result.findings.slice(0, EXAMPLES);
+    const shown = all ? findings : findings.slice(0, EXAMPLES);
     list.replaceChildren(...shown.map((f) => placeItem(f, showSection)));
   };
   renderPlaces(false);
 
   let toggle: HTMLButtonElement | undefined;
-  if (result.findings.length > EXAMPLES) {
+  if (findings.length > EXAMPLES) {
     let expanded = false;
     toggle = el(
       'button',
       { type: 'button', class: 'link', 'aria-expanded': 'false' },
-      ru.showAll(result.findings.length),
+      ru.showAll(findings.length),
     );
     toggle.addEventListener('click', () => {
       expanded = !expanded;
       renderPlaces(expanded);
       toggle?.setAttribute('aria-expanded', String(expanded));
-      if (toggle) toggle.textContent = expanded ? ru.showLess : ru.showAll(result.findings.length);
+      if (toggle) toggle.textContent = expanded ? ru.showLess : ru.showAll(findings.length);
     });
   }
 
+  const id = group.key === 'main' ? `rule-${result.ruleId}` : `rule-${result.ruleId}-${group.key}`;
   return el(
     'article',
-    { class: `card sev-${result.severity}`, id: `rule-${result.ruleId}`, tabindex: '-1' },
+    { class: `card sev-${group.severity}`, id, tabindex: '-1' },
     el(
       'h3',
       {},
-      el('span', { class: `badge badge-${result.severity}` }, SEVERITY_NAMES[result.severity]),
+      el('span', { class: `badge badge-${group.severity}` }, SEVERITY_NAMES[group.severity]),
       ' ',
       `${text?.title ?? result.ruleId} `,
       el('span', { class: 'muted' }, `(${result.ruleId})`),
+      group.key === 'main' ? undefined : ` — ${GROUP_NAMES[group.key]}`,
     ),
-    result.summary ? el('p', {}, result.summary) : undefined,
+    group.summary ? el('p', {}, group.summary) : undefined,
     result.heuristic ? el('p', { class: 'note' }, ru.heuristic) : undefined,
     config?.confidence === 'unconfirmed' ? el('p', { class: 'note' }, ru.unconfirmed) : undefined,
     list,
@@ -167,9 +176,21 @@ function sortResults(results: RuleResult[], profile: Profile): RuleResult[] {
 
 export function renderReport(report: Report, profile: Profile): HTMLElement {
   const byId = new Map(report.results.map((r) => [r.ruleId, r]));
-  const failed = report.results.filter((r) => r.status === 'fail');
+  const failed = sortResults(
+    report.results.filter((r) => r.status === 'fail'),
+    profile,
+  );
+  // Пары «правило — группа»: сначала текст работы, потом содержание, в конце титульный лист.
+  const cards = (key: ResultGroup['key']): [RuleResult, ResultGroup][] =>
+    failed.flatMap((r) =>
+      r.groups.filter((g) => g.key === key).map((g): [RuleResult, ResultGroup] => [r, g]),
+    );
+  const ordered = [...cards('main'), ...cards('toc'), ...cards('title-page')];
+  // Счётчики — по тексту работы и содержанию; титульный лист отдельной строкой.
+  const counted = ordered.filter(([, g]) => g.key !== 'title-page');
   const count = (severity: Severity): number =>
-    failed.filter((r) => r.severity === severity).length;
+    new Set(counted.filter(([, g]) => g.severity === severity).map(([r]) => r.ruleId)).size;
+  const titleFindings = cards('title-page').reduce((sum, [, g]) => sum + g.findings.length, 0);
   const notImplemented = report.results.filter((r) => r.status === 'not-implemented').length;
   const showSection = report.stats.sections > 1;
 
@@ -179,6 +200,7 @@ export function renderReport(report: Report, profile: Profile): HTMLElement {
     { class: 'report', 'aria-labelledby': 'report-title' },
     heading,
     el('p', { class: 'counters' }, ru.counters(count('error'), count('warning'), count('info'))),
+    titleFindings > 0 ? el('p', {}, ru.titlePageLine(titleFindings)) : undefined,
     el(
       'p',
       { class: 'muted' },
@@ -188,12 +210,12 @@ export function renderReport(report: Report, profile: Profile): HTMLElement {
     priorityBlock(profile, byId),
     boardBlock(profile, byId),
     el('h2', {}, ru.findingsTitle),
-    failed.length === 0
+    ordered.length === 0
       ? el('p', {}, ru.noFindings)
       : el(
           'div',
           { class: 'cards' },
-          ...sortResults(failed, profile).map((r) => ruleCard(r, profile, showSection)),
+          ...ordered.map(([r, g]) => ruleCard(r, g, profile, showSection)),
         ),
   );
 }

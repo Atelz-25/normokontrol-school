@@ -29,8 +29,21 @@ export function describeSpec(spec: NumberSpec, unit: string): string {
   }
 }
 
-export const where = (count: number, of: number, what: string): string =>
-  `${count} из ${of} ${what}`;
+// Склонение по числу: 1 абзац, 2 абзаца, 5 абзацев (а также 21 абзац, 11 абзацев).
+export function plural(n: number, forms: [one: string, few: string, many: string]): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return forms[0];
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
+  return forms[2];
+}
+
+// «в 10 из 37 абзацев», «в 1 из 21 абзаца»: после «из» нужен родительный падеж.
+export const where = (count: number, of: number, genitive: [one: string, many: string]): string =>
+  `${count} из ${of} ${plural(of, [genitive[0], genitive[1], genitive[1]])}`;
+
+const EMPTY_FORMS: [string, string, string] = ['пустой абзац', 'пустых абзаца', 'пустых абзацев'];
+const PARAGRAPH_FORMS: [string, string, string] = ['абзац', 'абзаца', 'абзацев'];
 
 const MARGIN_HOW =
   'Макет → Поля → Настраиваемые поля. Впишите значение и нажмите «Применить: ко всему документу».';
@@ -219,14 +232,16 @@ export const msg = {
   emptyParagraph: (numbered: boolean): string =>
     numbered ? 'Пустой пункт списка между абзацами.' : 'Пустой абзац между абзацами.',
   emptySeries: (length: number, before?: string): string =>
-    `Подряд ${length} пустых абзацев` + (before ? ` перед заголовком «${before}».` : '.'),
+    `Подряд ${length} ${plural(length, EMPTY_FORMS)}` +
+    (before ? ` перед заголовком «${before}».` : '.'),
   passportTable: (problems: string[]): string => `В таблице паспорта: ${problems.join('; ')}.`,
   rightIndent: (actual: number, expected: string): string =>
     `Правый отступ ${fmt(actual)} см, нужен ${expected}.`,
   noPageBreak: (title: string, empties: number, approxTop: boolean): string =>
     `Перед частью «${title}» нет разрыва страницы` +
-    (empties > 0 ? `, вместо него ${empties} пустых абзацев` : '') +
-    (approxTop
+    (empties > 0 ? `, вместо него ${empties} ${plural(empties, EMPTY_FORMS)}` : '') +
+    // «Из-за пустых строк» — только если они действительно есть (RULES-SCHOOL, раздел 10.3).
+    (approxTop && empties > 0
       ? ' (сейчас заголовок, примерно, вверху страницы, но только из-за пустых строк)'
       : '') +
     '.',
@@ -239,19 +254,24 @@ export const msg = {
 
 export const summary = {
   paragraphs: (affected: number, checked: number): string =>
-    `Замечание в ${where(affected, checked, 'абзацев')}.`,
+    `Замечание в ${where(affected, checked, ['абзаца', 'абзацев'])}.`,
   sections: (affected: number, checked: number): string =>
-    `Замечание в ${where(affected, checked, 'разделов')}.`,
+    `Замечание в ${where(affected, checked, ['раздела', 'разделов'])}.`,
   empties: (count: number, total: number): string =>
-    `${count} одиночных пустых абзацев (всего абзацев вне таблиц: ${total}).`,
+    `${count} ${plural(count, ['одиночный пустой абзац', 'одиночных пустых абзаца', 'одиночных пустых абзацев'])} (всего абзацев вне таблиц: ${total}).`,
   series: (series: number, empties: number, longest: number): string =>
-    `${series} серий пустых абзацев, в них ${empties} абзацев; самая длинная — ${longest}.`,
+    `${series} ${plural(series, ['серия', 'серии', 'серий'])} пустых абзацев, в них ${empties} ${plural(empties, PARAGRAPH_FORMS)}; самая длинная — ${longest}.`,
   breaks: (missing: number, needed: number): string =>
-    `Разрыв страницы есть перед ${needed - missing} из ${needed} частей.`,
+    `Разрыв страницы есть перед ${where(needed - missing, needed, ['части', 'частей'])}.`,
   passport: (affected: number, checked: number, withText: number): string =>
-    `Замечание в ${where(affected, checked, 'абзацев')} таблицы (${withText} абзацев с текстом).`,
+    `Замечание в ${where(affected, checked, ['абзаца', 'абзацев'])} таблицы (${withText} ${plural(withText, PARAGRAPH_FORMS)} с текстом).`,
   occurrences: (count: number, paragraphs: number): string =>
-    `${count} мест в ${paragraphs} абзацах.`,
+    `${count} ${plural(count, ['место', 'места', 'мест'])} в ${paragraphs} ${plural(paragraphs, ['абзаце', 'абзацах', 'абзацах'])}.`,
+  // Отдельные группы в отчёте (RULES-SCHOOL, раздел 10): титульный лист и содержание.
+  group: (group: 'title-page' | 'toc', count: number): string =>
+    `${group === 'title-page' ? 'На титульном листе' : 'В содержании'}: ${count} ${plural(count, ['место', 'места', 'мест'])}.`,
+  main: (count: number): string =>
+    `В тексте работы: ${count} ${plural(count, ['место', 'места', 'мест'])}.`,
 };
 
 const ALIGN_NAMES: Record<string, string> = {

@@ -2,6 +2,8 @@ import type { Classification } from '../classify/index.ts';
 import type { DocModel } from '../model/types.ts';
 import type { Severity } from '../profiles/types.ts';
 
+export type FindingGroup = 'title-page' | 'toc';
+
 export type Category = 'page' | 'font' | 'paragraph' | 'structure' | 'typography' | 'document';
 
 export interface Finding {
@@ -15,6 +17,7 @@ export interface Finding {
     sectionIndex?: number;
     approxPage?: number; // только если в файле есть lastRenderedPageBreak
     excerpt?: string;
+    group?: FindingGroup; // титульный лист или содержание; без группы — текст работы
   };
   autoFixable: boolean;
 }

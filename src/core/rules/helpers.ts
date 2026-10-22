@@ -2,7 +2,7 @@ import { expandRoles } from '../classify/index.ts';
 import type { Paragraph, Run } from '../model/types.ts';
 import type { Severity } from '../profiles/types.ts';
 import { strings, type Params } from './params.ts';
-import type { CheckContext, Finding } from './types.ts';
+import type { CheckContext, Finding, FindingGroup } from './types.ts';
 
 // Начало абзаца для карточки замечания: табуляции и переносы заменяем пробелом.
 export function excerpt(text: string, max = 80): string {
@@ -18,7 +18,9 @@ export function finding(
   autoFixable: boolean,
   message: string,
   where: { paragraph?: Paragraph; sectionIndex?: number; excerpt?: string },
-  extra: { severity?: Severity; expected?: string; actual?: string } = {},
+  // ungrouped: замечание о документе в целом (например, разрыв перед частью),
+  // его не относим к «содержанию» или «титульному листу», даже если абзац там.
+  extra: { severity?: Severity; expected?: string; actual?: string; ungrouped?: boolean } = {},
 ): Finding {
   const p = where.paragraph;
   return {
@@ -33,9 +35,18 @@ export function finding(
       // Номер страницы показываем, только если Word оставил отметки раскладки.
       approxPage: p && ctx.doc.hasLastRenderedPageBreaks ? p.approxPage : undefined,
       excerpt: where.excerpt ?? (p ? excerpt(p.text) : undefined),
+      group: p && !extra.ungrouped ? groupOf(p) : undefined,
     },
     autoFixable,
   };
+}
+
+// Замечания на титульном листе и в содержании отчёт показывает отдельными группами
+// (RULES-SCHOOL, раздел 10): там свои правила вёрстки, и их не смешивают с текстом работы.
+export function groupOf(p: Paragraph): FindingGroup | undefined {
+  if (p.zone === 'title-page') return 'title-page';
+  if (p.role === 'toc-entry' || p.partId === 'toc') return 'toc';
+  return undefined;
 }
 
 // Непустые абзацы с ролями из параметра appliesTo (группы heading и caption раскрываются).
