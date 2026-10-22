@@ -106,7 +106,8 @@ describe.skipIf(!existsSync(docxUrl))(
       );
       for (const r of implemented) {
         const entry = exp[r.ruleId];
-        if (!entry || entry.status === 'info') continue;
+        // 'not-tested' (FN-01): имя файла в тесте неизвестно, правило там неприменимо.
+        if (!entry || entry.status === 'info' || entry.status === 'not-tested') continue;
         expect(r.status, r.ruleId).toBe(entry.status);
       }
     });
@@ -209,6 +210,27 @@ describe.skipIf(!existsSync(docxUrl))(
       expect(paragraphs('PR-05')).toEqual([e.paragraph]);
       expect(result('PR-05').findings[0]?.message).toContain(String(e.length));
       expect(result('TY-03').metrics.count).toBe(num('TY-03', 'count'));
+    });
+
+    // --- Этап 2 ---
+    it('структура: заголовки частей на тех же абзацах, паспорт 11 из 11', () => {
+      for (const id of ['ST-02', 'ST-05', 'ST-06', 'ST-07'])
+        expect(result(id).metrics.headingParagraph, id).toBe(num(id, 'headingParagraph'));
+      expect(result('ST-08').metrics.partHeadings).toEqual(exp['ST-08']?.partHeadings);
+      expect(result('PS-01').metrics.fieldsFound).toBe(num('PS-01', 'fieldsFound'));
+      expect(result('PS-01').metrics.of).toBe(num('PS-01', 'of'));
+    });
+
+    it('TH-01: 1 777 знаков, не хватает 3 623 и 5 423', () => {
+      const m = result('TH-01').metrics;
+      for (const key of ['chars', 'pages', 'missingToMin', 'missingToRecommended'])
+        expect(m[key], key).toBe(num('TH-01', key));
+    });
+
+    it('VL-02: 183 пустых из 313, 14 477 знаков ≈ 8,0 страницы', () => {
+      const m = result('VL-02').metrics;
+      for (const key of ['empty', 'of', 'share', 'textChars', 'pagesBy1800'])
+        expect(m[key], key).toBe(num('VL-02', key));
     });
   },
 );

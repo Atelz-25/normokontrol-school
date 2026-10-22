@@ -1,33 +1,51 @@
-// Каждое правило этапа 1 на паре документов: «хорошо» — без замечаний, «плохо» — с замечаниями.
+// Каждое правило на паре документов: «хорошо» — без замечаний, «плохо» — с замечаниями.
 // Профиль — «Наша школа», потому что фикстуры оформлены по его требованиям.
 import { describe, expect, it } from 'vitest';
-import { FIXTURES, PB01_HARD_BREAK } from '../../scripts/lib/fixtures.ts';
+import { FIXTURES, PB01_HARD_BREAK, type FixturePair } from '../../scripts/lib/fixtures.ts';
 import { checkDocx, type RuleResult } from '../../src/core/engine/index.ts';
 import { BUILTIN_PROFILES } from '../../src/core/profiles/builtin.ts';
+import type { Profile } from '../../src/core/profiles/types.ts';
 import { RULES } from '../../src/core/rules/registry.ts';
 
 const school = BUILTIN_PROFILES.find((profile) => profile.id === 'school-custom')!;
 
-function resultFor(bytes: Uint8Array, ruleId: string): RuleResult {
-  const result = checkDocx(bytes, school).results.find((r) => r.ruleId === ruleId);
+// OUT-01 — напоминание в конце отчёта, а не проверка: «плохого» документа для него нет.
+const NOT_CHECKS = new Set(['OUT-01']);
+
+function profileFor(ruleId: string, pair?: FixturePair): Profile {
+  if (!pair?.override) return school;
+  const config = school.rules[ruleId]!;
+  return { ...school, rules: { ...school.rules, [ruleId]: { ...config, ...pair.override } } };
+}
+
+function resultFor(
+  bytes: Uint8Array,
+  ruleId: string,
+  pair?: FixturePair,
+  fileName?: string,
+): RuleResult {
+  const result = checkDocx(bytes, profileFor(ruleId, pair), { fileName }).results.find(
+    (r) => r.ruleId === ruleId,
+  );
   if (!result) throw new Error(`${ruleId} нет в профиле`);
   return result;
 }
 
 describe('фикстуры good/bad', () => {
   it('у каждого правила из реестра есть пара фикстур', () => {
-    expect(Object.keys(FIXTURES).sort()).toEqual(RULES.map((rule) => rule.id).sort());
+    const checks = RULES.map((rule) => rule.id).filter((id) => !NOT_CHECKS.has(id));
+    expect(Object.keys(FIXTURES).sort()).toEqual(checks.sort());
   });
 
   for (const [ruleId, pair] of Object.entries(FIXTURES)) {
     describe(ruleId, () => {
       it('good: без замечаний', () => {
-        const result = resultFor(pair.good(), ruleId);
+        const result = resultFor(pair.good(), ruleId, pair, pair.fileName?.good);
         expect(result.status, JSON.stringify(result.findings.map((f) => f.message))).toBe('pass');
       });
 
       it('bad: есть замечания', () => {
-        const result = resultFor(pair.bad(), ruleId);
+        const result = resultFor(pair.bad(), ruleId, pair, pair.fileName?.bad);
         expect(result.status).toBe('fail');
         expect(result.findings.length).toBeGreaterThan(0);
         for (const f of result.findings) expect(f.message.length).toBeGreaterThan(5);

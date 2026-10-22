@@ -81,12 +81,40 @@ export interface DocOptions {
   comments?: string[]; // тексты примечаний
   extraParts?: Record<string, string>;
   binaryParts?: Record<string, Uint8Array>;
+  // Колонтитулы (абзацы в XML) и «особый колонтитул первой страницы».
+  footers?: { default?: string; first?: string };
+  titlePage?: boolean;
 }
+
+// Номер страницы: поле PAGE в абзаце колонтитула.
+export const pageNumber = (align = 'center'): string =>
+  `<w:p><w:pPr><w:ind w:firstLine="0"/><w:jc w:val="${align}"/></w:pPr>` +
+  '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>' +
+  '<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>2</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>';
+
+// Стили заголовков школьной работы (ответ на Q7): части, подразделы II.I., подзаголовки.
+export const HEADING_STYLES =
+  '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="0"/><w:jc w:val="left"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="28"/></w:rPr></w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="709"/><w:jc w:val="left"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:sz w:val="28"/></w:rPr></w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="0"/><w:jc w:val="both"/><w:outlineLvl w:val="2"/></w:pPr></w:style>';
 
 export const SCHOOL_RPR =
   '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/>';
 export const SCHOOL_PPR =
   '<w:spacing w:before="0" w:after="0" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="709"/><w:jc w:val="both"/>';
+
+// Ссылки на колонтитулы и titlePg вставляем в последний раздел документа.
+function withFooters(section: string, options: DocOptions): string {
+  const refs = Object.keys(options.footers ?? {})
+    .map(
+      (kind) =>
+        `<w:footerReference xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" w:type="${kind}" r:id="rIdF-${kind}"/>`,
+    )
+    .join('');
+  return section
+    .replace('<w:sectPr>', `<w:sectPr>${refs}`)
+    .replace('</w:sectPr>', `${options.titlePage ? '<w:titlePg/>' : ''}</w:sectPr>`);
+}
 
 export function buildDocx(options: DocOptions): Uint8Array {
   const rPr = options.defaultRPr ?? SCHOOL_RPR;
@@ -105,6 +133,12 @@ export function buildDocx(options: DocOptions): Uint8Array {
       (options.comments
         ? '<Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/>'
         : '') +
+      Object.keys(options.footers ?? {})
+        .map(
+          (kind) =>
+            `<Override PartName="/word/footer-${kind}.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>`,
+        )
+        .join('') +
       '</Types>',
     '_rels/.rels':
       '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -114,7 +148,7 @@ export function buildDocx(options: DocOptions): Uint8Array {
     'word/document.xml':
       `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="${W_NS}"><w:body>` +
       options.body.join('') +
-      (options.finalSectPr ?? sectPr()) +
+      withFooters(options.finalSectPr ?? sectPr(), options) +
       '</w:body></w:document>',
     'word/styles.xml':
       `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="${W_NS}">` +
@@ -133,6 +167,21 @@ export function buildDocx(options: DocOptions): Uint8Array {
         .map((text, i) => `<w:comment w:id="${i}" w:author="Тест">${p(text)}</w:comment>`)
         .join('') +
       '</w:comments>';
+  const footers = Object.entries(options.footers ?? {});
+  if (footers.length > 0) {
+    files['word/_rels/document.xml.rels'] =
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      footers
+        .map(
+          ([kind]) =>
+            `<Relationship Id="rIdF-${kind}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer-${kind}.xml"/>`,
+        )
+        .join('') +
+      '</Relationships>';
+    for (const [kind, content] of footers)
+      files[`word/footer-${kind}.xml`] =
+        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="${W_NS}">${content}</w:ftr>`;
+  }
   Object.assign(files, options.extraParts ?? {});
   const entries: Record<string, Uint8Array | [Uint8Array, { level: 0 }]> = Object.fromEntries(
     Object.entries(files).map(([name, text]) => [name, strToU8(text)]),

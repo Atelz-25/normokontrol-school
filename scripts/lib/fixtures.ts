@@ -9,9 +9,11 @@ import {
   emptyRun,
   p,
   pageBreak,
+  pageNumber,
   sectPr,
   table,
 } from './docx-builder.ts';
+import { PASSPORT_ROWS as SCHOOL_PASSPORT, TITLE_LINES, schoolDoc } from './school-doc.ts';
 
 const T1 = 'Первый абзац основного текста, в нём описывается тема проекта.';
 const T2 = 'Второй абзац продолжает мысль и приводит пример из практики.';
@@ -66,6 +68,10 @@ function passport(line: number): Uint8Array {
 export interface FixturePair {
   good: () => Uint8Array;
   bad: () => Uint8Array;
+  // Для FN-01: имя файла «хорошее» и «плохое» (документ один и тот же).
+  fileName?: { good: string; bad: string };
+  // Настройка правила для теста, если в профиле школы оно выключено (HD-06).
+  override?: { enabled: boolean; params: Record<string, unknown> };
 }
 
 export const FIXTURES: Record<string, FixturePair> = {
@@ -205,3 +211,109 @@ export const PB01_HARD_BREAK = (): Uint8Array =>
       p('[1] Источник.'),
     ],
   });
+
+// --- Этап 2: правила на «школьной» работе (scripts/lib/school-doc.ts) ---
+const without = (lines: string[], ...drop: string[]): string[] =>
+  lines.filter((line) => !drop.some((d) => line.startsWith(d)));
+const noBreak =
+  '<w:p><w:r><w:t xml:space="preserve">Первая строка</w:t><w:br/><w:t>вторая строка абзаца.</w:t></w:r></w:p>';
+
+export const STAGE2_FIXTURES: Record<string, FixturePair> = {
+  'FT-05': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        extraBody: [
+          p('Здесь подчёркнутое слово в обычном тексте.', { rPr: '<w:u w:val="single"/>' }),
+        ],
+      }),
+  },
+  'PR-07': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: [noBreak] }) },
+  'HD-01': { good: () => schoolDoc(), bad: () => schoolDoc({ headingStyle: false }) },
+  'HD-02': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ parts: { conclusion: 'III.\tЗАКЛЮЧИТЕЛЬНАЯ ЧАСТЬ.' } }),
+  },
+  // Подзаголовок 3 уровня сразу после заголовка части 1 уровня.
+  'HD-03': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({ extraBody: [p('1. Подзаголовок не на своём уровне', { style: 'Heading3' })] }),
+  },
+  'HD-04': { good: () => schoolDoc(), bad: () => schoolDoc({ partHeadingRPr: '<w:b/>' }) },
+  'HD-05': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ partHeadingPPr: '<w:keepNext w:val="0"/>' }),
+  },
+  'HD-06': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ parts: { intro: 'I.\tВведение' } }),
+    override: { enabled: true, params: { case: 'upper', align: 'left' } },
+  },
+  'HD-07': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ parts: { literature: 'V.\tЛИТЕРАТУРА', appendix: 'VI.\tПРИЛОЖЕНИЕ' } }),
+  },
+  'ST-01': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ titleLines: without(TITLE_LINES, 'Автор', 'Руководитель') }),
+  },
+  'ST-02': { good: () => schoolDoc(), bad: () => schoolDoc({ withToc: false }) },
+  'ST-03': { good: () => schoolDoc(), bad: () => schoolDoc({ tocField: false }) },
+  'ST-04': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        tocEntries: [
+          'ПАСПОРТ ПРОЕКТА\t2',
+          'I.\tВВЕДЕНИЕ\t4',
+          'II.\tОСНОВНАЯ ЧАСТЬ\t5',
+          'IV.\tЛИТЕРАТУРА\t11',
+        ],
+      }),
+  },
+  'ST-05': { good: () => schoolDoc(), bad: () => schoolDoc({ parts: { intro: null } }) },
+  'ST-06': { good: () => schoolDoc(), bad: () => schoolDoc({ parts: { conclusion: null } }) },
+  'ST-07': { good: () => schoolDoc(), bad: () => schoolDoc({ parts: { literature: null } }) },
+  'ST-08': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        order: ['intro', 'main', 'theory', 'practice', 'literature', 'conclusion', 'appendix'],
+      }),
+  },
+  'ST-10': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ titleLines: without(TITLE_LINES, 'Пояснительная') }),
+  },
+  'PS-01': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({ passportRows: SCHOOL_PASSPORT.filter(([label]) => label !== 'Цель проекта') }),
+  },
+  'FN-01': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc(),
+    fileName: { good: 'Иванов, И. Пояснительная записка.docx', bad: 'project_final.docx' },
+  },
+  'NM-01': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ footers: { default: '<w:p/>', first: '<w:p/>' } }),
+  },
+  'NM-02': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ footers: { default: pageNumber('right'), first: '<w:p/>' } }),
+  },
+  'NM-03': { good: () => schoolDoc(), bad: () => schoolDoc({ titlePage: false }) },
+  // Второй раздел начинает нумерацию заново.
+  'NM-04': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({ middleSection: sectPr(), finalSectPrExtra: '<w:pgNumType w:start="1"/>' }),
+  },
+  'TH-01': { good: () => schoolDoc(), bad: () => schoolDoc({ theoryParagraphs: 2 }) },
+  'VL-02': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: emptyRun(40) }) },
+};
+
+// Все пары в одном списке: этап 1 и этап 2.
+Object.assign(FIXTURES, STAGE2_FIXTURES);
