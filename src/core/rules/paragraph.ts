@@ -3,7 +3,14 @@ import { describeSpec, fmt, msg, summary } from '../../i18n/rules-ru.ts';
 import { expandRoles } from '../classify/index.ts';
 import type { LineSpacing, Paragraph } from '../model/types.ts';
 import { round } from '../units.ts';
-import { finding, paragraphsFor, unique, visibleRuns } from './helpers.ts';
+import {
+  checksIndent,
+  finding,
+  INDENT_WHITESPACE,
+  paragraphsFor,
+  unique,
+  visibleRuns,
+} from './helpers.ts';
 import { bool, matches, num, numberSpec, str, strings, type NumberSpec } from './params.ts';
 import type { Finding, Rule, RuleOutcome } from './types.ts';
 
@@ -156,12 +163,12 @@ const spaceIndent: Rule = {
   check(ctx, params) {
     if (!bool(params, 'forbidSpacesTabsAsIndent', true))
       return { checked: 0, findings: [], unit: 'paragraphs' };
-    const paragraphs = ctx.doc.paragraphs.filter((p) => !p.table && p.role !== 'toc-entry');
+    const paragraphs = ctx.doc.paragraphs.filter(checksIndent);
     // Абзац из одних пробелов — это пустой абзац: о нём сообщают PR-06/PR-10, и исправляется он
     // одним действием (удалить). Второе замечание на то же место было бы шумом, поэтому
     // PR-05 смотрит только на пробелы и табуляции перед текстом.
     return perParagraph(paragraphs, (p) => {
-      if (!p.isEmpty && /^( {2,}|\t)/.test(p.text))
+      if (!p.isEmpty && INDENT_WHITESPACE.test(p.text))
         return finding(ctx, true, msg.leadingWhitespace(), { paragraph: p });
       return undefined;
     });

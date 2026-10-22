@@ -548,7 +548,10 @@ export const STAGE3_FIXTURES: Record<string, FixturePair> = {
   },
   'TY-06': {
     good: () => schoolDoc(),
-    bad: () => schoolDoc({ extraBody: [p('Абзац с пробелом в конце. ')] }),
+    bad: () =>
+      schoolDoc({
+        extraBody: [p('Абзац с пробелом в конце. '), p(' Абзац с одним пробелом в начале.')],
+      }),
   },
   'TY-07': {
     good: () => schoolDoc(),

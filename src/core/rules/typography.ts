@@ -3,7 +3,7 @@
 // именно его, а не весь абзац.
 import { msg, summary } from '../../i18n/rules-ru.ts';
 import type { Paragraph } from '../model/types.ts';
-import { finding } from './helpers.ts';
+import { checksIndent, finding, INDENT_WHITESPACE } from './helpers.ts';
 import type { CheckContext, Finding, Rule, RuleOutcome } from './types.ts';
 
 type Range = [start: number, end: number];
@@ -151,7 +151,17 @@ const sourceSafe = (p: Paragraph, text: string): string =>
 const stage3: Rule[] = [
   simple('TY-04', (text, p) => quoteProblems(sourceSafe(p, text)), msg.quotes),
   simple('TY-05', (text) => rangesOf(text, /[(«[] +| +[)»\]]/g), msg.innerSpaces, true),
-  simple('TY-06', (text) => rangesOf(text, /^[ \t]+|[ \t]+$/g), msg.edgeSpaces, true),
+  // TY-06. Пробелы по краям абзаца. Отступ из двух пробелов или Tab в начале — это PR-05,
+  // здесь его не считаем: одно место — одно замечание.
+  simple(
+    'TY-06',
+    (text, p) => {
+      const indentIsPr05 = checksIndent(p) && INDENT_WHITESPACE.test(text);
+      return rangesOf(text, /^[ \t]+|[ \t]+$/g).filter(([start]) => start > 0 || !indentIsPr05);
+    },
+    msg.edgeSpaces,
+    true,
+  ),
   simple('TY-07', (text, p) => mixedScripts(sourceSafe(p, text)), msg.mixedScripts),
   // TY-08. Неразрывный пробел нужен: число + единица, «№ 5», инициалы «А. С. Пушкин».
   simple(

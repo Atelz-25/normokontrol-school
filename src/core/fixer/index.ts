@@ -299,7 +299,7 @@ export function fixDocx(
     const beforeDot = /(?<=[\p{L}\d]) +(?=\.(?![\p{L}\d.]))/gu;
     if (p && replaceInText(p, beforeMark, '') + replaceInText(p, beforeDot, '') > 0) count('TY-02');
   }
-  // TY-06: пробелы по краям абзаца.
+  // TY-06: пробелы по краям абзаца (отступ из двух пробелов или Tab сюда не попадает, его убирает PR-05).
   for (const index of findings('TY-06')) {
     const nodes = at(index) ? textNodes(at(index) as XmlElement) : [];
     const first = nodes[0];

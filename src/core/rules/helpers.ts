@@ -82,3 +82,10 @@ export function visibleRuns(p: Paragraph): Run[] {
 }
 
 export const unique = <T>(items: T[]): T[] => [...new Set(items)];
+
+// Отступ пробелами или табуляцией перед текстом — зона PR-05: два пробела и больше или Tab.
+// TY-06 такие пробелы не считает, чтобы на одно место не было двух замечаний.
+export const INDENT_WHITESPACE = /^(?:[ \t]{2,}|\t)/;
+
+// Где PR-05 ищет такой отступ: абзацы вне таблиц, кроме строк ручного содержания (это ST-03).
+export const checksIndent = (p: Paragraph): boolean => !p.table && p.role !== 'toc-entry';
