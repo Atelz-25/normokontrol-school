@@ -1,0 +1,12 @@
+{
+  "name": "Нормоконтроль — проверка оформления школьного проекта",
+  "short_name": "Нормоконтроль",
+  "description": "Проверка оформления пояснительной записки (.docx) прямо в браузере. Файл никуда не отправляется.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b57d0",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

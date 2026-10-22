@@ -348,3 +348,12 @@ drop.addEventListener('drop', (event) => {
   const link = event.dataTransfer?.getData('text/uri-list') ?? '';
   showMessage(/docs\.google\.com/.test(link) ? ru.googleDocs : ru.unknownFile, true);
 });
+
+// --- офлайн-режим ---------------------------------------------------------
+// Service worker сохраняет файлы сайта в кэш браузера, чтобы проверка работала и без
+// интернета. В режиме разработки он не нужен: мешал бы горячей перезагрузке.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
+    // Без офлайн-режима сайт работает как обычно.
+  });
+}
