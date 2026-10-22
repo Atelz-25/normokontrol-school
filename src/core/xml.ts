@@ -13,6 +13,7 @@ export const NS = {
   cp: 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties',
   dcterms: 'http://purl.org/dc/terms/',
   rel: 'http://schemas.openxmlformats.org/package/2006/relationships',
+  wp: 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
 } as const;
 
 export class XmlParseError extends Error {}

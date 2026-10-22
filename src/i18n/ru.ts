@@ -132,6 +132,18 @@ export const ru = {
   editorInvalid: 'В профиле есть ошибки:',
   editorBadJson: (name: string): string => `Параметр «${name}»: это не JSON.`,
   customSuffix: '(мой)',
+  editorTopics: 'Темы проекта',
+  editorTopicsHint:
+    'Темы, которые учитель просил раскрыть в теоретической части (правило TH-03). По одной на строке: «Название темы: слово1, слово2». Слова ищутся по началу: «сценар» найдёт «сценарий» и «сценарист».',
+
+  // Сравнение версий (этап 3)
+  compareTitle: 'Сравнение с прошлой версией',
+  compareSummary: (fixed: number, remaining: number, added: number): string =>
+    `Исправлено: ${fixed} · осталось: ${remaining} · появилось новых: ${added}.`,
+  compareScore: (before: number, after: number): string =>
+    `Оценка: было ${before}, стало ${after} (${after >= before ? '+' : ''}${after - before}).`,
+  compareFixed: 'Что исправлено',
+  compareAdded: 'Что появилось нового',
   hashProfile: (title: string): string => `Профиль из ссылки: «${title}».`,
   hashProfileBroken: 'Ссылка на профиль повреждена, профиль не загружен.',
 } as const;

@@ -2,7 +2,7 @@
 import { describeSpec, msg, summary } from '../../i18n/rules-ru.ts';
 import { round } from '../units.ts';
 import { finding, paragraphsFor, unique, visibleRuns } from './helpers.ts';
-import { bool, matches, numberSpec, strings } from './params.ts';
+import { bool, matches, num, numberSpec, strings } from './params.ts';
 import type { Finding, Rule } from './types.ts';
 
 const BODY_ROLES = ['body', 'list-item', 'table-cell', 'toc-entry', 'source-item', 'caption'];
@@ -159,4 +159,45 @@ const underline: Rule = {
   },
 };
 
-export const fontRules: Rule[] = [fontFamily, fontSize, singleFamily, textColor, underline];
+// FT-06. Злоупотребление выделением: подряд больше maxEmphasisChars знаков полужирным,
+// курсивом или ПРОПИСНЫМИ. Заголовки и титульный лист не считаем — там выделение уместно.
+const emphasis: Rule = {
+  id: 'FT-06',
+  category: 'font',
+  stage: 3,
+  autoFixable: false,
+  defaultParams: { maxEmphasisChars: 150, appliesTo: ['body', 'list-item', 'source-item'] },
+  check(ctx, params) {
+    const max = num(params, 'maxEmphasisChars', 150);
+    const paragraphs = paragraphsFor(ctx, params, ['body', 'list-item', 'source-item']);
+    const findings: Finding[] = [];
+    for (const p of paragraphs) {
+      let streak = 0;
+      let longest = 0;
+      for (const r of p.runs) {
+        const piece = p.text.slice(r.start, r.end);
+        const letters = piece.replace(/[^\p{L}]/gu, '');
+        const shouting = letters.length > 0 && letters === letters.toUpperCase();
+        streak = r.bold || r.italic || r.caps || shouting ? streak + piece.length : 0;
+        longest = Math.max(longest, streak);
+      }
+      if (longest > max)
+        findings.push(finding(ctx, false, msg.emphasis(longest), { paragraph: p }));
+    }
+    return {
+      checked: paragraphs.length,
+      findings,
+      unit: 'paragraphs',
+      summary: summary.paragraphs(findings.length, paragraphs.length),
+    };
+  },
+};
+
+export const fontRules: Rule[] = [
+  fontFamily,
+  fontSize,
+  singleFamily,
+  textColor,
+  underline,
+  emphasis,
+];

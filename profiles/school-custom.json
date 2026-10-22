@@ -38,12 +38,9 @@
       { "id": "appendix", "title": "Приложения", "aliases": ["Приложение", "Приложения"], "optional": true }
     ],
     "partNumberFormats": ["roman-dot", "roman-dot-roman", "none"],
-    "passportFields": [
-      "Тема проекта", "Учебный предмет", "Вид проекта", "Актуальность", "Цель проекта", "Задачи проекта",
-      "Сроки реализации проекта", "Оборудование и ресурсы, необходимые для реализации проекта",
-      "Аннотация проекта", "Ожидаемые результаты", "Смета проекта (при необходимости)"
-    ],
-    "passportOptionalFields": ["Смета проекта (при необходимости)"]
+    "passportFields": ["Тема проекта", "Учебный предмет", "Вид проекта", "Актуальность", "Цель проекта", "Задачи проекта", "Сроки реализации проекта", "Оборудование и ресурсы, необходимые для реализации проекта", "Аннотация проекта", "Ожидаемые результаты", "Смета проекта (при необходимости)"],
+    "passportOptionalFields": ["Смета проекта (при необходимости)"],
+    "projectTopics": []
   },
   "rules": {
     "PG-01": { "enabled": true, "severity": "error", "params": { "widthMm": 210, "heightMm": 297, "toleranceMm": 1, "allowLandscapeInAppendix": true }, "confidence": "default", "source": "brief" },
@@ -64,7 +61,7 @@
     "PR-02": { "enabled": true, "severity": "error", "params": { "mode": "equals", "valuePt": 0, "tolerancePt": 1, "appliesTo": ["body", "list-item", "toc-entry", "source-item"], "headingSeverity": "warning" }, "confidence": "inferred", "source": "S1,S2", "note": "В файле 9 строк содержания имеют 10 pt после, 5 заголовков тоже 10 pt после, заголовок паспорта 12 pt перед." },
     "PR-03": { "enabled": true, "severity": "error", "params": { "mode": "equals", "valueCm": 1.25, "toleranceCm": 0.1, "appliesTo": ["body"], "requireConsistent": true, "leadInBeforeList": "require" }, "confidence": "explicit", "source": "S3", "note": "Сам факт красной строки назван учителем, величина не названа. 1,27 см (табуляция Word) укладывается в допуск." },
     "PR-04": { "enabled": true, "severity": "error", "params": { "align": "both", "appliesTo": ["body", "list-item"] }, "confidence": "explicit", "source": "S3,S5", "note": "«От края до края» это выравнивание по ширине." },
-    "PR-05": {"enabled": true, "severity": "error", "params": {"forbidSpacesTabsAsIndent": true, "titlePageSeverity": "warning"}, "confidence": "default", "source": "brief", "note": "В файле есть абзац из 69 пробелов на титульном листе (#16). На титульном листе — замечание, а не ошибка (RULES-SCHOOL, раздел 10.1)."},
+    "PR-05": { "enabled": true, "severity": "error", "params": { "forbidSpacesTabsAsIndent": true, "titlePageSeverity": "warning" }, "confidence": "default", "source": "brief", "note": "В файле есть абзац из 69 пробелов на титульном листе (#16). На титульном листе — замечание, а не ошибка (RULES-SCHOOL, раздел 10.1)." },
     "PR-06": { "enabled": true, "severity": "error", "params": { "runs": "single", "maxEmptyBetweenParagraphs": 0, "titlePageSeverity": "warning", "ignoreTableCells": true, "spacesOnlyCountsAsEmpty": true }, "confidence": "explicit", "source": "S1,S2,S5", "note": "Одиночный пустой абзац между абзацами. Серии из 2 и более абзацев считает PR-10, каждый пустой абзац учитывается один раз." },
     "PR-07": { "enabled": true, "severity": "warning", "params": { "forbidManualLineBreaks": true }, "confidence": "default", "source": "brief" },
     "PR-08": { "enabled": true, "severity": "error", "params": { "lineSpacing": 1.0, "tolerance": 0.05, "spaceBeforePt": 0, "spaceAfterPt": 0, "font": "Times New Roman", "fontPt": 12 }, "confidence": "explicit", "source": "S3", "note": "Таблица паспорта проекта. В файле требование соблюдено: на нём не должно быть замечаний." },
@@ -73,25 +70,27 @@
 
     "PB-01": { "enabled": true, "severity": "error", "params": { "accept": ["pageBreakBefore", "hardPageBreak", "sectionBreakNextPage"], "partsFrom": "structure.partsInOrder" }, "confidence": "explicit", "source": "S3", "note": "«Каждая новая часть с новой страницы». Паспорт тоже начинается с новой страницы (после титульного листа). Основная часть делит страницу с теоретической (sharesPageWithNext)." },
 
-    "HD-01": {"enabled": true, "severity": "info", "params": {"heuristic": true}, "confidence": "explicit", "source": "author", "note": "Совет: заголовки стилями «Заголовок 1–3», тогда Word соберёт содержание сам (Q8, docs/school-guidelines.md, раздел 6)."},
+    "HD-01": { "enabled": true, "severity": "info", "params": { "heuristic": true }, "confidence": "explicit", "source": "author", "note": "Совет: заголовки стилями «Заголовок 1–3», тогда Word соберёт содержание сам (Q8, docs/school-guidelines.md, раздел 6)." },
     "HD-02": { "enabled": true, "severity": "warning", "params": { "forbidTrailingDot": true }, "confidence": "default", "source": "brief" },
     "HD-03": { "enabled": true, "severity": "warning", "params": {}, "confidence": "default", "source": "brief" },
-    "HD-04": {"enabled": true, "severity": "warning", "params": {"toleranceCm": 0.1, "levels": {"front": {"sizePt": 12, "bold": true, "align": "center"}, "part": {"sizePt": 14, "bold": false, "align": "left", "tabAfterNumber": true, "firstLineIndentCm": 0, "rightIndentCm": 0}, "subPart": {"sizePt": 14, "bold": false, "align": "left", "tabAfterNumber": true, "firstLineIndentCm": 1.25, "rightIndentCm": 0}, "subHeading": {"sizePt": 12, "bold": false, "align": "both", "firstLineIndentCm": 0}}}, "confidence": "explicit", "source": "author", "note": "Ответ на Q7 (docs/school-guidelines.md, раздел 6): части I.–V. — 14 pt, не жирные, по левому краю, «номер<Tab>НАЗВАНИЕ», без правого отступа; II.I. и II.II. — то же с красной строкой 1,25 см; подзаголовки «1. Название» — 12 pt, не жирные, по ширине, без отступа; «ПАСПОРТ…» и «СОДЕРЖАНИЕ» — 12 pt, жирные, по центру."},
+    "HD-04": { "enabled": true, "severity": "warning", "params": { "toleranceCm": 0.1, "levels": { "front": { "sizePt": 12, "bold": true, "align": "center" }, "part": { "sizePt": 14, "bold": false, "align": "left", "tabAfterNumber": true, "firstLineIndentCm": 0, "rightIndentCm": 0 }, "subPart": { "sizePt": 14, "bold": false, "align": "left", "tabAfterNumber": true, "firstLineIndentCm": 1.25, "rightIndentCm": 0 }, "subHeading": { "sizePt": 12, "bold": false, "align": "both", "firstLineIndentCm": 0 } } }, "confidence": "explicit", "source": "author", "note": "Ответ на Q7 (docs/school-guidelines.md, раздел 6): части I.–V. — 14 pt, не жирные, по левому краю, «номер<Tab>НАЗВАНИЕ», без правого отступа; II.I. и II.II. — то же с красной строкой 1,25 см; подзаголовки «1. Название» — 12 pt, не жирные, по ширине, без отступа; «ПАСПОРТ…» и «СОДЕРЖАНИЕ» — 12 pt, жирные, по центру." },
     "HD-05": { "enabled": true, "severity": "warning", "params": { "requireKeepNext": true }, "confidence": "default", "source": "FILE", "note": "В LibreOffice заголовки «ВВЕДЕНИЕ», «ОСНОВНАЯ ЧАСТЬ», «ПРАКТИЧЕСКАЯ ЧАСТЬ», «ПРИЛОЖЕНИЯ» оказались внизу страниц отдельно от текста." },
-    "HD-06": {"enabled": false, "severity": "info", "params": {}, "confidence": "explicit", "source": "author", "note": "Выключено: выравнивание и начертание заголовков проверяет HD-04 по ответу на Q7 (docs/school-guidelines.md, раздел 6)."},
-    "HD-07": {"enabled": true, "severity": "info", "params": {"acceptRomanPartNumbers": true}, "confidence": "explicit", "source": "author", "note": "Нумерация «I.», «II.», «II.I.», «II.II.» подтверждена автором (Q7, docs/school-guidelines.md, раздел 6)."},
+    "HD-06": { "enabled": false, "severity": "info", "params": {}, "confidence": "explicit", "source": "author", "note": "Выключено: выравнивание и начертание заголовков проверяет HD-04 по ответу на Q7 (docs/school-guidelines.md, раздел 6)." },
+    "HD-07": { "enabled": true, "severity": "info", "params": { "acceptRomanPartNumbers": true }, "confidence": "explicit", "source": "author", "note": "Нумерация «I.», «II.», «II.I.», «II.II.» подтверждена автором (Q7, docs/school-guidelines.md, раздел 6)." },
 
-    "ST-01": {"enabled": true, "severity": "warning", "params": {"minSigns": 2, "signs": ["индивидуальный итоговый проект", "автор проекта", "руководитель проекта"], "layout": {"spacingNotEmptyLines": true, "elements": ["школа", "индивидуальный итоговый проект по теме", "автор проекта", "руководитель проекта", "работа допущена к защите", "город и год"]}}, "confidence": "explicit", "source": "author", "note": "Ответ на Q10 (docs/school-guidelines.md, раздел 6): школа (жирн., 12), «Индивидуальный итоговый проект по теме:» и тема (жирн., 14), «Автор проекта:» одной строкой, руководитель, «Работа допущена к защите», строки даты и ФИО зам. директора, внизу город и год (жирн.). Расстояния — интервалом, не пустыми строками."},
+    "ST-01": { "enabled": true, "severity": "warning", "params": { "minSigns": 2, "signs": ["индивидуальный итоговый проект", "автор проекта", "руководитель проекта"], "layout": { "spacingNotEmptyLines": true, "elements": ["школа", "индивидуальный итоговый проект по теме", "автор проекта", "руководитель проекта", "работа допущена к защите", "город и год"] } }, "confidence": "explicit", "source": "author", "note": "Ответ на Q10 (docs/school-guidelines.md, раздел 6): школа (жирн., 12), «Индивидуальный итоговый проект по теме:» и тема (жирн., 14), «Автор проекта:» одной строкой, руководитель, «Работа допущена к защите», строки даты и ФИО зам. директора, внизу город и год (жирн.). Расстояния — интервалом, не пустыми строками." },
     "ST-02": { "enabled": true, "severity": "error", "params": { "aliasesFrom": "structure.partsInOrder.toc" }, "confidence": "explicit", "source": "S3" },
-    "ST-03": {"enabled": true, "severity": "info", "params": {"requireTocField": true}, "confidence": "explicit", "source": "author", "note": "Автоматическое содержание (поле TOC) — рекомендация, а не требование (Q8, docs/school-guidelines.md, раздел 6)."},
-    "ST-04": {"enabled": true, "severity": "warning", "params": {"compareTitles": true, "comparePages": "ifKnown", "firstEntry": "Паспорт проекта", "numberTab": true, "leftIndentCm": 0, "dotLeader": true, "includeAppendix": true}, "confidence": "explicit", "source": "author", "note": "Ответ на Q8 (docs/school-guidelines.md, раздел 6): первая строка «ПАСПОРТ ПРОЕКТА», дальше «номер<Tab>название», все уровни без отступа слева, точки до номера страницы, приложение входит в содержание."},
+    "ST-03": { "enabled": true, "severity": "info", "params": { "requireTocField": true }, "confidence": "explicit", "source": "author", "note": "Автоматическое содержание (поле TOC) — рекомендация, а не требование (Q8, docs/school-guidelines.md, раздел 6)." },
+    "ST-04": { "enabled": true, "severity": "warning", "params": { "compareTitles": true, "comparePages": "ifKnown", "firstEntry": "Паспорт проекта", "numberTab": true, "leftIndentCm": 0, "dotLeader": true, "includeAppendix": true }, "confidence": "explicit", "source": "author", "note": "Ответ на Q8 (docs/school-guidelines.md, раздел 6): первая строка «ПАСПОРТ ПРОЕКТА», дальше «номер<Tab>название», все уровни без отступа слева, точки до номера страницы, приложение входит в содержание." },
     "ST-05": { "enabled": true, "severity": "error", "params": { "aliasesFrom": "structure.partsInOrder.intro" }, "confidence": "explicit", "source": "S3" },
     "ST-06": { "enabled": true, "severity": "error", "params": { "aliasesFrom": "structure.partsInOrder.conclusion" }, "confidence": "explicit", "source": "S3", "note": "В школе раздел называется «Заключительная часть»." },
     "ST-07": { "enabled": true, "severity": "error", "params": { "aliasesFrom": "structure.partsInOrder.literature" }, "confidence": "explicit", "source": "S3", "note": "В школе раздел называется «Литература»." },
     "ST-08": { "enabled": true, "severity": "warning", "params": { "orderFrom": "structure.partsInOrder", "appendixOptional": true }, "confidence": "explicit", "source": "S3" },
     "ST-09": { "enabled": true, "severity": "info", "params": { "elements": ["актуальность", "цель", "задачи", "продукт"], "optionalElements": ["проблема", "гипотеза", "методы"] }, "confidence": "default", "source": "brief", "note": "Учитель содержание введения не обсуждала." },
     "ST-10": { "enabled": true, "severity": "warning", "params": { "requiredPhrase": "Пояснительная записка", "where": "titlePage", "forbidAsDocumentTitle": ["Паспорт проекта", "Паспорт индивидуального итогового проекта"] }, "confidence": "inferred", "source": "S3", "note": "Учитель сказала, что документ называется «пояснительная записка». Требование надписи на титульном листе выведено из этого. Если она не нужна, отключи." },
+
     "FN-01": { "enabled": true, "severity": "warning", "params": { "pattern": "^[А-ЯЁ][а-яё-]+[,\\s_.-]+[А-ЯЁ]\\.?[,\\s_.-]+[Пп]ояснительная[\\s_-]+записка", "example": "Иванов, И. Пояснительная записка.docx", "allowTransliteration": false }, "confidence": "inferred", "source": "S3", "note": "Имя файла может измениться при загрузке, поэтому проверка работает только для файла, выбранного пользователем." },
+
     "PS-01": { "enabled": true, "severity": "warning", "params": { "fieldsFrom": "structure.passportFields", "optionalFieldsFrom": "structure.passportOptionalFields", "requireNonEmptyValues": true }, "confidence": "explicit", "source": "S3,FILE", "note": "Паспорт проекта это часть записки. В файле все 11 полей на месте." },
 
     "NM-01": { "enabled": true, "severity": "error", "params": { "requirePageField": true }, "confidence": "default", "source": "brief" },
@@ -104,6 +103,7 @@
     "FG-03": { "enabled": true, "severity": "error", "params": {}, "confidence": "default", "source": "brief" },
     "FG-04": { "enabled": true, "severity": "warning", "params": {}, "confidence": "default", "source": "brief" },
     "FG-05": { "enabled": true, "severity": "warning", "params": {}, "confidence": "default", "source": "brief" },
+
     "TB-01": { "enabled": true, "severity": "warning", "params": { "excludeRoles": ["passport-table"] }, "confidence": "default", "source": "brief", "note": "Таблица паспорта не подчиняется правилам подписей." },
     "TB-02": { "enabled": true, "severity": "error", "params": { "excludeRoles": ["passport-table"] }, "confidence": "default", "source": "brief" },
     "TB-03": { "enabled": true, "severity": "warning", "params": { "excludeRoles": ["passport-table"] }, "confidence": "default", "source": "brief" },
@@ -120,12 +120,7 @@
 
     "TH-01": { "enabled": true, "severity": "error", "params": { "minChars": 5400, "recommendedChars": 7200, "charsPerPage": 1800, "partId": "theory" }, "confidence": "explicit", "source": "S4", "note": "«Минимум 3–4 страницы основательного текста»: 3 стр. = 5 400 знаков, 4 стр. = 7 200. В файле 1 777 знаков." },
     "TH-02": { "enabled": true, "severity": "warning", "params": { "partId": "theory", "minCitations": 3, "citationPattern": "\\[\\d+[\\d,;–\\s-]*\\]" }, "confidence": "explicit", "source": "S3", "note": "В теоретической части должны быть ссылки в квадратных скобках с номером источника." },
-    "TH-03": { "enabled": true, "severity": "info", "params": { "partId": "theory", "heuristic": true, "topics": [
-      { "title": "История кино", "keywords": ["истори", "немое кино", "зарожден", "люмьер"] },
-      { "title": "Сценарий и его написание", "keywords": ["сценар", "драматург", "сюжет"] },
-      { "title": "Подбор актёров", "keywords": ["актёр", "актер", "кастинг", "подбор"] },
-      { "title": "Как менялось кино: от немого до современного", "keywords": ["немого", "звуков", "цветн", "современн", "трансформир", "эволюц"] }
-    ] }, "confidence": "explicit", "source": "S4", "note": "Темы относятся к этому проекту. Для другого проекта список меняется. Проверка ключевых слов даёт подсказку, а не приговор." },
+    "TH-03": { "enabled": true, "severity": "info", "params": { "partId": "theory", "heuristic": true, "topicsFrom": "structure.projectTopics" }, "confidence": "explicit", "source": "S4", "note": "Темы теории берутся из блока «Темы проекта» (structure.projectTopics). По умолчанию он пуст, и правило неприменимо: у каждого проекта свои темы (решение В4). Пример для проекта про кино — profiles/examples/project-topics-film.json." },
 
     "CN-01": { "enabled": true, "severity": "warning", "params": { "partId": "conclusion", "heuristic": true, "patterns": ["цел\\p{L}*[^.]{0,60}достигнут", "достигнут\\p{L}*[^.]{0,60}цел"] }, "confidence": "explicit", "source": "S3", "note": "Заключение: сказано, что цель достигнута." },
     "CN-02": { "enabled": true, "severity": "warning", "params": { "partId": "conclusion", "heuristic": true, "patterns": ["сложн", "трудн", "проблем"] }, "confidence": "explicit", "source": "S3", "note": "Заключение: названы возникшие сложности." },
@@ -137,6 +132,7 @@
 
     "VL-01": { "enabled": false, "severity": "warning", "params": { "minPages": null, "charsPerPage": 1800 }, "confidence": "unconfirmed", "source": "S1", "note": "Выключено: учитель сказала «объём маловат», но число не назвала. Включить после подтверждения нормы." },
     "VL-02": { "enabled": true, "severity": "info", "params": { "warnIfEmptyShareAbove": 0.1 }, "confidence": "inferred", "source": "S1,S2", "note": "Показывает, какая доля абзацев пустая и сколько страниц останется без них. В файле 58,5 %." },
+
     "OUT-01": { "enabled": true, "severity": "info", "params": { "message": "Перед сдачей сохраните PDF и откройте его на телефоне: учитель смотрит работу сначала на телефоне или планшете." }, "confidence": "explicit", "source": "S1,S2,S3" },
 
     "DC-01": { "enabled": true, "severity": "error", "params": {}, "confidence": "default", "source": "brief" },
@@ -152,7 +148,7 @@
     "TY-05": { "enabled": true, "severity": "info", "params": {}, "confidence": "default", "source": "brief" },
     "TY-06": { "enabled": true, "severity": "warning", "params": {}, "confidence": "default", "source": "brief" },
     "TY-07": { "enabled": true, "severity": "error", "params": {}, "confidence": "default", "source": "brief" },
-    "TY-08": { "enabled": true, "severity": "info", "params": {}, "confidence": "default", "source": "brief" },
+    "TY-08": { "enabled": false, "severity": "info", "params": {}, "confidence": "default", "source": "brief", "note": "Выключено: образцовая работа школы (fixtures/good/model-note.docx) набрана без неразрывных пробелов, и учитель их не требовала. Включите, если школа попросит." },
     "TY-09": { "enabled": true, "severity": "info", "params": {}, "confidence": "default", "source": "brief" },
     "TY-10": { "enabled": true, "severity": "info", "params": {}, "confidence": "default", "source": "brief" },
     "TY-11": { "enabled": true, "severity": "info", "params": {}, "confidence": "default", "source": "brief" }

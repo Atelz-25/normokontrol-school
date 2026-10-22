@@ -29,6 +29,8 @@ export interface ProfileStructure {
   partNumberFormats?: string[];
   passportFields?: string[];
   passportOptionalFields?: string[];
+  // «Темы проекта»: темы теории со словами-подсказками для TH-03 (решение В4).
+  projectTopics?: { title: string; keywords: string[] }[];
   [key: string]: unknown;
 }
 

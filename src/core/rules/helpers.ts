@@ -49,6 +49,26 @@ export function groupOf(p: Paragraph): FindingGroup | undefined {
   return undefined;
 }
 
+// Абзацы части (между её заголовком и заголовком следующей части), только с текстом.
+// undefined — части в документе нет.
+export function partParagraphs(ctx: CheckContext, partId: string): Paragraph[] | undefined {
+  const { partHeadings } = ctx.classification;
+  const start = partHeadings.get(partId);
+  if (start === undefined) return undefined;
+  const next = [...partHeadings.values()].filter((index) => index > start);
+  const end = next.length > 0 ? Math.min(...next) : ctx.doc.paragraphs.length + 1;
+  return ctx.doc.paragraphs.filter((p) => p.index > start && p.index < end && !p.isEmpty);
+}
+
+// Шаблон из профиля: флаги «u» (Юникод, \p{L}) и «i» (без учёта регистра). Битый шаблон — undefined.
+export function profilePattern(source: string, global = false): RegExp | undefined {
+  try {
+    return new RegExp(source, global ? 'giu' : 'iu');
+  } catch {
+    return undefined;
+  }
+}
+
 // Непустые абзацы с ролями из параметра appliesTo (группы heading и caption раскрываются).
 export function paragraphsFor(ctx: CheckContext, params: Params, fallback: string[]): Paragraph[] {
   const roles = expandRoles(strings(params, 'appliesTo', fallback));

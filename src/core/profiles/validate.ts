@@ -132,6 +132,17 @@ function validateStructure(structure: unknown, add: Add): void {
       add('wrong-type', `structure.${key}`, 'массив строк');
   }
 
+  // «Темы проекта» (решение В4): список { title, keywords[] }, может быть пустым.
+  if ('projectTopics' in structure) {
+    const topics = structure.projectTopics;
+    if (!Array.isArray(topics)) add('wrong-type', 'structure.projectTopics', 'массив');
+    else
+      topics.forEach((topic: unknown, i) => {
+        if (!isPlainObject(topic) || typeof topic.title !== 'string' || !isStringArray(topic.keywords))
+          add('wrong-type', `structure.projectTopics[${i}]`, '{ title, keywords: [строки] }');
+      });
+  }
+
   // Необязательное поле паспорта должно быть одним из полей паспорта.
   const { passportFields, passportOptionalFields } = structure;
   if (isStringArray(passportFields) && isStringArray(passportOptionalFields)) {

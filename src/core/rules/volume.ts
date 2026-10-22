@@ -108,4 +108,28 @@ const pdfReminder: Rule = {
   },
 };
 
-export const volumeRules: Rule[] = [theoryVolume, emptyShare, pdfReminder];
+// VL-01. Общий объём: страницы считаем по знакам (1 800 на страницу). Пока школа не назвала
+// норму (minPages = null), правило неприменимо.
+const totalVolume: Rule = {
+  id: 'VL-01',
+  category: 'document',
+  stage: 3,
+  autoFixable: false,
+  defaultParams: { minPages: null, charsPerPage: 1800 },
+  check(ctx, params) {
+    const minPages = typeof params.minPages === 'number' ? params.minPages : undefined;
+    if (minPages === undefined) return { checked: 0, findings: [], unit: 'document' };
+    const chars = ctx.doc.paragraphs
+      .filter((p) => !p.isEmpty)
+      .reduce((sum, p) => sum + p.text.length, 0);
+    const pages = round(chars / num(params, 'charsPerPage', 1800), 1);
+    return {
+      checked: 1,
+      findings: pages < minPages ? [finding(ctx, false, msg.volumeShort(pages, minPages), {})] : [],
+      unit: 'document',
+      metrics: { chars, pages },
+    };
+  },
+};
+
+export const volumeRules: Rule[] = [theoryVolume, emptyShare, pdfReminder, totalVolume];
