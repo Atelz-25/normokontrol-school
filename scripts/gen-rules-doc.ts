@@ -1,6 +1,7 @@
 // Генерация docs/RULES.md из реестра правил (бриф, раздел 8): npm run docs:rules.
 // Документ не пишется руками, поэтому не расходится с кодом.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { FIXABLE } from '../src/core/fixer/fixable.ts';
 import { plannedStage } from '../src/core/rules/planned.ts';
 import { RULES } from '../src/core/rules/registry.ts';
 import { CATEGORY_NAMES, RULE_TEXTS } from '../src/i18n/rules-ru.ts';
@@ -30,7 +31,7 @@ for (const rule of RULES) {
     ? `${school.severity}${school.confidence ? `, ${school.confidence}` : ''}`
     : '—';
   lines.push(
-    `| ${rule.id} | ${text?.title ?? ''}${rule.heuristic ? ' (эвристика)' : ''} | ${CATEGORY_NAMES[rule.category] ?? rule.category} | ${rule.stage} | ${rule.autoFixable ? 'да (этап 4)' : 'нет'} | ${schoolCell} |`,
+    `| ${rule.id} | ${text?.title ?? ''}${rule.heuristic ? ' (эвристика)' : ''} | ${CATEGORY_NAMES[rule.category] ?? rule.category} | ${rule.stage} | ${FIXABLE.includes(rule.id) ? 'да' : 'нет'} | ${schoolCell} |`,
   );
 }
 
