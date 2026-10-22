@@ -16,6 +16,20 @@ function first(root: XmlElement | undefined, ns: string, name: string): string |
   return value === '' ? undefined : (value ?? undefined);
 }
 
+// word/_rels/document.xml.rels: rId → путь к части внутри архива.
+function readRelationships(root: XmlElement | undefined): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!root) return map;
+  for (const rel of Array.from(root.getElementsByTagNameNS(NS.rel, 'Relationship'))) {
+    const id = rel.getAttribute('Id');
+    const target = rel.getAttribute('Target');
+    if (!id || !target || rel.getAttribute('TargetMode') === 'External') continue;
+    // Цель указана относительно папки word/, иногда с ведущим «/».
+    map.set(id, target.startsWith('/') ? target.slice(1) : `word/${target}`);
+  }
+  return map;
+}
+
 export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMITS): DocModel {
   const parts = readArchive(bytes, limits);
   try {
@@ -30,10 +44,23 @@ export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMI
     const core = optional('docProps/core.xml');
     const documentRoot = parseXml(parts.get('word/document.xml') ?? '');
 
+    const rels = readRelationships(optional('word/_rels/document.xml.rels'));
+    // Колонтитулы: только те, на которые ссылается документ.
+    const headerFooterRoots = new Map<string, XmlElement>();
+    for (const target of rels.values()) {
+      // Имя части может быть любым (footer1.xml, footer-first.xml), важно слово header/footer.
+      const root = /^word\/[^/]*(header|footer)[^/]*\.xml$/.test(target)
+        ? optional(target)
+        : undefined;
+      if (root) headerFooterRoots.set(target, root);
+    }
+
     return buildModel(documentRoot, sheet, numbering, {
       comments: comments ? comments.getElementsByTagNameNS(NS.w, 'comment').length : 0,
       title: first(core, NS.dc, 'title'),
       creator: first(core, NS.dc, 'creator'),
+      rels,
+      headerFooterRoots,
     });
   } catch (error) {
     if (error instanceof DocxError) throw error;

@@ -6,7 +6,15 @@
 //   - удалённый текст (w:del) — это правка, его в абзаце уже нет;
 //   - mc:AlternateContent дублирует содержимое: берём только один вариант;
 //   - сложное поле (fldChar begin/separate/end) может тянуться через несколько абзацев.
-import type { DocModel, FieldInfo, Paragraph, Run, Section, Table } from '../model/types.ts';
+import type {
+  DocModel,
+  FieldInfo,
+  HeaderFooter,
+  Paragraph,
+  Run,
+  Section,
+  Table,
+} from '../model/types.ts';
 import {
   mergePPr,
   readPPr,
@@ -38,6 +46,7 @@ interface WalkState {
   sections: Section[];
   openFields: OpenField[];
   renderedBreaks: number;
+  rels: Map<string, string>;
 }
 
 interface TableContext {
@@ -220,10 +229,28 @@ class ParagraphBuilder {
   }
 }
 
+// Ссылки раздела на колонтитулы: w:footerReference w:type="first" r:id="rId9" → word/footer2.xml.
+function references(
+  sectPr: XmlElement | undefined,
+  tag: string,
+  rels: Map<string, string>,
+): Section['headers'] {
+  const result: Section['headers'] = {};
+  if (!sectPr) return result;
+  for (const ref of children(sectPr, NS.w, tag)) {
+    const kind = wAttr(ref, 'type') ?? 'default';
+    const target = rels.get(ref.getAttributeNS(NS.r, 'id') ?? '');
+    if (target && (kind === 'default' || kind === 'first' || kind === 'even'))
+      result[kind] = target;
+  }
+  return result;
+}
+
 function readSection(
   sectPr: XmlElement | undefined,
   index: number,
   lastParagraph: number,
+  rels: Map<string, string>,
 ): Section {
   const size = wChild(sectPr, 'pgSz');
   const margins = wChild(sectPr, 'pgMar');
@@ -239,6 +266,11 @@ function readSection(
     // Если тип раздела не указан, Word считает его «со следующей страницы».
     type: wAttr(wChild(sectPr, 'type'), 'val') ?? 'nextPage',
     lastParagraph,
+    headers: references(sectPr, 'headerReference', rels),
+    footers: references(sectPr, 'footerReference', rels),
+    titlePage:
+      wChild(sectPr, 'titlePg') !== undefined && wAttr(wChild(sectPr, 'titlePg'), 'val') !== '0',
+    pageNumberStart: wNum(wChild(sectPr, 'pgNumType'), 'start'),
   };
 }
 
@@ -271,7 +303,7 @@ function paragraph(state: WalkState, el: XmlElement, table?: TableContext): void
 
   const sectPr = wChild(pPrEl, 'sectPr');
   const sectionIndex = state.sections.length + 1;
-  if (sectPr) state.sections.push(readSection(sectPr, sectionIndex, index));
+  if (sectPr) state.sections.push(readSection(sectPr, sectionIndex, index, state.rels));
 
   const fontSizePt = halfPointsToPt(paragraphRPr.sz ?? 20);
   const pageStart = 1 + state.renderedBreaks + (builder.renderedBreakAtStart ? 1 : 0);
@@ -326,20 +358,22 @@ function tableElement(state: WalkState, el: XmlElement): void {
     firstParagraph: state.paragraphs.length + 1,
     lastParagraph: state.paragraphs.length,
     firstColumnTexts: [],
+    cells: [],
     role: 'generic',
   };
   state.tables.push(record);
 
   children(el, NS.w, 'tr').forEach((tr, row) => {
     record.rows += 1;
+    const rowTexts: string[] = [];
     children(tr, NS.w, 'tc').forEach((tc, cell) => {
       const before = state.paragraphs.length;
       block(state, tc, { tableIndex, row, cell });
-      if (cell === 0) {
-        const texts = state.paragraphs.slice(before).map((p) => p.text.trim());
-        record.firstColumnTexts.push(texts.filter(Boolean).join(' '));
-      }
+      const texts = state.paragraphs.slice(before).map((p) => p.text.trim());
+      rowTexts.push(texts.filter(Boolean).join(' '));
     });
+    record.cells.push(rowTexts);
+    record.firstColumnTexts.push(rowTexts[0] ?? '');
   });
   record.lastParagraph = state.paragraphs.length;
 }
@@ -384,28 +418,71 @@ const REVISION_TAGS = [
   'sectPrChange',
 ];
 
+const freshState = (
+  sheet: StyleSheet,
+  numbering: NumberingLookup,
+  rels: Map<string, string>,
+): WalkState => ({
+  sheet,
+  numbering,
+  paragraphs: [],
+  tables: [],
+  sections: [],
+  openFields: [],
+  renderedBreaks: 0,
+  rels,
+});
+
+// Колонтитул устроен как маленький документ: те же абзацы, стили и поля.
+function readHeaderFooter(
+  part: string,
+  root: XmlElement,
+  sheet: StyleSheet,
+  numbering: NumberingLookup,
+): HeaderFooter {
+  const state = freshState(sheet, numbering, new Map());
+  block(state, root);
+  return {
+    part,
+    paragraphs: state.paragraphs.map((p) => ({
+      text: p.text,
+      align: p.format.align,
+      fields: p.fields,
+    })),
+  };
+}
+
+export interface ModelExtra {
+  comments: number;
+  title?: string;
+  creator?: string;
+  rels: Map<string, string>; // rId → имя части (word/footer1.xml)
+  headerFooterRoots: Map<string, XmlElement>;
+}
+
 export function buildModel(
   documentRoot: XmlElement,
   sheet: StyleSheet,
   numbering: NumberingLookup,
-  extra: { comments: number; title?: string; creator?: string },
+  extra: ModelExtra,
 ): DocModel {
   const body = wChild(documentRoot, 'body');
-  const state: WalkState = {
-    sheet,
-    numbering,
-    paragraphs: [],
-    tables: [],
-    sections: [],
-    openFields: [],
-    renderedBreaks: 0,
-  };
+  const state = freshState(sheet, numbering, extra.rels);
   if (body) block(state, body);
 
   // Последний раздел описан в конце body, а не в абзаце.
   state.sections.push(
-    readSection(wChild(body, 'sectPr'), state.sections.length + 1, state.paragraphs.length),
+    readSection(
+      wChild(body, 'sectPr'),
+      state.sections.length + 1,
+      state.paragraphs.length,
+      extra.rels,
+    ),
   );
+
+  const headerFooters: Record<string, HeaderFooter> = {};
+  for (const [part, root] of extra.headerFooterRoots)
+    headerFooters[part] = readHeaderFooter(part, root, sheet, numbering);
 
   let revisions = 0;
   for (const tag of REVISION_TAGS)
@@ -420,5 +497,6 @@ export function buildModel(
     comments: Math.max(extra.comments, commentRefs),
     hasLastRenderedPageBreaks: state.renderedBreaks > 0,
     properties: { title: extra.title, creator: extra.creator },
+    headerFooters,
   };
 }

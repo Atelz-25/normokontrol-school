@@ -100,8 +100,17 @@ export interface Table {
   firstParagraph: number;
   lastParagraph: number;
   firstColumnTexts: string[];
+  cells: string[][]; // текст каждой ячейки, по строкам
   role: TableRole;
 }
+
+// Колонтитул: где номер страницы и как он выровнен (правила NM-*).
+export interface HeaderFooter {
+  part: string; // имя части в архиве, например word/footer1.xml
+  paragraphs: { text: string; align: Align; fields: FieldInfo[] }[];
+}
+
+export type HeaderFooterKind = 'default' | 'first' | 'even';
 
 export interface Section {
   index: number;
@@ -111,6 +120,11 @@ export interface Section {
   marginsMm: { top: number; right: number; bottom: number; left: number };
   type: string;
   lastParagraph: number; // последний абзац раздела
+  // Ссылки на колонтитулы (имена частей). Раздел без своей ссылки наследует её у предыдущего.
+  headers: Partial<Record<HeaderFooterKind, string>>;
+  footers: Partial<Record<HeaderFooterKind, string>>;
+  titlePage: boolean; // «Особый колонтитул для первой страницы»
+  pageNumberStart?: number; // нумерация начата заново с этого числа
 }
 
 export interface DocModel {
@@ -121,4 +135,5 @@ export interface DocModel {
   comments: number;
   hasLastRenderedPageBreaks: boolean;
   properties: { title?: string; creator?: string };
+  headerFooters: Record<string, HeaderFooter>;
 }
