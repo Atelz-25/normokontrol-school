@@ -140,5 +140,6 @@ export function buildDocx(options: DocOptions): Uint8Array {
   // Двоичные части (картинки) кладём без сжатия, как Word кладёт PNG и JPEG.
   for (const [name, data] of Object.entries(options.binaryParts ?? {}))
     entries[name] = [data, { level: 0 }];
-  return zipSync(entries);
+  // Фиксированная дата внутри архива: иначе каждая сборка даёт «новый» файл, и git видит изменения.
+  return zipSync(entries, { mtime: new Date('2026-01-01T00:00:00Z') });
 }
