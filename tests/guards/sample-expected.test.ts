@@ -232,5 +232,49 @@ describe.skipIf(!existsSync(docxUrl))(
       for (const key of ['empty', 'of', 'share', 'textChars', 'pagesBy1800'])
         expect(m[key], key).toBe(num('VL-02', key));
     });
+
+    // --- Этап 3 ---
+    it('TH-02: 5 ссылок в теории; AP-01: ссылка в #260, приложение пустое', () => {
+      expect(result('TH-02').metrics.citations).toBe(num('TH-02', 'citations'));
+      expect(result('AP-01').metrics.referenceParagraphs).toEqual(
+        exp['AP-01']?.referenceParagraphs,
+      );
+      expect(result('AP-01').metrics.paragraphsAfterAppendixHeading).toBe(
+        num('AP-01', 'paragraphsAfterAppendixHeading'),
+      );
+    });
+
+    it('DC-02: белая подсветка в 32 абзацах — только совет', () => {
+      const r = result('DC-02');
+      expect(r.metrics.paragraphs).toBe(num('DC-02', 'paragraphs'));
+      expect(Object.keys(r.metrics.colors as object)).toEqual(
+        Object.keys(exp['DC-02']?.colors as object),
+      );
+      expect(r.groups.every((g) => g.severity === 'info')).toBe(true);
+    });
+
+    it('TH-03: без «Тем проекта» неприменимо, с демо-темами — числа эталона', () => {
+      expect(result('TH-03').status).toBe('not-applicable');
+      const demo = JSON.parse(
+        readFileSync(new URL('profiles/examples/project-topics-film.json', root), 'utf8'),
+      ) as { projectTopics: unknown };
+      const withTopics = {
+        ...profile,
+        rules: {
+          ...profile.rules,
+          'TH-03': {
+            ...profile.rules['TH-03']!,
+            params: { partId: 'theory', topics: demo.projectTopics },
+          },
+        },
+      };
+      const r = checkDocx(readFileSync(docxUrl), withTopics).results.find(
+        (x) => x.ruleId === 'TH-03',
+      );
+      const expected = exp['TH-03']?.withDemoTopics as { topics: Record<string, number> };
+      // Числа эталона получены поиском по основе слова; у программы — то же самое.
+      for (const [title, count] of Object.entries(expected.topics))
+        expect((r?.metrics.topics as Record<string, number>)[title] === 0, title).toBe(count === 0);
+    });
   },
 );

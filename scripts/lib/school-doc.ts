@@ -28,7 +28,39 @@ export interface SchoolDocOptions {
   partHeadingRPr?: string;
   middleSection?: string; // sectPr в абзаце после введения (второй раздел)
   finalSectPrExtra?: string; // дополнительно в последний раздел, например pgNumType
+  // Этап 3: содержание частей.
+  introParagraphs?: string[];
+  theoryCitations?: boolean; // ссылки [1]…[5] в теории
+  extraTheory?: string[];
+  conclusion?: string[];
+  literature?: string[]; // записи списка литературы
+  appendix?: string[];
+  creator?: string; // автор в свойствах файла (docProps/core.xml)
 }
+
+export const INTRO = [
+  'Актуальность темы связана с тем, что многие школьники снимают видео для себя и для школьных мероприятий.',
+  'Цель проекта — снять короткий фильм о школе и описать этапы работы над ним.',
+  'Задачи проекта: изучить этапы съёмки, написать сценарий, снять и смонтировать фильм.',
+  'Продукт проекта — короткий фильм о школе.',
+];
+
+// Источники по алфавиту; на каждый есть ссылка в теоретической части.
+export const LITERATURE = [
+  '1. Белов А. А. Монтаж для начинающих. — Москва : Искусство, 2019. — 96 с.',
+  '2. Иванов И. И. Как снять кино. — Москва : Наука, 2020. — 120 с.',
+  '3. Козлова М. В. Сценарий короткого фильма. — Москва : Просвещение, 2021. — 80 с.',
+  '4. Орлов П. С. Свет и звук на съёмке. — Москва : Искусство, 2018. — 110 с.',
+  '5. Школьное кино // Школьный портал. — URL: https://example.org/kino (дата обращения: 20.10.2026).',
+];
+
+export const CONCLUSION = [
+  'Цель проекта достигнута: фильм снят и показан классу.',
+  'Самым сложным оказалось уложиться в срок, потому что съёмки зависели от погоды.',
+  'Сначала я планировал снимать на камеру, но заменил её телефоном, потому что камеры не нашлось.',
+  'Эту трудность я решил так: перенёс уличные сцены в школьный двор.',
+  'В следующий раз я бы заранее составил план съёмок на каждый день.',
+];
 
 type PartKey = 'intro' | 'main' | 'theory' | 'practice' | 'conclusion' | 'literature' | 'appendix';
 
@@ -155,29 +187,28 @@ export function schoolDoc(options: SchoolDocOptions = {}): Uint8Array {
   const styled = options.headingStyle ?? true;
   const bodyOf: Record<PartKey, string[]> = {
     intro: [
-      p(
-        'Актуальность темы связана с тем, что многие школьники снимают видео для себя и для школьных мероприятий.',
-      ),
-      p('Цель проекта — снять короткий фильм о школе и описать этапы работы над ним.'),
+      ...(options.introParagraphs ?? INTRO).map((text) => p(text)),
       ...(options.extraBody ?? []),
       ...(options.middleSection ? [p('Конец введения.', { pPr: options.middleSection })] : []),
     ],
     main: [],
     theory: [
       subHeading('1. Этапы создания фильма', styled),
-      ...Array.from({ length: options.theoryParagraphs ?? 15 }, () => p(LONG)),
+      ...Array.from({ length: options.theoryParagraphs ?? 15 }, (_, i) =>
+        // В первых пяти абзацах — ссылки на источники [1]…[5].
+        p(options.theoryCitations !== false && i < 5 ? `${LONG.slice(0, -1)} [${i + 1}].` : LONG),
+      ),
+      ...(options.extraTheory ?? []),
     ],
     practice: [
       subHeading('1. Съёмка фильма', styled),
       p('Съёмка заняла две недели, монтаж — ещё неделю.'),
     ],
-    conclusion: [p('Цель проекта достигнута: фильм снят и показан классу.')],
-    literature: [
-      p('1. Иванов И. И. Как снять кино. — Москва : Наука, 2020. — 120 с.', {
-        pPr: '<w:ind w:firstLine="0"/>',
-      }),
-    ],
-    appendix: [p('Приложение 1. Кадры из фильма.')],
+    conclusion: (options.conclusion ?? CONCLUSION).map((text) => p(text)),
+    literature: (options.literature ?? LITERATURE).map((text) =>
+      p(text, { pPr: '<w:ind w:firstLine="0"/>' }),
+    ),
+    appendix: (options.appendix ?? ['Приложение 1. Кадры из фильма.']).map((text) => p(text)),
   };
 
   const parts = (options.order ?? DEFAULT_ORDER).flatMap((key) => {
@@ -192,5 +223,10 @@ export function schoolDoc(options: SchoolDocOptions = {}): Uint8Array {
     finalSectPr: sectPr(undefined, undefined, options.finalSectPrExtra ?? ''),
     footers: options.footers ?? { default: pageNumber(), first: '<w:p/>' },
     titlePage: options.titlePage ?? true,
+    extraParts: options.creator
+      ? {
+          'docProps/core.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:creator>${escapeXml(options.creator)}</dc:creator></cp:coreProperties>`,
+        }
+      : {},
   });
 }

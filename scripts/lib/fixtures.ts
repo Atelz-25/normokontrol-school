@@ -13,7 +13,14 @@ import {
   sectPr,
   table,
 } from './docx-builder.ts';
-import { PASSPORT_ROWS as SCHOOL_PASSPORT, TITLE_LINES, schoolDoc } from './school-doc.ts';
+import {
+  CONCLUSION,
+  INTRO,
+  LITERATURE,
+  PASSPORT_ROWS as SCHOOL_PASSPORT,
+  TITLE_LINES,
+  schoolDoc,
+} from './school-doc.ts';
 
 const T1 = 'Первый абзац основного текста, в нём описывается тема проекта.';
 const T2 = 'Второй абзац продолжает мысль и приводит пример из практики.';
@@ -315,5 +322,261 @@ export const STAGE2_FIXTURES: Record<string, FixturePair> = {
   'VL-02': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: emptyRun(40) }) },
 };
 
-// Все пары в одном списке: этап 1 и этап 2.
-Object.assign(FIXTURES, STAGE2_FIXTURES);
+// --- Этап 3: содержание, источники, рисунки, таблицы, типографика ---
+const center = '<w:ind w:firstLine="0"/><w:jc w:val="center"/>';
+const left = '<w:ind w:firstLine="0"/><w:jc w:val="left"/>';
+
+// Рисунок 10 см шириной: «в тексте» (inline) или с обтеканием (anchor).
+function drawing(options: { anchored?: boolean; align?: string; widthMm?: number } = {}): string {
+  const kind = options.anchored ? 'anchor' : 'inline';
+  const cx = Math.round((options.widthMm ?? 100) * 36000);
+  return (
+    `<w:p><w:pPr><w:ind w:firstLine="0"/><w:jc w:val="${options.align ?? 'center'}"/></w:pPr><w:r><w:drawing>` +
+    `<wp:${kind} xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><wp:extent cx="${cx}" cy="1800000"/></wp:${kind}>` +
+    '</w:drawing></w:r></w:p>'
+  );
+}
+
+const figure = (caption = 'Рисунок 1 – Кадр из фильма', mention = true, options = {}): string[] => [
+  drawing(options),
+  p(caption, { pPr: center }),
+  ...(mention ? [p('Кадр из фильма показан на рисунке 1.')] : []),
+];
+
+const tableBlock = (
+  caption = 'Таблица 1 – Этапы съёмки',
+  mention = true,
+  rows?: string[][],
+  header = false,
+): string[] => [
+  ...(caption ? [p(caption, { pPr: left })] : []),
+  table(
+    rows ?? [
+      ['Этап', 'Срок'],
+      ['Сценарий', 'Сентябрь'],
+      ['Съёмка', 'Октябрь'],
+    ],
+    left,
+  ).replace('<w:tr>', header ? '<w:tr><w:trPr><w:tblHeader/></w:trPr>' : '<w:tr>'),
+  ...(mention ? [p('Этапы работы перечислены в таблице 1.')] : []),
+];
+
+const manyRows = Array.from({ length: 25 }, (_, i) => [`Шаг ${i + 1}`, 'Готово']);
+// Элемент списка по номеру (пустая строка, если его нет) — без «!» в коде.
+const nth = (list: string[], i: number): string => list[i] ?? '';
+const drop = (list: string[], prefix: string): string[] =>
+  list.filter((line) => !line.startsWith(prefix));
+const bold = (text: string): string =>
+  `<w:p><w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
+const marked =
+  '<w:p><w:r><w:rPr><w:highlight w:val="yellow"/></w:rPr><w:t>Этот текст выделен жёлтым маркером.</w:t></w:r></w:p>';
+const LONG_WORDS = Array.from({ length: 260 }, (_, i) => (i % 10 === 9 ? 'слово.' : 'слово')).join(
+  ' ',
+);
+const nbspLiterature = LITERATURE.map((line) =>
+  line.replace(/ (?=с\.)/g, '\u00a0').replace(/(?<=[А-ЯЁ]\.) (?=[А-ЯЁ])/g, '\u00a0'),
+);
+
+export const STAGE3_FIXTURES: Record<string, FixturePair> = {
+  'TH-02': { good: () => schoolDoc(), bad: () => schoolDoc({ theoryCitations: false }) },
+  'TH-03': {
+    good: () => schoolDoc({ extraTheory: [p('Первый фильм показали братья Люмьер в 1895 году.')] }),
+    bad: () => schoolDoc(),
+    override: {
+      enabled: true,
+      params: { partId: 'theory', topics: [{ title: 'История кино', keywords: ['люмьер'] }] },
+    },
+  },
+  'CN-01': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ conclusion: drop(CONCLUSION, 'Цель') }),
+  },
+  // Без «сложностей»: ни «сложн», ни «трудн», ни «проблем».
+  'CN-02': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        conclusion: [
+          nth(CONCLUSION, 0),
+          nth(CONCLUSION, 2),
+          'Я справился и перенёс сцены во двор.',
+          nth(CONCLUSION, 4),
+        ],
+      }),
+  },
+  'CN-03': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ conclusion: drop(CONCLUSION, 'Сначала') }),
+  },
+  'CN-04': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ conclusion: drop(CONCLUSION, 'Эту') }),
+  },
+  'CN-05': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ conclusion: drop(CONCLUSION, 'В следующий') }),
+  },
+  'AP-01': {
+    good: () => schoolDoc({ extraBody: [p('Кадры из фильма приведены в приложении.')] }),
+    bad: () =>
+      schoolDoc({ extraBody: [p('Кадры из фильма приведены в приложении.')], appendix: [] }),
+  },
+  'ST-09': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ introParagraphs: INTRO.slice(0, 2) }),
+  },
+  'RF-01': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        literature: [
+          ...LITERATURE.slice(0, 4),
+          'Школьное кино // Школьный портал. — URL: https://example.org/kino (дата обращения: 20.10.2026).',
+        ],
+      }),
+  },
+  'RF-02': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        literature: [
+          nth(LITERATURE, 1).replace('2.', '1.'),
+          nth(LITERATURE, 0).replace('1.', '2.'),
+          ...LITERATURE.slice(2),
+        ],
+      }),
+    override: { enabled: true, params: { order: 'alphabetical' } },
+  },
+  'RF-03': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ literature: LITERATURE.slice(0, 3) }),
+  },
+  'RF-04': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({ literature: [nth(LITERATURE, 0).replace(/\.$/, ''), ...LITERATURE.slice(1)] }),
+  },
+  'RF-05': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        literature: [
+          ...LITERATURE.slice(0, 4),
+          '5. Школьное кино // Школьный портал. — URL: https://example.org/kino.',
+        ],
+      }),
+  },
+  'RF-06': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraTheory: [p('Об этом пишут и другие авторы [9].')] }),
+  },
+  'RF-07': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        literature: [
+          ...LITERATURE,
+          '6. Яковлев Я. Я. Видео на телефон. — Москва : Наука, 2022. — 64 с.',
+        ],
+      }),
+  },
+  'RF-08': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ literature: [...LITERATURE, nth(LITERATURE, 1).replace('2.', '6.')] }),
+  },
+  'FG-01': {
+    good: () => schoolDoc({ extraTheory: figure() }),
+    bad: () => schoolDoc({ extraTheory: [drawing(), p('Кадр из фильма показан на рисунке 1.')] }),
+  },
+  'FG-02': {
+    good: () => schoolDoc({ extraTheory: figure() }),
+    bad: () => schoolDoc({ extraTheory: figure('Рис. 1. Кадр из фильма') }),
+  },
+  'FG-03': {
+    good: () => schoolDoc({ extraTheory: figure() }),
+    bad: () => schoolDoc({ extraTheory: [...figure(), ...figure('Рисунок 3 – Ещё кадр', false)] }),
+  },
+  'FG-04': {
+    good: () => schoolDoc({ extraTheory: figure() }),
+    bad: () => schoolDoc({ extraTheory: figure(undefined, false) }),
+  },
+  'FG-05': {
+    good: () => schoolDoc({ extraTheory: figure() }),
+    bad: () =>
+      schoolDoc({ extraTheory: figure(undefined, true, { anchored: true, widthMm: 200 }) }),
+  },
+  'TB-01': {
+    good: () => schoolDoc({ extraTheory: tableBlock() }),
+    bad: () => schoolDoc({ extraTheory: tableBlock('') }),
+  },
+  'TB-02': {
+    good: () => schoolDoc({ extraTheory: tableBlock() }),
+    bad: () => schoolDoc({ extraTheory: tableBlock('Таблица 2 – Этапы съёмки') }),
+  },
+  'TB-03': {
+    good: () => schoolDoc({ extraTheory: tableBlock() }),
+    bad: () => schoolDoc({ extraTheory: tableBlock(undefined, false) }),
+  },
+  'TB-04': {
+    good: () => schoolDoc({ extraTheory: tableBlock(undefined, true, manyRows, true) }),
+    bad: () => schoolDoc({ extraTheory: tableBlock(undefined, true, manyRows, false) }),
+  },
+  'FT-06': {
+    good: () => schoolDoc(),
+    bad: () =>
+      schoolDoc({
+        extraBody: [
+          bold('Очень длинный фрагмент текста, выделенный полужирным целиком. '.repeat(4)),
+        ],
+      }),
+  },
+  'DC-02': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: [marked] }) },
+  'DC-03': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: [p('Введите текст')] }) },
+  'DC-04': {
+    good: () => schoolDoc({ creator: 'Иванов И. И.' }),
+    bad: () => schoolDoc({ creator: 'Петров П. П.' }),
+    override: { enabled: true, params: { expectedAuthor: 'Иванов И. И.' } },
+  },
+  'DC-05': { good: () => schoolDoc(), bad: () => schoolDoc({ extraBody: [p(LONG_WORDS)] }) },
+  'TY-04': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Он сказал "привет" и ушёл.')] }),
+  },
+  'TY-05': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Фильм ( короткий ) снят за месяц.')] }),
+  },
+  'TY-06': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Абзац с пробелом в конце. ')] }),
+  },
+  'TY-07': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Это мoё мнение о фильме.')] }),
+  },
+  'TY-08': {
+    good: () => schoolDoc({ literature: nbspLiterature }),
+    bad: () => schoolDoc({ literature: nbspLiterature, extraBody: [p('Шрифт размером 12 пт.')] }),
+    override: { enabled: true, params: {} },
+  },
+  'TY-09': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Фильм длится 10-15 минут.')] }),
+  },
+  'TY-10': {
+    good: () => schoolDoc({ extraBody: [p('Итак… фильм готов.')] }),
+    bad: () => schoolDoc({ extraBody: [p('Итак... фильм готов.'), p('Потом… показ.')] }),
+  },
+  'VL-01': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ theoryParagraphs: 2 }),
+    override: { enabled: true, params: { minPages: 3 } },
+  },
+  'TY-11': {
+    good: () => schoolDoc(),
+    bad: () => schoolDoc({ extraBody: [p('Мы снимали в в школе.')] }),
+  },
+};
+
+// Все пары в одном списке: этапы 1, 2 и 3.
+Object.assign(FIXTURES, STAGE2_FIXTURES, STAGE3_FIXTURES);
