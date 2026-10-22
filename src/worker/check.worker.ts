@@ -9,9 +9,9 @@ const post = (message: CheckResponse): void => {
 };
 
 self.addEventListener('message', (event: MessageEvent<CheckRequest>) => {
-  const { id, bytes, profile } = event.data;
+  const { id, bytes, profile, fileName } = event.data;
   try {
-    post({ id, ok: true, report: checkDocx(new Uint8Array(bytes), profile) });
+    post({ id, ok: true, report: checkDocx(new Uint8Array(bytes), profile, { fileName }) });
   } catch (error) {
     // Ни одно исключение не уходит необработанным: страница всегда получает ответ.
     post({ id, ok: false, code: error instanceof DocxError ? error.code : 'broken' });

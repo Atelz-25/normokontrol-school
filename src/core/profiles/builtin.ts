@@ -41,9 +41,38 @@ const typicalRules: Record<string, RuleConfig> = {
   'TY-02': rule('warning'),
   'TY-03': rule('warning'),
   'DC-01': rule('error'),
+  // Этап 2.
+  'FT-05': rule('warning', { forbidUnderlineInBody: true }),
+  'PR-07': rule('warning', { forbidManualLineBreaks: true }),
+  'HD-01': rule('warning'),
+  'HD-02': rule('warning', { forbidTrailingDot: true }),
+  'HD-03': rule('warning'),
+  'HD-04': rule('warning'),
+  'HD-05': rule('warning', { requireKeepNext: true }),
+  'HD-06': rule('info', { case: 'any', align: 'any' }),
+  'HD-07': rule('warning'),
+  'ST-01': rule('warning', { minSigns: 2, signs: ['проект', 'выполнил', 'руководитель'] }),
+  'ST-02': rule('error', { aliases: ['Содержание', 'Оглавление'] }),
+  'ST-03': rule('warning', { requireTocField: true }),
+  'ST-04': rule('warning', { compareTitles: true, comparePages: 'ifKnown' }),
+  'ST-05': rule('error', { aliases: ['Введение'] }),
+  'ST-06': rule('error', { aliases: ['Заключение', 'Выводы'] }),
+  'ST-07': rule('error', { aliases: ['Список литературы', 'Список источников', 'Список использованных источников', 'Литература'] }),
+  'ST-08': rule('warning', { appendixOptional: true }),
+  'NM-01': rule('error', { requirePageField: true }),
+  'NM-02': rule('warning', { position: 'bottom-center' }),
+  'NM-03': rule('warning', { noNumberOnTitlePage: true }),
+  'NM-04': rule('warning', { continuous: true }),
+  // Новые школьные правила: во встроенных профилях только советы или выключены.
+  'ST-10': rule('info', { requiredPhrase: 'Пояснительная записка' }, false),
+  'PS-01': rule('info', {}, false),
+  'FN-01': rule('info', {}, false),
+  'TH-01': rule('info', {}, false),
+  'VL-02': rule('info', { warnIfEmptyShareAbove: 0.1 }),
+  'OUT-01': rule('info', { message: 'Перед сдачей сохраните работу в PDF и посмотрите, как она выглядит на телефоне.' }),
 };
 
-const NEW_SCHOOL_RULES = new Set(['PR-08', 'PR-09', 'PR-10', 'PB-01']);
+const NEW_SCHOOL_RULES = new Set(['PR-08', 'PR-09', 'PR-10', 'PB-01', 'ST-10', 'PS-01', 'FN-01', 'TH-01', 'VL-02', 'OUT-01']);
 
 const typical: Profile = {
   schemaVersion: 1,

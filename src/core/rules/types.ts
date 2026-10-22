@@ -36,6 +36,7 @@ export interface CheckContext {
   classification: Classification;
   severity: Severity; // серьёзность из профиля
   ruleId: string;
+  fileName?: string; // имя выбранного файла (знает только интерфейс)
 }
 
 export interface Rule {

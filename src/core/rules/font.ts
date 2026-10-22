@@ -136,4 +136,27 @@ const textColor: Rule = {
   },
 };
 
-export const fontRules: Rule[] = [fontFamily, fontSize, singleFamily, textColor];
+// Подчёркивание в основном тексте: так выделяли на печатной машинке; сейчас — только ссылки.
+const underline: Rule = {
+  id: 'FT-05',
+  category: 'font',
+  stage: 2,
+  autoFixable: true,
+  defaultParams: { forbidUnderlineInBody: true, appliesTo: ['body', 'list-item'] },
+  check(ctx, params) {
+    if (!bool(params, 'forbidUnderlineInBody', true))
+      return { checked: 0, findings: [], unit: 'paragraphs' };
+    const paragraphs = paragraphsFor(ctx, params, ['body', 'list-item']);
+    const findings: Finding[] = paragraphs
+      .filter((p) => visibleRuns(p).some((r) => r.underline && !r.inHyperlink))
+      .map((p) => finding(ctx, true, msg.underline(), { paragraph: p }));
+    return {
+      checked: paragraphs.length,
+      findings,
+      unit: 'paragraphs',
+      summary: summary.paragraphs(findings.length, paragraphs.length),
+    };
+  },
+};
+
+export const fontRules: Rule[] = [fontFamily, fontSize, singleFamily, textColor, underline];

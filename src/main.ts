@@ -82,7 +82,7 @@ function runCheck(): void {
   results.replaceChildren();
   // Копию буфера отдаём Worker'у «насовсем» (transfer): так не тратится время на копирование.
   const bytes = lastFile.bytes.slice(0);
-  const request: CheckRequest = { id: requestId, bytes, profile };
+  const request: CheckRequest = { id: requestId, bytes, profile, fileName: lastFile.name };
   worker.postMessage(request, [bytes]);
 }
 

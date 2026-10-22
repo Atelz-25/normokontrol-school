@@ -258,7 +258,30 @@ const rightIndent: Rule = {
   },
 };
 
+// Ручной перенос строки (Shift+Enter) внутри абзаца: при другой ширине строки остаётся «дыра».
+const manualBreaks: Rule = {
+  id: 'PR-07',
+  category: 'paragraph',
+  stage: 2,
+  autoFixable: false,
+  defaultParams: { forbidManualLineBreaks: true },
+  check(ctx, params) {
+    if (!bool(params, 'forbidManualLineBreaks', true))
+      return { checked: 0, findings: [], unit: 'paragraphs' };
+    // Титульный лист и таблицы верстают строками по-своему.
+    const paragraphs = ctx.doc.paragraphs.filter(
+      (p) => !p.isEmpty && !p.table && p.zone !== 'title-page',
+    );
+    return perParagraph(paragraphs, (p) =>
+      p.text.includes('\n')
+        ? finding(ctx, false, msg.manualBreak((p.text.match(/\n/g) ?? []).length), { paragraph: p })
+        : undefined,
+    );
+  },
+};
+
 export const paragraphRules: Rule[] = [
+  manualBreaks,
   lineSpacing,
   spacing,
   firstLineIndent,

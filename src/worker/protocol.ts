@@ -7,6 +7,7 @@ export interface CheckRequest {
   id: number;
   bytes: ArrayBuffer;
   profile: Profile;
+  fileName: string;
 }
 
 export type CheckResponse =

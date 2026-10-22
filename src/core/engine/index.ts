@@ -98,7 +98,11 @@ function groupFindings(
     });
 }
 
-export function checkModel(doc: DocModel, profile: Profile): Report {
+export interface CheckOptions {
+  fileName?: string; // имя выбранного файла — для FN-01
+}
+
+export function checkModel(doc: DocModel, profile: Profile, options: CheckOptions = {}): Report {
   const classification: Classification = classify(doc, {
     parts: profile.structure?.partsInOrder,
     passportFields: profile.structure?.passportFields,
@@ -122,7 +126,7 @@ export function checkModel(doc: DocModel, profile: Profile): Report {
     try {
       const params = { ...rule.defaultParams, ...config.params };
       const outcome = rule.check(
-        { doc, classification, severity: config.severity, ruleId },
+        { doc, classification, severity: config.severity, ruleId, fileName: options.fileName },
         params,
       );
       // titlePageSeverity: на титульном листе своя (обычно мягче) серьёзность. Применяем её здесь,
@@ -157,6 +161,6 @@ export function checkModel(doc: DocModel, profile: Profile): Report {
   return { profileId: profile.id, results, stats: documentStats(doc) };
 }
 
-export function checkDocx(bytes: Uint8Array, profile: Profile): Report {
-  return checkModel(readDocx(bytes), profile);
+export function checkDocx(bytes: Uint8Array, profile: Profile, options: CheckOptions = {}): Report {
+  return checkModel(readDocx(bytes), profile, options);
 }
