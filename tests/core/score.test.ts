@@ -28,7 +28,12 @@ describe('оценка', () => {
     const report = checkDocx(
       FIXTURES['PR-03']!.bad(),
       profile({
-        'PR-03': on('error', { appliesTo: ['body'] }),
+        'PR-03': on('error', {
+          mode: 'equals',
+          valueCm: 1.5,
+          toleranceCm: 0.1,
+          appliesTo: ['body'],
+        }),
         'TY-03': on('warning'),
         'DC-01': on('info'),
       }),

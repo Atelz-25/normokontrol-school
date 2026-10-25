@@ -158,9 +158,9 @@ function partHeading(key: PartKey, text: string, options: SchoolDocOptions): str
   // Без стиля оформляем «руками» так же, как стиль: так меняется только HD-01.
   const manual = styled
     ? ''
-    : `<w:keepNext/><w:ind w:firstLine="${part.level === 2 ? 709 : 0}"/><w:jc w:val="left"/>`;
+    : `<w:keepNext/><w:ind w:firstLine="${part.level === 2 ? 850 : 0}"/><w:jc w:val="left"/>`;
   const pPr = `${style}${part.newPage ? '<w:pageBreakBefore/>' : ''}${manual}${options.partHeadingPPr ?? ''}`;
-  const rPr = `${styled ? '' : '<w:sz w:val="28"/>'}${options.partHeadingRPr ?? ''}`;
+  const rPr = `${styled ? '' : '<w:sz w:val="24"/>'}${options.partHeadingRPr ?? ''}`;
   return `<w:p><w:pPr>${pPr}</w:pPr>${runsWithTabs(text, rPr)}</w:p>`;
 }
 

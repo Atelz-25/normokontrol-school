@@ -1,6 +1,6 @@
 файл;правило;нарушение
 real/sample-v2.docx;PG-02;да
-real/sample-v2.docx;PG-03;нет
+real/sample-v2.docx;PG-03;да
 real/sample-v2.docx;PG-04;нет
 real/sample-v2.docx;PG-05;нет
 real/sample-v2.docx;PG-01;нет
@@ -120,3 +120,9 @@ good/model-note.docx;TY-07;нет
 good/model-note.docx;TY-09;нет
 good/model-note.docx;TY-10;нет
 good/model-note.docx;TY-11;нет
+real/sample-v2.docx;PG-07;да
+real/sample-v2.docx;HD-04;да
+real/sample-v2.docx;RF-02;да
+real/sample-v2.docx;VL-01;да
+good/model-note.docx;PG-07;нет
+good/model-note.docx;VL-01;нет

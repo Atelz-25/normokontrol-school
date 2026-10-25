@@ -11,11 +11,14 @@ import {
   emptyShareTruth,
   formatSynthetic,
   parseTruth,
+  syntheticProfile,
 } from './lib/synthetic-lib.ts';
 
 const root = 'fixtures/synthetic';
-const profile = BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID);
-if (!profile) throw new Error(`Нет встроенного профиля ${DEFAULT_PROFILE_ID}`);
+const school = BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID);
+if (!school) throw new Error(`Нет встроенного профиля ${DEFAULT_PROFILE_ID}`);
+// Значения профиля на день создания набора (см. syntheticProfile).
+const profile = syntheticProfile(school);
 const found = collectFindings(`${root}/docs`, profile);
 writeFileSync(`${root}/findings.json`, JSON.stringify(found, null, 1) + '\n');
 

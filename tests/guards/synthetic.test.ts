@@ -10,11 +10,13 @@ import {
   compareSynthetic,
   emptyShareTruth,
   parseTruth,
+  syntheticProfile,
 } from '../../scripts/lib/synthetic-lib.ts';
 
 const root = new URL('../../fixtures/synthetic/', import.meta.url);
 const docs = fileURLToPath(new URL('docs', root));
-const profile = BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!;
+// Набор размечен под значения профиля на день создания (см. syntheticProfile).
+const profile = syntheticProfile(BUILTIN_PROFILES.find((p) => p.id === DEFAULT_PROFILE_ID)!);
 const found = collectFindings(docs, profile);
 const csvTruth = parseTruth(readFileSync(new URL('truth.csv', root), 'utf8'));
 // VL-02 генератор не размечает: дописываем по доле пустых абзацев и порогу из профиля.

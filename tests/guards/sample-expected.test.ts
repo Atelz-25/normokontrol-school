@@ -64,11 +64,11 @@ describe('fixtures/real/sample-v2.expected.json', () => {
     );
   });
 
-  it('PR-03: нарушения = без отступа + короткий отступ, всего = нарушения + норма', () => {
+  it('PR-03: нарушения = без отступа + короткий отступ + 1,27 см (при норме 1,5 см)', () => {
     const noIndent = (exp['PR-03']?.noIndent as number[]).length;
     const short = (exp['PR-03']?.['shortIndent(0.63cm)'] as number[]).length;
-    expect(noIndent + short).toBe(num('PR-03', 'violations'));
-    expect(num('PR-03', 'violations') + num('PR-03', 'okIndent(1.27cm)')).toBe(num('PR-03', 'of'));
+    expect(noIndent + short + num('PR-03', 'indent(1.27cm)')).toBe(num('PR-03', 'violations'));
+    expect(num('PR-03', 'violations')).toBe(num('PR-03', 'of'));
   });
 
   it('PB-01: число частей, где нужен разрыв, совпадает со списком', () => {
@@ -163,14 +163,26 @@ describe.skipIf(!existsSync(docxUrl))(
       expect(m.ids).toEqual(exp['PB-01']?.ids);
     });
 
-    it('PR-03: те же 10 абзацев из 37', () => {
+    it('PR-03: при норме 1,5 см все 37 абзацев с ошибкой (8 без отступа, 2 по 0,63, 27 по 1,27)', () => {
       const e = exp['PR-03']!;
       expect(result('PR-03').checked).toBe(num('PR-03', 'of'));
-      expect(paragraphs('PR-03').sort((a, b) => a - b)).toEqual(
-        [...(e.noIndent as number[]), ...(e['shortIndent(0.63cm)'] as number[])].sort(
-          (a, b) => a - b,
-        ),
+      expect(result('PR-03').affected).toBe(num('PR-03', 'violations'));
+      for (const i of [...(e.noIndent as number[]), ...(e['shortIndent(0.63cm)'] as number[])])
+        expect(paragraphs('PR-03'), String(i)).toContain(i);
+      expect(result('PR-03').metrics.spread).toMatchObject({
+        '1,27': num('PR-03', 'indent(1.27cm)'),
+      });
+    });
+
+    it('решения по методичке: PG-07, HD-04, RF-02, VL-01', () => {
+      expect(result('PG-07').findings).toHaveLength(1);
+      expect(result('PG-07').findings[0]?.message).toContain(
+        String(num('PG-07', 'leftPlusRightMm')),
       );
+      expect(result('HD-04').findings).toHaveLength(num('HD-04', 'headings'));
+      expect(result('HD-04').checked).toBe(num('HD-04', 'of'));
+      expect(result('RF-02').findings).toHaveLength(num('RF-02', 'notAlphabetical'));
+      expect(result('VL-01').metrics.pages).toBe(num('VL-01', 'pages'));
     });
 
     it('PR-09: 74 из 115', () => {

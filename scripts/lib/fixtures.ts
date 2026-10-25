@@ -106,6 +106,11 @@ export const FIXTURES: Record<string, FixturePair> = {
     good: () => doc([p(T1, { pPr: sectPr() }), p(T2)]),
     bad: () => doc([p(T1, { pPr: sectPr({ ...SCHOOL_MARGINS, left: MM(20) }) }), p(T2)]),
   },
+  'PG-07': {
+    good: () => doc(BODY),
+    // Левое 30 + правое 20 = 50 мм вместо 40.
+    bad: () => doc(BODY, { finalSectPr: sectPr({ ...SCHOOL_MARGINS, right: MM(20) }) }),
+  },
   'FT-01': {
     good: () => doc(BODY),
     bad: () => doc([p(T1), p(T2, { rPr: '<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>' })]),
@@ -132,10 +137,10 @@ export const FIXTURES: Record<string, FixturePair> = {
     bad: () => doc([p(T1), p(T2, { pPr: '<w:spacing w:after="200"/>' })]),
   },
   'PR-03': {
-    good: () => doc([p(T1), p(T2, { pPr: '<w:ind w:firstLine="720"/>' })]), // 1,25 и 1,27 см
+    good: () => doc([p(T1), p(T2, { pPr: '<w:ind w:firstLine="851"/>' })]), // 1,5 см и 1,501 см
     bad: () =>
       doc([
-        p(T1, { pPr: '<w:ind w:firstLine="720"/>' }),
+        p(T1, { pPr: '<w:ind w:firstLine="850"/>' }),
         p(T2, { pPr: '<w:ind w:firstLine="360"/>' }),
         p(T3, { pPr: '<w:ind w:firstLine="0"/>' }),
       ]),

@@ -115,6 +115,34 @@ export function collectFindings(dir: string, profile: Profile): FoundRow[] {
   return out;
 }
 
+// Набор сгенерирован 2026-10-23 из образцовой работы по тогдашнему профилю школы: красная
+// строка 1,25 см, правое поле 10 или 15 мм, заголовки частей 14 pt, литература в любом порядке,
+// объём не проверялся. Разметка truth.csv (в том числе ловушка «1,27 см в допуске») посчитана
+// под эти значения. Поэтому набор проверяет алгоритм с профилем тех значений, а не с текущим:
+// иначе каждое изменение требований школы выглядело бы как тысячи «ложных» замечаний.
+export function syntheticProfile(school: Profile): Profile {
+  const rules = { ...school.rules };
+  const set = (id: string, params: Record<string, unknown>, enabled = true): void => {
+    const config = rules[id];
+    if (config) rules[id] = { ...config, enabled, params: { ...config.params, ...params } };
+  };
+  set('PR-03', { valueCm: 1.25 });
+  set('PG-03', { mode: 'oneOf', valuesMm: [10, 15], valueMm: undefined });
+  set('PG-07', {}, false);
+  set('RF-02', { order: 'any' });
+  set('VL-01', {}, false);
+  const hd = rules['HD-04']?.params.levels as Record<string, Record<string, unknown>> | undefined;
+  if (hd)
+    set('HD-04', {
+      levels: {
+        ...hd,
+        part: { ...hd.part, sizePt: 14 },
+        subPart: { ...hd.subPart, sizePt: 14, firstLineIndentCm: 1.25 },
+      },
+    });
+  return { ...school, id: 'synthetic-2026-10-23', rules };
+}
+
 // VL-02 (доля пустых абзацев) в truth.csv не размечен: генератор о нём не знает. Дописываем
 // разметку сами по тому же условию, что в профиле: замечание ожидается, если пустых абзацев
 // вне таблиц больше порога warnIfEmptyShareAbove. Пустые абзацы считает модуль чтения

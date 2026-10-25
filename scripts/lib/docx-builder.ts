@@ -1,7 +1,7 @@
 // Сборщик маленьких .docx «руками» (бриф, раздел 12): так мы точно знаем, что внутри
 // «плохого» документа, и можем проверить каждое правило по отдельности.
 // По умолчанию документ оформлен «хорошо» для профиля школы: TNR 12, интервал 1,5,
-// по ширине, красная строка 1,25 см, поля 30/15/20/20 мм.
+// по ширине, красная строка 1,5 см, поля 30/10/20/20 мм (методичка школы).
 import { strToU8, zipSync } from 'fflate';
 
 const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -58,7 +58,7 @@ export interface Margins {
 
 // Поля в миллиметрах → twips (1 мм = 56,7 twips).
 export const MM = (mm: number): number => Math.round(mm * 56.7);
-export const SCHOOL_MARGINS: Margins = { top: MM(20), right: MM(15), bottom: MM(20), left: MM(30) };
+export const SCHOOL_MARGINS: Margins = { top: MM(20), right: MM(10), bottom: MM(20), left: MM(30) };
 
 export function sectPr(
   margins: Margins = SCHOOL_MARGINS,
@@ -94,14 +94,14 @@ export const pageNumber = (align = 'center'): string =>
 
 // Стили заголовков школьной работы (ответ на Q7): части, подразделы II.I., подзаголовки.
 export const HEADING_STYLES =
-  '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="0"/><w:jc w:val="left"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="28"/></w:rPr></w:style>' +
-  '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="709"/><w:jc w:val="left"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:sz w:val="28"/></w:rPr></w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="0"/><w:jc w:val="left"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="24"/></w:rPr></w:style>' +
+  '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="850"/><w:jc w:val="left"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:sz w:val="24"/></w:rPr></w:style>' +
   '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="a"/><w:pPr><w:keepNext/><w:ind w:firstLine="0"/><w:jc w:val="both"/><w:outlineLvl w:val="2"/></w:pPr></w:style>';
 
 export const SCHOOL_RPR =
   '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/>';
 export const SCHOOL_PPR =
-  '<w:spacing w:before="0" w:after="0" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="709"/><w:jc w:val="both"/>';
+  '<w:spacing w:before="0" w:after="0" w:line="360" w:lineRule="auto"/><w:ind w:firstLine="850"/><w:jc w:val="both"/>';
 
 // Ссылки на колонтитулы и titlePg вставляем в последний раздел документа.
 function withFooters(section: string, options: DocOptions): string {
