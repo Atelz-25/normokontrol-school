@@ -5,9 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <title>Нормоконтроль</title>
-    <meta name="theme-color" content="#2f3aa8" />
+    <meta name="theme-color" content="#ebe5d9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1916" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Начертания названия и вводного абзаца (самый крупный текст первого экрана) качаем сразу,
+         параллельно со скриптом. Иначе браузер узнает о них, только когда скрипт построит
+         страницу, и первый экран дорисуется позже (Lighthouse: LCP). Остальные — по мере нужды. -->
+    <link
+      rel="preload"
+      href="/src/ui/fonts/pt-serif-cyrillic-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/src/ui/fonts/pt-serif-cyrillic-700-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/src/ui/fonts/pt-serif-latin-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="stylesheet" href="/src/ui/styles.css" />
   </head>
   <body>
