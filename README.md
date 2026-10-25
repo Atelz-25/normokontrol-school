@@ -4,7 +4,7 @@
 
 **Сайт:** https://atelz-25.github.io/normokontrol-school/
 
-> Статус: **все этапы 0–5 выполнены**. 91 правило (VL-01 ждёт нормы объёма от школы и пока выключено) — каталог в [docs/RULES.md](docs/RULES.md). План и решения — [PLAN.md](PLAN.md).
+> Статус: **все этапы 0–5 выполнены**. 92 правила — каталог в [docs/RULES.md](docs/RULES.md). План и решения — [PLAN.md](PLAN.md).
 
 ## Что умеет
 
