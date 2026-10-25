@@ -1,9 +1,9 @@
 // Сквозные тесты этапа 2: оценка, предпросмотр, редактор требований, ссылка на профиль,
 // отметка «здесь это есть», образцовая работа без замечаний.
 import { readFileSync } from 'node:fs';
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { FIXTURES } from '../../scripts/lib/fixtures.ts';
+import { seriousViolations } from './axe.ts';
 import { BUILTIN_PROFILES } from '../../src/core/profiles/builtin.ts';
 import { profileToHash } from '../../src/core/profiles/share.ts';
 
@@ -78,8 +78,5 @@ test('доступность: отчёт с предпросмотром и от
   await page.goto('./');
   await upload(page, 'работа.docx', FIXTURES['PB-01']!.bad());
   await page.getByRole('button', { name: 'Редактор требований' }).click();
-  const violations = (await new AxeBuilder({ page }).analyze()).violations
-    .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-    .map((v) => `${v.id}: ${v.nodes.length}`);
-  expect(violations).toEqual([]);
+  expect(await seriousViolations(page)).toEqual([]);
 });

@@ -1,9 +1,9 @@
 // Сквозные тесты в настоящем браузере: загрузка → отчёт, профили, приватность,
 // доступность, повреждённые файлы и большой файл.
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { buildDocx, p } from '../../scripts/lib/docx-builder.ts';
 import { FIXTURES } from '../../scripts/lib/fixtures.ts';
+import { seriousViolations } from './axe.ts';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -70,14 +70,10 @@ test('приватность: при проверке нет запросов н
 
 test('доступность: нет серьёзных нарушений на главной и в отчёте', async ({ page }) => {
   await page.goto('./');
-  const serious = async (): Promise<string[]> =>
-    (await new AxeBuilder({ page }).analyze()).violations
-      .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-      .map((v) => v.id);
-  expect(await serious()).toEqual([]);
+  expect(await seriousViolations(page)).toEqual([]);
   await upload(page, 'работа.docx', FIXTURES['PR-10']!.bad());
   await expect(page.getByRole('status')).toContainText('Готово');
-  expect(await serious()).toEqual([]);
+  expect(await seriousViolations(page)).toEqual([]);
 });
 
 test('файл 10 МБ: проверка завершается, страница не зависает', async ({ page }) => {

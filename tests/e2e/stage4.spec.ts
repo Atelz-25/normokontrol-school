@@ -1,8 +1,8 @@
 // Этап 4 в браузере: автоисправление со скачиванием и режим учителя с CSV.
 import { readFileSync } from 'node:fs';
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { FIXTURES } from '../../scripts/lib/fixtures.ts';
+import { seriousViolations } from './axe.ts';
 import { readDocx } from '../../src/core/reader/index.ts';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -70,8 +70,5 @@ test('режим учителя: таблица по нескольким раб
     .click();
   await expect(page.locator('#rule-PR-06')).toBeVisible();
 
-  const serious = (await new AxeBuilder({ page }).analyze()).violations.filter(
-    (v) => v.impact === 'serious' || v.impact === 'critical',
-  );
-  expect(serious.map((v) => v.id)).toEqual([]);
+  expect(await seriousViolations(page)).toEqual([]);
 });

@@ -1,7 +1,7 @@
 // Этап 5 в браузере: работа без сети, доступность в тёмной теме, работа с клавиатуры.
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { FIXTURES } from '../../scripts/lib/fixtures.ts';
+import { seriousViolations } from './axe.ts';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -41,10 +41,7 @@ test('доступность в тёмной теме: нет серьёзных
     buffer: Buffer.from(FIXTURES['PB-01']!.bad()),
   });
   await expect(page.locator('#app > .status')).toContainText('Готово');
-  const serious = (await new AxeBuilder({ page }).analyze()).violations.filter(
-    (v) => v.impact === 'serious' || v.impact === 'critical',
-  );
-  expect(serious.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+  expect(await seriousViolations(page)).toEqual([]);
 });
 
 test('с клавиатуры: Tab доходит до «Выбрать файл», Enter открывает выбор файла', async ({
