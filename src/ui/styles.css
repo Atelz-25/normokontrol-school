@@ -1,36 +1,76 @@
-/* Цвета подобраны с контрастом не ниже 4,5:1 (WCAG 2.1 AA) в обеих темах. */
+/*
+  Оформление «Нормоконтроля».
+  Идея: работа — это лист А4 с полями. Синий — ручка ученика (действия, ссылки),
+  красный — ручка учителя (ошибки). Заголовки набраны с засечками, как сама работа,
+  интерфейс — системным шрифтом без засечек. Внешних шрифтов нет: это запрещено CSP.
+  Цвета подобраны с контрастом не ниже 4,5:1 (WCAG 2.1 AA) в обеих темах.
+*/
 :root {
-  --bg: #ffffff;
-  --fg: #1a1a1a;
-  --muted: #555555;
-  --line: #c8c8c8;
-  --surface: #f4f5f7;
-  --focus: #0b57d0;
-  --accent: #0b57d0;
+  --bg: #eef1f5; /* стол, на котором лежит лист */
+  --paper: #ffffff;
+  --fg: #17202b; /* графит */
+  --muted: #536070;
+  --line: #c6cfd9;
+  --grid: #dde3ea; /* клетка тетради */
+  --surface: #f6f8fa;
+  --accent: #2f3aa8; /* синяя ручка */
+  --accent-soft: #e6e8f8;
   --accent-fg: #ffffff;
-  --error: #b3261e;
+  --focus: #2f3aa8;
+  --error: #b42318; /* красная ручка */
+  --error-soft: #fdecea;
   --warning: #8a5a00;
+  --warning-soft: #fdf3dc;
   --info: #1f5f8b;
+  --info-soft: #e5f0f8;
   --ok: #1e6b35;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+  --mark-bg: #ffe08a;
+  --shadow: 0 1px 2px rgb(23 32 43 / 6%), 0 8px 24px -12px rgb(23 32 43 / 18%);
+
+  --serif: 'Times New Roman', Times, 'Liberation Serif', 'Noto Serif', serif;
+  --sans: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --radius: 10px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  font-family: var(--sans);
+  font-size: 100%;
+  line-height: 1.55;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121212;
-    --fg: #f0f0f0;
-    --muted: #b8b8b8;
-    --line: #444444;
-    --surface: #1e1f22;
-    --focus: #8ab4f8;
-    --accent: #8ab4f8;
-    --accent-fg: #0b1a33;
-    --error: #ffb4ab;
-    --warning: #ffcf70;
+    --bg: #0e141c;
+    --paper: #161e29;
+    --fg: #e7edf4;
+    --muted: #a5b1bf;
+    --line: #34404f;
+    --grid: #1c2633;
+    --surface: #1b2430;
+    --accent: #a9b4ff;
+    --accent-soft: #232c4a;
+    --accent-fg: #0e1430;
+    --focus: #a9b4ff;
+    --error: #ffb4a9;
+    --error-soft: #3a1d1b;
+    --warning: #f2c66d;
+    --warning-soft: #33280f;
     --info: #9ecaff;
+    --info-soft: #14283a;
     --ok: #8fd5a6;
+    --mark-bg: #6b5410;
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 28px -14px rgb(0 0 0 / 60%);
+    color-scheme: dark;
   }
+
+  mark {
+    color: #fff4d6;
+  }
+}
+
+/* --- Основа ---------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -40,76 +80,41 @@ body {
 }
 
 main {
-  max-width: 52rem;
+  max-width: 76rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 0 1rem 4rem;
 }
 
-h1 {
-  margin-bottom: 0.25rem;
+h1,
+h2 {
+  font-family: var(--serif);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 1.55rem;
+  margin: 0 0 0.75rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+p,
+li {
+  max-width: 72ch;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
 }
 
 .muted {
   color: var(--muted);
-}
-
-.privacy {
-  font-weight: 600;
-}
-
-.field {
-  display: grid;
-  gap: 0.25rem;
-  margin: 1.5rem 0;
-}
-
-select,
-button {
-  font: inherit;
-}
-
-select {
-  max-width: 100%;
-  padding: 0.4rem;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-}
-
-.drop {
-  padding: 2rem 1rem;
-  text-align: center;
-  border: 2px dashed var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-}
-
-.drop.over {
-  border-color: var(--accent);
-}
-
-.drop-title {
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
-button.primary {
-  padding: 0.6rem 1.2rem;
-  color: var(--accent-fg);
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button.link {
-  padding: 0;
-  color: var(--accent);
-  background: none;
-  border: none;
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 .visually-hidden {
@@ -121,9 +126,461 @@ button.link {
   white-space: nowrap;
 }
 
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* --- Кнопки и поля --------------------------------------------------------- */
+select,
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.15s var(--ease);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.primary {
+  padding: 0.65rem 1.3rem;
+  font-weight: 600;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+}
+
+button.primary:hover {
+  background: color-mix(in srgb, var(--accent) 86%, var(--fg));
+}
+
+button.secondary {
+  padding: 0.45rem 0.95rem;
+  color: var(--fg);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+button.secondary:hover {
+  border-color: var(--accent);
+}
+
+button.secondary[aria-expanded='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+button.link {
+  padding: 0;
+  color: var(--accent);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+select,
+input[type='text'],
+input[type='number'],
+textarea {
+  max-width: 100%;
+  padding: 0.45rem 0.6rem;
+  color: var(--fg);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+select:hover,
+input[type='text']:hover,
+input[type='number']:hover,
+textarea:hover {
+  border-color: var(--muted);
+}
+
+textarea.json {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+input[type='checkbox'] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+details {
+  margin: 0.4rem 0;
+}
+
+summary {
+  cursor: pointer;
+  width: fit-content;
+  color: var(--accent);
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Свой треугольник: поворачивается, когда блок открыт — видно, что изменилось. */
+summary::before {
+  content: '';
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  margin-right: 0.5em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.15em) rotate(-45deg);
+  transition: transform 0.2s var(--ease);
+}
+
+details[open] > summary::before {
+  transform: translateY(-0.25em) rotate(45deg);
+}
+
+/* --- Шапка: что это и лист для файла ---------------------------------------- */
+.hero {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+  padding: 2.5rem 0 2rem;
+}
+
+@media (min-width: 860px) {
+  .hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 3rem;
+    padding: 4rem 0 3rem;
+  }
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 6vw, 3.8rem);
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.lead {
+  margin: 1.5rem 0 0;
+  font-size: 1.1rem;
+}
+
+.privacy {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--ok);
+  background: var(--paper);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.privacy p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.privacy details p {
+  margin-top: 0.4rem;
+  font-weight: 400;
+}
+
+/*
+  Лист А4. Поля — CSS-переменные --m-left и др. (в процентах от листа), их задаёт sheet.ts
+  по профилю. Пунктир — граница текста, подписи — ширина поля в миллиметрах.
+*/
+.drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 1.5rem 1rem;
+  border-radius: 16px;
+  background-color: var(--surface);
+  /* Тетрадная клетка 5 мм — только под листом. */
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 2px dashed transparent;
+  transition: border-color 0.2s;
+}
+
+.drop.over {
+  border-color: var(--accent);
+}
+
+.sheet-figure {
+  margin: 0;
+  width: min(100%, 300px);
+}
+
+.sheet {
+  position: relative;
+  aspect-ratio: 210 / 297;
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s;
+  overflow: hidden;
+  --m-left: 14.29%;
+  --m-right: 7.14%;
+  --m-top: 6.73%;
+  --m-bottom: 6.73%;
+}
+
+.drop.over .sheet {
+  transform: translateY(-6px) rotate(-1deg);
+  box-shadow:
+    var(--shadow),
+    0 18px 30px -18px rgb(47 58 168 / 45%);
+}
+
+.sheet-area {
+  position: absolute;
+  top: var(--m-top);
+  right: var(--m-right);
+  bottom: var(--m-bottom);
+  left: var(--m-left);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow: hidden;
+  padding-top: 4px;
+  outline: 1px dashed var(--accent);
+  outline-offset: 0;
+  transition:
+    top 0.4s var(--ease),
+    right 0.4s var(--ease),
+    bottom 0.4s var(--ease),
+    left 0.4s var(--ease);
+  animation: guide-draw 0.9s var(--ease) both;
+}
+
+/* Декоративные строки «текста»; красная строка — у первой строки абзаца. */
+.sheet-area .line {
+  display: block;
+  height: 4px;
+  width: var(--w);
+  border-radius: 2px;
+  background: var(--line);
+  opacity: 0.7;
+}
+
+.sheet-area .title {
+  align-self: center;
+  height: 5px;
+  background: var(--fg);
+  opacity: 0.55;
+}
+
+.sheet-area .gap + .line:not(.title, .gap) {
+  margin-left: 12%;
+  width: calc(var(--w) - 12%);
+}
+
+.sheet-area .gap {
+  height: 2px;
+  background: transparent;
+}
+
+.dim {
+  position: absolute;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  white-space: nowrap;
+  animation: fade-in 0.4s 0.7s both;
+}
+
+.dim:empty {
+  display: none;
+}
+
+.dim-left {
+  top: 50%;
+  left: calc(var(--m-left) / 2);
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.dim-right {
+  top: 50%;
+  right: calc(var(--m-right) / 2);
+  transform: translate(50%, -50%) rotate(90deg);
+}
+
+.dim-top {
+  top: calc(var(--m-top) / 2);
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dim-bottom {
+  bottom: calc(var(--m-bottom) / 2);
+  left: 50%;
+  transform: translate(-50%, 50%);
+}
+
+/* Линия «сканера» видна только во время проверки. */
+.scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  opacity: 0;
+}
+
+.drop.busy .scan {
+  opacity: 1;
+  animation: scan 1.1s ease-in-out infinite alternate;
+}
+
+.drop-text {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.drop-text p {
+  margin: 0;
+}
+
+.drop-title {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.drop-text button.primary {
+  margin-top: 0.4rem;
+}
+
+/* На телефоне лист маленький и стоит рядом с кнопкой, чтобы «Выбрать файл» было видно сразу. */
+@media (max-width: 559px) {
+  .hero {
+    padding-top: 1.75rem;
+  }
+
+  .drop {
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .drop-text {
+    margin-top: 0;
+  }
+
+  .dim {
+    font-size: 0.55rem;
+  }
+
+  .sheet-area {
+    gap: 4px;
+  }
+
+  .sheet-area .line {
+    height: 2px;
+  }
+}
+
+@keyframes guide-draw {
+  from {
+    clip-path: inset(0 100% 100% 0);
+    outline-color: transparent;
+  }
+  to {
+    clip-path: inset(-2px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes scan {
+  from {
+    top: 4%;
+  }
+  to {
+    top: 94%;
+  }
+}
+
+/* --- Настройки -------------------------------------------------------------- */
+.settings {
+  display: grid;
+  gap: 0.5rem 2rem;
+  align-items: end;
+  padding: 1.25rem 1.5rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+@media (min-width: 860px) {
+  .settings {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.settings .toolbar {
+  margin: 0;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.field p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 .status {
   min-height: 1.5em;
-  margin-top: 1rem;
+  margin: 1.25rem 0;
 }
 
 .status.error {
@@ -131,15 +588,120 @@ button.link {
   font-weight: 600;
 }
 
-.counters {
-  font-weight: 600;
+/* --- Отчёт ------------------------------------------------------------------ */
+.results-grid {
+  display: grid;
+  gap: 1.5rem;
+  animation: rise 0.45s var(--ease) both;
+}
+
+@media (min-width: 1100px) {
+  .results-grid {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .preview {
+    position: sticky;
+    top: 0.75rem;
+    max-height: calc(100vh - 1.5rem);
+    overflow: auto;
+  }
+}
+
+/* Только сдвиг, без прозрачности: полупрозрачный текст на миг стал бы нечитаемым
+   (и проверка контраста axe его бы поймала). */
+@keyframes rise {
+  from {
+    transform: translateY(10px);
+  }
+}
+
+.report-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-head h2 {
+  margin: 0;
+  font-size: 2rem;
 }
 
 .block {
-  padding: 0.5rem 1rem 1rem;
+  padding: 1.25rem 1.5rem;
   margin: 1rem 0;
+  background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
+}
+
+.block > h2 {
+  font-size: 1.3rem;
+}
+
+/* Оценка: крупная цифра с засечками, рядом три счётчика. */
+.score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  align-items: center;
+}
+
+.score-value {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(2.6rem, 7vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-value.none {
+  font-size: 1.1rem;
+  font-family: var(--sans);
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tally li {
+  display: grid;
+  line-height: 1.2;
+}
+
+.tally strong {
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tally span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tally-error strong {
+  color: var(--error);
+}
+
+.tally-warning strong {
+  color: var(--warning);
+}
+
+.tally-info strong {
+  color: var(--info);
+}
+
+.tally li.zero strong {
+  color: var(--muted);
 }
 
 .checklist {
@@ -147,7 +709,7 @@ button.link {
 }
 
 .checklist li {
-  margin: 0.35rem 0;
+  margin: 0.4rem 0;
 }
 
 .mark {
@@ -169,16 +731,20 @@ button.link {
   color: var(--muted);
 }
 
-a {
-  color: var(--accent);
+.findings-title {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.55rem;
 }
 
+/* Карточка замечания: полоса слева — цвет серьёзности. */
 .card {
-  padding: 0.5rem 1rem 1rem;
-  margin: 1rem 0;
-  border-left: 4px solid var(--line);
-  background: var(--surface);
-  border-radius: 6px;
+  padding: 0.25rem 1.25rem 1rem;
+  margin: 0.75rem 0;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--line);
+  border-radius: 6px var(--radius) var(--radius) 6px;
+  scroll-margin-top: 1rem;
 }
 
 .card.sev-error {
@@ -193,28 +759,39 @@ a {
   border-left-color: var(--info);
 }
 
-.card h3 {
-  font-size: 1.05rem;
+.card:target,
+.card:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.card.dismissed {
+  opacity: 0.7;
 }
 
 .badge {
   display: inline-block;
-  padding: 0 0.4rem;
-  font-size: 0.85rem;
-  border: 1px solid currentColor;
-  border-radius: 4px;
+  margin-right: 0.35rem;
+  padding: 0.05rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: 0.1em;
+  border-radius: 999px;
 }
 
 .badge-error {
   color: var(--error);
+  background: var(--error-soft);
 }
 
 .badge-warning {
   color: var(--warning);
+  background: var(--warning-soft);
 }
 
 .badge-info {
   color: var(--info);
+  background: var(--info-soft);
 }
 
 .note {
@@ -228,7 +805,15 @@ a {
 }
 
 .places li {
-  margin: 0.3rem 0;
+  margin: 0.35rem 0;
+}
+
+.places li.extra {
+  display: none;
+}
+
+.places.expanded li.extra {
+  display: list-item;
 }
 
 .place {
@@ -241,111 +826,50 @@ a {
   overflow-wrap: anywhere;
 }
 
-details {
-  margin: 0.4rem 0;
-}
-
-summary {
-  cursor: pointer;
-}
-
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* --- Этап 2: отчёт рядом с текстом работы -------------------------------- */
-main {
-  max-width: 76rem;
-}
-
-.results-grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-@media (min-width: 1100px) {
-  .results-grid {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-  }
-
-  .preview {
-    position: sticky;
-    top: 0.5rem;
-    max-height: calc(100vh - 1rem);
-    overflow: auto;
-  }
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0.75rem 0;
-}
-
-button.secondary {
-  padding: 0.45rem 0.9rem;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.score-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin: 0.25rem 0;
-}
-
-.places li.extra {
-  display: none;
-}
-
-.places.expanded li.extra {
-  display: list-item;
-}
-
 button.link.show {
   font-size: 0.9rem;
 }
 
-.card.dismissed {
-  opacity: 0.75;
-}
-
-/* Предпросмотр */
+/* --- Текст работы: лист тетради с красной линией полей ------------------------ */
 .preview {
-  padding: 0 1rem 1rem;
+  padding: 0.25rem 1rem 1rem;
+  background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 .preview-list {
-  padding-left: 3.2rem;
-  font-family: 'Times New Roman', serif;
+  position: relative;
+  padding-left: 3.6rem;
+  font-family: var(--serif);
+  font-size: 1.02rem;
+}
+
+/* Красная линия полей, как в школьной тетради; номера абзацев — на полях. */
+.preview-list::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3.1rem;
+  width: 1px;
+  background: color-mix(in srgb, var(--error) 45%, transparent);
 }
 
 .preview-list li {
   margin: 0.15rem 0;
-  padding: 0.1rem 0.3rem;
+  padding: 0.15rem 0.4rem;
   overflow-wrap: anywhere;
   border-left: 3px solid transparent;
+  border-radius: 0 4px 4px 0;
 }
 
 .preview-list li::marker {
   color: var(--muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.8rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .preview-list li.empty {
@@ -358,37 +882,51 @@ button.link.show {
 
 .cell-label {
   color: var(--muted);
-  font-family: system-ui, sans-serif;
+  font-family: var(--sans);
   font-size: 0.8rem;
 }
 
 .preview-list li.flag-error {
   border-left-color: var(--error);
+  background: color-mix(in srgb, var(--error-soft) 60%, transparent);
 }
 
 .preview-list li.flag-warning {
   border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning-soft) 60%, transparent);
 }
 
 .preview-list li.flag-info {
   border-left-color: var(--info);
 }
 
+/* «Показать в тексте»: абзац коротко вспыхивает, чтобы глаз сразу его нашёл. */
 .preview-list li.pulse {
   outline: 3px solid var(--focus);
+  animation: flash 1.2s var(--ease);
+}
+
+@keyframes flash {
+  0%,
+  30% {
+    background: var(--accent-soft);
+  }
 }
 
 mark {
-  background: #ffe08a;
+  background: var(--mark-bg);
   color: #1a1a1a;
+  border-radius: 2px;
 }
 
-/* Редактор требований */
+/* --- Редактор требований ----------------------------------------------------- */
 .editor {
-  padding: 0 1rem 1rem;
+  padding: 0.25rem 1.5rem 1.25rem;
   margin: 1rem 0;
+  background: var(--paper);
   border: 2px solid var(--accent);
-  border-radius: 10px;
+  border-radius: var(--radius);
+  animation: rise 0.3s var(--ease) both;
 }
 
 .rule-group {
@@ -397,6 +935,7 @@ mark {
 
 .rule-row {
   margin: 0.5rem 0;
+  padding: 0 0.75rem;
   border: 1px solid var(--line);
   border-radius: 8px;
 }
@@ -416,33 +955,61 @@ mark {
 
 .param-check {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
   align-items: center;
 }
 
-input[type='text'],
-input[type='number'],
-textarea {
-  font: inherit;
-  max-width: 100%;
-  padding: 0.3rem;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+/* --- Режим учителя ----------------------------------------------------------- */
+.teacher {
+  animation: rise 0.3s var(--ease) both;
 }
 
-textarea.json {
-  font-family: ui-monospace, monospace;
-  font-size: 0.85rem;
+.table-wrap {
+  overflow-x: auto;
 }
 
-/* Печать: только отчёт, все места раскрыты */
+.teacher-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.teacher-table th,
+.teacher-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.teacher-table tbody tr:hover {
+  background: var(--surface);
+}
+
+.teacher-table th[aria-sort='ascending'] button::after {
+  content: ' ▲';
+}
+
+.teacher-table th[aria-sort='descending'] button::after {
+  content: ' ▼';
+}
+
+/* --- Меньше движения, если об этом просит система ------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* --- Печать: только отчёт, все места раскрыты --------------------------------- */
 @media print {
   .no-print,
   .preview,
   .editor-slot,
-  details > summary::marker {
+  details > summary::before {
     display: none !important;
   }
 
@@ -456,36 +1023,17 @@ textarea.json {
 
   .results-grid {
     display: block;
+    animation: none;
   }
 
   body {
     background: #fff;
     color: #000;
   }
-}
 
-/* Режим учителя (этап 4) */
-.table-wrap {
-  overflow-x: auto;
-}
-
-.teacher-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.teacher-table th,
-.teacher-table td {
-  padding: 0.4rem 0.5rem;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid var(--line);
-}
-
-.teacher-table th[aria-sort='ascending'] button::after {
-  content: ' ▲';
-}
-
-.teacher-table th[aria-sort='descending'] button::after {
-  content: ' ▼';
+  .block,
+  .card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
 }

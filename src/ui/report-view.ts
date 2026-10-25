@@ -100,7 +100,47 @@ function boardBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLElemen
   );
 }
 
-function scoreBlock(report: Report, dismissed: ReadonlySet<string>): HTMLElement {
+// Число оценки «набегает» от прошлого значения к новому за полсекунды: так видно, как
+// изменилась оценка после «Здесь это есть» или исправления. Первый раз — от нуля.
+// Если в системе просят меньше анимации, сразу пишем итог.
+let shownScore = 0;
+
+function countUp(node: HTMLElement, total: number): void {
+  const from = shownScore;
+  shownScore = total;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce || from === total) return;
+  node.textContent = ru.score(from);
+  const start = performance.now();
+  const step = (now: number): void => {
+    const t = Math.min(1, (now - start) / 600);
+    const eased = 1 - (1 - t) ** 3; // быстро в начале, плавно в конце
+    node.textContent = ru.score(Math.round(from + (total - from) * eased));
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function tally(counts: Record<Severity, number>): HTMLElement {
+  return el(
+    'ul',
+    { class: 'tally' },
+    ...SEVERITY_ORDER.map((severity) =>
+      el(
+        'li',
+        { class: `tally-${severity}${counts[severity] === 0 ? ' zero' : ''}` },
+        el('strong', {}, String(counts[severity])),
+        el('span', {}, ru.tally[severity](counts[severity])),
+      ),
+    ),
+  );
+}
+
+function scoreBlock(
+  report: Report,
+  dismissed: ReadonlySet<string>,
+  counts: Record<Severity, number>,
+): HTMLElement {
   const score = computeScore(report, dismissed);
   const categories = Object.entries(score.byCategory).map(([category, value]) =>
     el(
@@ -109,15 +149,17 @@ function scoreBlock(report: Report, dismissed: ReadonlySet<string>): HTMLElement
       ru.scoreCategory(CATEGORY_NAMES[category] ?? category, value.earned, value.possible),
     ),
   );
+  const value = el(
+    'p',
+    { class: `score-value${score.total === undefined ? ' none' : ''}` },
+    score.total === undefined ? ru.scoreNone : ru.score(score.total),
+  );
+  if (score.total !== undefined) countUp(value, score.total);
   return el(
     'section',
     { class: 'block score', 'aria-labelledby': 'score-title' },
     el('h2', { id: 'score-title' }, ru.scoreTitle),
-    el(
-      'p',
-      { class: 'score-value' },
-      score.total === undefined ? ru.scoreNone : ru.score(score.total),
-    ),
+    el('div', { class: 'score-row' }, value, tally(counts)),
     el(
       'details',
       {},
@@ -347,17 +389,24 @@ export function renderReport(
   return el(
     'section',
     { class: 'report', 'aria-labelledby': 'report-title' },
-    el('h2', { id: 'report-title', tabindex: '-1' }, ru.reportTitle),
-    toolbar(actions),
-    scoreBlock(report, actions.dismissed),
+    el(
+      'div',
+      { class: 'report-head' },
+      el('h2', { id: 'report-title', tabindex: '-1' }, ru.reportTitle),
+      toolbar(actions),
+    ),
+    scoreBlock(report, actions.dismissed, {
+      error: count('error'),
+      warning: count('warning'),
+      info: count('info'),
+    }),
     previous ? comparisonBlock(previous, report, actions.dismissed) : undefined,
-    el('p', { class: 'counters' }, ru.counters(count('error'), count('warning'), count('info'))),
     titleFindings > 0 ? el('p', {}, ru.titlePageLine(titleFindings)) : undefined,
     notImplemented > 0 ? el('p', { class: 'muted' }, ru.notChecked(notImplemented)) : undefined,
     priorityBlock(profile, byId),
     boardBlock(profile, byId),
     passportBlock(report),
-    el('h2', {}, ru.findingsTitle),
+    el('h2', { class: 'findings-title' }, ru.findingsTitle),
     ordered.length === 0
       ? el('p', {}, ru.noFindings)
       : el(

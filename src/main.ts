@@ -11,6 +11,7 @@ import { copyText, downloadFile, findingsAsText } from './ui/export.ts';
 import { renderPreview } from './ui/preview.ts';
 import { renderProfileEditor } from './ui/profile-editor.ts';
 import { renderReport } from './ui/report-view.ts';
+import { renderSheet } from './ui/sheet.ts';
 import {
   loadCustomProfiles,
   loadSelectedId,
@@ -65,6 +66,7 @@ function fillProfiles(): void {
     }),
   );
   profileHint.textContent = profile.description ?? '';
+  sheet.update(profile);
 }
 
 const editButton = el(
@@ -87,34 +89,56 @@ const input = el('input', {
   tabindex: '-1',
 });
 const chooseButton = el('button', { type: 'button', class: 'primary' }, ru.chooseFile);
+// Лист А4 с полями из профиля — он же зона, куда перетаскивают файл.
+const sheet = renderSheet(profile);
 const drop = el(
   'div',
   { class: 'drop no-print', id: 'drop' },
-  el('p', { class: 'drop-title' }, ru.dropTitle),
-  el('p', {}, ru.dropOr),
-  chooseButton,
-  input,
-);
-
-root.replaceChildren(
-  el('header', {}, el('h1', {}, ru.appTitle), el('p', {}, ru.appSubtitle)),
+  sheet.element,
   el(
     'div',
-    { class: 'no-print' },
-    el('p', { class: 'privacy' }, ru.privacyNote),
-    disclosure(ru.privacyHowTitle, ru.privacyHow),
+    { class: 'drop-text' },
+    el('p', { class: 'drop-title' }, ru.dropTitle),
+    el('p', { class: 'muted' }, ru.dropOr),
+    chooseButton,
+    input,
+  ),
+);
+
+// Порядок на странице: что это и куда класть файл → настройки → статус → отчёт.
+root.replaceChildren(
+  el(
+    'header',
+    { class: 'hero' },
+    el(
+      'div',
+      { class: 'hero-copy' },
+      el('h1', {}, ru.appTitle),
+      el('p', { class: 'subtitle' }, ru.appSubtitle),
+      el('p', { class: 'lead no-print' }, ru.heroLead),
+      el(
+        'div',
+        { class: 'privacy no-print' },
+        el('p', {}, ru.privacyNote),
+        disclosure(ru.privacyHowTitle, ru.privacyHow),
+      ),
+    ),
+    drop,
+  ),
+  el(
+    'div',
+    { class: 'settings no-print' },
     el(
       'div',
       { class: 'field' },
       el('label', { for: 'profile' }, ru.profileLabel),
       select,
       profileHint,
-      el('div', { class: 'toolbar' }, editButton, teacherButton),
     ),
+    el('div', { class: 'toolbar' }, editButton, teacherButton),
   ),
   editorSlot,
   teacherSlot,
-  drop,
   status,
   results,
 );
@@ -176,8 +200,11 @@ function runCheck(): void {
   const id = requestId;
   showMessage(ru.checking(file.name));
   results.replaceChildren();
+  // Пока идёт проверка, по листу бежит линия: видно, что программа работает.
+  drop.classList.add('busy');
   void check(file.bytes, profile, file.name).then((response) => {
     if (id !== requestId) return; // ответ на старый запрос: пользователь уже выбрал другое
+    drop.classList.remove('busy');
     if (!response.ok) {
       lastReport = undefined;
       showMessage(docxErrorText(response.code), true);

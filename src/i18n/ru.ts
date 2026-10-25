@@ -8,6 +8,12 @@ import { plural } from './rules-ru.ts';
 export const ru = {
   appTitle: 'Нормоконтроль',
   appSubtitle: 'Проверка оформления школьного проекта (.docx) прямо в браузере.',
+  heroLead:
+    'Загрузите работу: программа найдёт поля, шрифты, интервалы и пустые строки не по требованиям, покажет место в тексте и подскажет, как исправить в Word.',
+  sheetCaption: 'Поля листа по выбранным требованиям',
+  sheetMm: (value: string): string => `${value} мм`,
+  sheetMargin: (side: string, value: string): string => `${side}: ${value} мм`,
+  sheetSides: { left: 'слева', right: 'справа', top: 'сверху', bottom: 'снизу' },
   privacyNote: 'Файл не покидает ваш компьютер: проверка идёт прямо в браузере, без сервера.',
   privacyHowTitle: 'Как это проверить',
   privacyHow:
@@ -20,8 +26,15 @@ export const ru = {
   checked: (name: string): string => `Готово: «${name}».`,
   recheck: 'Проверить новую версию',
   reportTitle: 'Результат проверки',
-  counters: (errors: number, warnings: number, infos: number): string =>
-    `Правил с ошибками: ${errors} · с замечаниями: ${warnings} · с советами: ${infos}`,
+  // Счётчики под оценкой: число крупно, подпись мелко.
+  tally: {
+    error: (n: number): string =>
+      plural(n, ['правило с ошибками', 'правила с ошибками', 'правил с ошибками']),
+    warning: (n: number): string =>
+      plural(n, ['правило с замечаниями', 'правила с замечаниями', 'правил с замечаниями']),
+    info: (n: number): string =>
+      plural(n, ['правило с советами', 'правила с советами', 'правил с советами']),
+  },
   notChecked: (count: number): string =>
     `Ещё ${count} ${plural(count, ['правило профиля пока не проверяется', 'правила профиля пока не проверяются', 'правил профиля пока не проверяются'])}: они появятся на следующих этапах.`,
   titlePageLine: (count: number): string =>

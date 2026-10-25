@@ -68,3 +68,10 @@ Web Worker: src/worker/check.worker.ts
 | `src/ui/fix-panel.ts`, `src/ui/teacher.ts` | панель исправления, режим учителя с CSV |
 | `scripts/evaluate.ts` | точность и полнота по разметке человека |
 | `public/sw.js`, `public/manifest.webmanifest` | офлайн-режим |
+
+## Оформление
+
+| Файл | Зачем |
+|---|---|
+| `src/ui/styles.css` | цвета и шрифты темы: лист А4, синяя ручка ученика (действия), красная — учителя (ошибки); анимации выключаются при `prefers-reduced-motion` |
+| `src/ui/sheet.ts` | лист А4 в зоне загрузки: поля рисуются по правилам PG-02…PG-05 выбранного профиля |
