@@ -12,3 +12,6 @@ fixtures/real/*.pdf
 
 # Вывод npm run evaluate:synthetic, пересоздаётся при каждом запуске
 fixtures/synthetic/findings.json
+
+# Снимки отчёта по личной работе: в них текст работы
+docs/design/*-sample-v2.png
