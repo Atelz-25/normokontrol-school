@@ -7,12 +7,14 @@ import { RULE_TEXTS } from '../i18n/rules-ru.ts';
 import { ru } from '../i18n/ru.ts';
 import { el } from './dom.ts';
 import { downloadFile } from './export.ts';
+import type { MapParagraph } from '../worker/protocol.ts';
 import { check } from './worker-client.ts';
 
 interface Row {
   name: string;
   bytes: ArrayBuffer;
   report?: Report;
+  map?: MapParagraph[];
   score?: number;
   errors: number;
   warnings: number;
@@ -48,7 +50,7 @@ export function rowsToCsv(
 
 export function renderTeacher(
   getProfile: () => Profile,
-  onOpen: (name: string, bytes: ArrayBuffer, report: Report) => void,
+  onOpen: (name: string, bytes: ArrayBuffer, report: Report, map: MapParagraph[]) => void,
 ): HTMLElement {
   let rows: Row[] = [];
   let sortColumn = 0;
@@ -103,7 +105,7 @@ export function renderTeacher(
         const report = row.report;
         open = el('button', { type: 'button', class: 'link' }, ru.teacherOpenReport);
         open.addEventListener('click', () => {
-          onOpen(row.name, row.bytes, report);
+          onOpen(row.name, row.bytes, report, row.map ?? []);
         });
       }
       return el(
@@ -157,6 +159,7 @@ export function renderTeacher(
                 name: file.name,
                 bytes,
                 report: response.report,
+                map: response.map,
                 score: computeScore(response.report).total,
                 errors: countRules(response.report, 'error'),
                 warnings: countRules(response.report, 'warning'),

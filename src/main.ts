@@ -12,6 +12,9 @@ import { renderPreview } from './ui/preview.ts';
 import { renderProfileEditor } from './ui/profile-editor.ts';
 import { renderReport } from './ui/report-view.ts';
 import { renderSheet } from './ui/sheet.ts';
+import { renderDocMap } from './ui/doc-map.ts';
+import { reducedMotion, revealInOrder, unfold } from './ui/motion.ts';
+import type { MapParagraph } from './worker/protocol.ts';
 import {
   loadCustomProfiles,
   loadSelectedId,
@@ -43,6 +46,8 @@ let profile: Profile =
 // Последний файл держим в памяти, чтобы при смене профиля проверить его заново.
 let lastFile: { name: string; bytes: ArrayBuffer } | undefined;
 let lastReport: Report | undefined;
+// Карта документа к последнему отчёту: роль, «пустой» и длина абзацев, без текста.
+let lastMap: MapParagraph[] = [];
 // Отчёт по прошлой версии файла — для сравнения «было / стало» (этап 3).
 let previousReport: Report | undefined;
 // Отметки «здесь это есть» — только в памяти, на время работы со страницей (решение В7).
@@ -105,37 +110,41 @@ const drop = el(
   ),
 );
 
-// Порядок на странице: что это и куда класть файл → настройки → статус → отчёт.
+// Порядок на странице: шапка → стол (лист для файла и требования) → статус → отчёт.
 root.replaceChildren(
   el(
     'header',
-    { class: 'hero' },
+    { class: 'masthead' },
     el(
       'div',
-      { class: 'hero-copy' },
+      { class: 'masthead-title' },
       el('h1', {}, ru.appTitle),
       el('p', { class: 'subtitle' }, ru.appSubtitle),
-      el('p', { class: 'lead no-print' }, ru.heroLead),
-      el(
-        'div',
-        { class: 'privacy no-print' },
-        el('p', {}, ru.privacyNote),
-        disclosure(ru.privacyHowTitle, ru.privacyHow),
-      ),
     ),
-    drop,
+    el(
+      'div',
+      { class: 'privacy no-print' },
+      el('p', {}, ru.privacyNote),
+      disclosure(ru.privacyHowTitle, ru.privacyHow),
+    ),
   ),
   el(
     'div',
-    { class: 'settings no-print' },
+    { class: 'desk no-print' },
+    drop,
     el(
       'div',
-      { class: 'field' },
-      el('label', { for: 'profile' }, ru.profileLabel),
-      select,
-      profileHint,
+      { class: 'tools' },
+      el('p', { class: 'lead' }, ru.heroLead),
+      el(
+        'div',
+        { class: 'field' },
+        el('label', { for: 'profile' }, ru.profileLabel),
+        select,
+        profileHint,
+      ),
+      el('div', { class: 'toolbar' }, editButton, teacherButton),
     ),
-    el('div', { class: 'toolbar' }, editButton, teacherButton),
   ),
   editorSlot,
   teacherSlot,
@@ -150,8 +159,23 @@ function showMessage(text: string, isError = false): void {
   status.classList.toggle('error', isError);
 }
 
+// Файл не прочитался: лист в зоне загрузки перечёркнут, как неудачная страница.
+function markFileFailed(failed: boolean): void {
+  drop.classList.toggle('failed', failed);
+}
+
 // --- отчёт ----------------------------------------------------------------
-function renderResults(): void {
+// К карточке замечания: плавная прокрутка (если движение не выключено) и фокус на ней.
+function showCard(cardId: string): void {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  card.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  card.focus({ preventScroll: true });
+}
+
+// reveal — новый отчёт: блоки появляются один раз по очереди. При перерисовке того же
+// отчёта (например, после «Здесь это есть») ничего не появляется заново.
+function renderResults(reveal = false): void {
   if (!lastReport) return;
   const report = lastReport;
   const preview = renderPreview(report, dismissed);
@@ -187,9 +211,26 @@ function renderResults(): void {
   const fixPanel = renderFixPanel(report, (ruleIds) => {
     void runFix(ruleIds);
   });
+  const docMap = renderDocMap(lastMap, report, dismissed, {
+    onShowParagraph: (index) => {
+      preview.show(index);
+    },
+    onShowCard: showCard,
+  });
   results.replaceChildren(
-    el('div', { class: 'results-grid' }, el('div', {}, view, fixPanel), preview.element),
+    el(
+      'div',
+      { class: `results-grid${docMap ? ' with-map' : ''}` },
+      docMap,
+      el('div', { class: 'report-column' }, view, fixPanel),
+      preview.element,
+    ),
   );
+  if (reveal) {
+    // Порядок появления: заголовок и оценка, блоки отчёта, первые карточки, затем текст работы.
+    const blocks = [...view.children, preview.element, ...(docMap ? [docMap] : [])];
+    revealInOrder(blocks);
+  }
 }
 
 // --- проверка -------------------------------------------------------------
@@ -202,17 +243,22 @@ function runCheck(): void {
   results.replaceChildren();
   // Пока идёт проверка, по листу бежит линия: видно, что программа работает.
   drop.classList.add('busy');
+  sheet.startScan();
+  markFileFailed(false);
   void check(file.bytes, profile, file.name).then((response) => {
     if (id !== requestId) return; // ответ на старый запрос: пользователь уже выбрал другое
+    sheet.stopScan(response.ok);
     drop.classList.remove('busy');
     if (!response.ok) {
       lastReport = undefined;
       showMessage(docxErrorText(response.code), true);
+      markFileFailed(true);
       return;
     }
     lastReport = response.report;
+    lastMap = response.map;
     showMessage(ru.checked(file.name));
-    renderResults();
+    renderResults(true);
     document.getElementById('report-title')?.focus();
   });
 }
@@ -245,14 +291,16 @@ async function runFix(ruleIds: string[]): Promise<void> {
   previousReport = before;
   lastFile = { name, bytes: response.bytes };
   lastReport = response.report;
+  lastMap = response.map;
   dismissed.clear();
-  renderResults();
+  renderResults(true);
 }
 
 async function acceptFile(file: File): Promise<void> {
   const hint = extensionHint(file.name);
   if (hint) {
     showMessage(hint, true);
+    markFileFailed(true);
     results.replaceChildren();
     return;
   }
@@ -297,6 +345,7 @@ editButton.addEventListener('click', () => {
     defaults: (id) => BUILTIN_PROFILES.find((p) => p.id === id),
   });
   editorSlot.replaceChildren(editor);
+  revealInOrder([editor]);
   editButton.setAttribute('aria-expanded', 'true');
   document.getElementById('editor-title')?.focus();
 });
@@ -312,17 +361,19 @@ teacherButton.addEventListener('click', () => {
   teacherSlot.replaceChildren(
     renderTeacher(
       () => profile,
-      (name, bytes, report) => {
+      (name, bytes, report, map) => {
         previousReport = undefined;
         lastFile = { name, bytes };
         lastReport = report;
+        lastMap = map;
         dismissed.clear();
         showMessage(ru.checked(name));
-        renderResults();
+        renderResults(true);
         document.getElementById('report-title')?.focus();
       },
     ),
   );
+  revealInOrder([...teacherSlot.children]);
   teacherButton.setAttribute('aria-expanded', 'true');
   teacherButton.textContent = ru.teacherClose;
   document.getElementById('teacher-title')?.focus();
@@ -341,6 +392,18 @@ if (location.hash.startsWith('#profile=')) {
 }
 
 // --- события --------------------------------------------------------------
+// Раскрыли «Почему это важно», «Как исправить» и т. п.: содержимое проявляется.
+// Событие toggle не всплывает, поэтому ловим его на этапе погружения (capture).
+root.addEventListener(
+  'toggle',
+  (event) => {
+    const details = event.target;
+    if (details instanceof HTMLDetailsElement && details.open)
+      unfold([...details.children].filter((child) => child.tagName !== 'SUMMARY'));
+  },
+  true,
+);
+
 chooseButton.addEventListener('click', () => {
   input.click();
 });

@@ -4,6 +4,7 @@
 import type { Profile } from '../core/profiles/types.ts';
 import { ru } from '../i18n/ru.ts';
 import { el } from './dom.ts';
+import { animate, durations, reducedMotion } from './motion.ts';
 
 type Side = keyof typeof ru.sheetSides;
 
@@ -31,6 +32,8 @@ function marginOf(profile: Profile, ruleId: string): { mm: number; label: string
 export interface SheetView {
   element: HTMLElement;
   update: (profile: Profile) => void;
+  startScan: () => void; // началась проверка
+  stopScan: (ok: boolean) => void; // проверка закончилась
 }
 
 export function renderSheet(profile: Profile): SheetView {
@@ -50,11 +53,12 @@ export function renderSheet(profile: Profile): SheetView {
     line.style.setProperty('--w', `${width}%`);
     return line;
   });
+  const scan = el('span', { class: 'scan' });
   const sheet = el(
     'div',
     { class: 'sheet', 'aria-hidden': 'true' },
     el('div', { class: 'sheet-area' }, ...lines),
-    el('span', { class: 'scan' }),
+    scan,
     ...Object.values(labels),
   );
   // Подпись для экранного диктора: на картинке те же числа видны у краёв листа.
@@ -75,5 +79,51 @@ export function renderSheet(profile: Profile): SheetView {
       described.length > 0 ? `${ru.sheetCaption}: ${described.join(', ')}.` : ru.sheetCaption;
   };
   update(profile);
-  return { element, update };
+
+  // Линия сканирования. Ядро не сообщает, какая доля правил уже проверена, поэтому
+  // процентов не показываем: линия ровно ходит по листу, пока идёт проверка, а в конце
+  // доходит до низа и исчезает. При «уменьшить движение» линия стоит и только проявляется.
+  let running: Animation | undefined;
+  const startScan = (): void => {
+    running?.cancel();
+    const { reveal } = durations();
+    running = reducedMotion()
+      ? animate(scan, [{ opacity: 0 }, { opacity: 1 }], { duration: reveal, fill: 'forwards' })
+      : animate(
+          scan,
+          [
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 1, transform: 'translateY(98%)' },
+          ],
+          { duration: reveal * 2.5, iterations: Infinity, direction: 'alternate' },
+        );
+  };
+  const stopScan = (ok: boolean): void => {
+    const current = running;
+    running = undefined;
+    if (!current) return;
+    const { ui } = durations();
+    if (!ok) {
+      current.cancel();
+      return;
+    }
+    // Проверка закончилась: линия доходит до низа листа и гаснет.
+    current.pause();
+    const done = animate(
+      scan,
+      [
+        { opacity: 1, transform: 'translateY(98%)' },
+        { opacity: 0, transform: 'translateY(98%)' },
+      ],
+      {
+        duration: ui,
+        fill: 'forwards',
+      },
+    );
+    current.cancel();
+    void done?.finished.then(() => {
+      done.cancel();
+    });
+  };
+  return { element, update, startScan, stopScan };
 }

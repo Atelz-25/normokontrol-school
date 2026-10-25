@@ -11,8 +11,11 @@ export const ru = {
   heroLead:
     'Загрузите работу: программа найдёт поля, шрифты, интервалы и пустые строки не по требованиям, покажет место в тексте и подскажет, как исправить в Word.',
   sheetCaption: 'Поля листа по выбранным требованиям',
-  sheetMm: (value: string): string => `${value} мм`,
-  sheetMargin: (side: string, value: string): string => `${side}: ${value} мм`,
+  docMapTitle: 'Карта',
+  docMapHint:
+    'Карта документа: штрих — абзац, пропуск — пустой абзац, засечка на полях — замечание. Щелчок по засечке открывает замечание, по строке — абзац в тексте работы.',
+  sheetMm: (value: string): string => `${value}\u00a0мм`,
+  sheetMargin: (side: string, value: string): string => `${side}: ${value}\u00a0мм`,
   sheetSides: { left: 'слева', right: 'справа', top: 'сверху', bottom: 'снизу' },
   privacyNote: 'Файл не покидает ваш компьютер: проверка идёт прямо в браузере, без сервера.',
   privacyHowTitle: 'Как это проверить',

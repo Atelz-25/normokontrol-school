@@ -9,6 +9,7 @@ import type { Finding } from '../core/rules/types.ts';
 import { CATEGORY_NAMES, RULE_TEXTS } from '../i18n/rules-ru.ts';
 import { GROUP_NAMES, SEVERITY_NAMES, STATUS_NAMES, ru } from '../i18n/ru.ts';
 import { disclosure, el } from './dom.ts';
+import { countTo, unfold } from './motion.ts';
 
 const EXAMPLES = 5; // сколько мест показывать до кнопки «Показать все»
 const SEVERITY_ORDER: Severity[] = ['error', 'warning', 'info'];
@@ -58,10 +59,12 @@ function priorityBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLEle
   if (!ids || ids.length === 0) return undefined;
   const items = ids.map((id) => {
     const result = byId.get(id);
-    const name = RULE_TEXTS[id] ? `${titleOf(id)} (${id})` : id;
+    const name = titleOf(id);
+    // Как пометка учителя на полях тетради: номер правила слева от красной линии.
     return el(
       'li',
       {},
+      el('span', { class: 'margin-note' }, id),
       mark(statusMark([result?.status === 'not-implemented' ? undefined : result])),
       ' ',
       // Ссылка ведёт к карточке, а карточки есть только у правил с замечаниями.
@@ -75,7 +78,7 @@ function priorityBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLEle
     { class: 'block', 'aria-labelledby': 'priority-title' },
     el('h2', { id: 'priority-title' }, ru.priorityTitle),
     el('p', { class: 'muted' }, ru.priorityIntro),
-    el('ol', { class: 'checklist' }, ...items),
+    el('ol', { class: 'checklist margin-list' }, ...items),
   );
 }
 
@@ -100,25 +103,16 @@ function boardBlock(profile: Profile, byId: Map<string, RuleResult>): HTMLElemen
   );
 }
 
-// Число оценки «набегает» от прошлого значения к новому за полсекунды: так видно, как
-// изменилась оценка после «Здесь это есть» или исправления. Первый раз — от нуля.
-// Если в системе просят меньше анимации, сразу пишем итог.
+// Числа «докручиваются» от прошлого значения к новому: так видно, как изменилась оценка
+// после «Здесь это есть» или исправления. Первый раз — от нуля.
 let shownScore = 0;
+const shownTally: Record<Severity, number> = { error: 0, warning: 0, info: 0 };
 
-function countUp(node: HTMLElement, total: number): void {
-  const from = shownScore;
-  shownScore = total;
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || from === total) return;
-  node.textContent = ru.score(from);
-  const start = performance.now();
-  const step = (now: number): void => {
-    const t = Math.min(1, (now - start) / 600);
-    const eased = 1 - (1 - t) ** 3; // быстро в начале, плавно в конце
-    node.textContent = ru.score(Math.round(from + (total - from) * eased));
-    if (t < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
+function counter(severity: Severity, value: number): HTMLElement {
+  const node = el('strong', {}, String(value));
+  countTo(node, shownTally[severity], value, String);
+  shownTally[severity] = value;
+  return node;
 }
 
 function tally(counts: Record<Severity, number>): HTMLElement {
@@ -129,7 +123,7 @@ function tally(counts: Record<Severity, number>): HTMLElement {
       el(
         'li',
         { class: `tally-${severity}${counts[severity] === 0 ? ' zero' : ''}` },
-        el('strong', {}, String(counts[severity])),
+        counter(severity, counts[severity]),
         el('span', {}, ru.tally[severity](counts[severity])),
       ),
     ),
@@ -154,7 +148,10 @@ function scoreBlock(
     { class: `score-value${score.total === undefined ? ' none' : ''}` },
     score.total === undefined ? ru.scoreNone : ru.score(score.total),
   );
-  if (score.total !== undefined) countUp(value, score.total);
+  if (score.total !== undefined) {
+    countTo(value, shownScore, score.total, ru.score);
+    shownScore = score.total;
+  }
   return el(
     'section',
     { class: 'block score', 'aria-labelledby': 'score-title' },
@@ -281,6 +278,7 @@ function ruleCard(
     );
     toggle.addEventListener('click', () => {
       const expanded = list.classList.toggle('expanded');
+      if (expanded) unfold([...list.querySelectorAll('li.extra')]);
       toggle?.setAttribute('aria-expanded', String(expanded));
       if (toggle) toggle.textContent = expanded ? ru.showLess : ru.showAll(findings.length);
     });
@@ -298,30 +296,39 @@ function ruleCard(
     });
   }
 
+  // Строка корректурного листа: слева на полях знак серьёзности и номер правила, справа текст.
+  const margin = el(
+    'div',
+    { class: 'card-margin' },
+    el('span', { class: 'rule-id' }, result.ruleId),
+    el('span', { class: `severity severity-${group.severity}` }, SEVERITY_NAMES[group.severity]),
+  );
   return el(
     'article',
     { class: `card sev-${group.severity}${dismissed ? ' dismissed' : ''}`, id, tabindex: '-1' },
+    margin,
     el(
-      'h3',
-      {},
-      el('span', { class: `badge badge-${group.severity}` }, SEVERITY_NAMES[group.severity]),
-      ' ',
-      `${text?.title ?? result.ruleId} `,
-      el('span', { class: 'muted' }, `(${result.ruleId})`),
-      group.key === 'main' ? undefined : ` — ${GROUP_NAMES[group.key]}`,
+      'div',
+      { class: 'card-body' },
+      el(
+        'h3',
+        {},
+        text?.title ?? result.ruleId,
+        group.key === 'main' ? undefined : el('span', { class: 'group' }, GROUP_NAMES[group.key]),
+      ),
+      dismissed ? el('p', { class: 'note' }, ru.dismissed) : undefined,
+      group.summary ? el('p', {}, group.summary) : undefined,
+      result.heuristic ? el('p', { class: 'note' }, ru.heuristic) : undefined,
+      config?.confidence === 'unconfirmed' ? el('p', { class: 'note' }, ru.unconfirmed) : undefined,
+      dismissed ? undefined : list,
+      dismissed ? undefined : toggle,
+      text ? disclosure(ru.why, `${text.why} ${ru.typicalNote}`) : undefined,
+      text ? disclosure(ru.how, text.howToFixWord) : undefined,
+      dismissButton,
+      dismissButton
+        ? el('p', { class: 'muted no-print', id: `${id}-dismiss-hint` }, ru.dismissHint)
+        : undefined,
     ),
-    dismissed ? el('p', { class: 'note' }, ru.dismissed) : undefined,
-    group.summary ? el('p', {}, group.summary) : undefined,
-    result.heuristic ? el('p', { class: 'note' }, ru.heuristic) : undefined,
-    config?.confidence === 'unconfirmed' ? el('p', { class: 'note' }, ru.unconfirmed) : undefined,
-    dismissed ? undefined : list,
-    dismissed ? undefined : toggle,
-    text ? disclosure(ru.why, `${text.why} ${ru.typicalNote}`) : undefined,
-    text ? disclosure(ru.how, text.howToFixWord) : undefined,
-    dismissButton,
-    dismissButton
-      ? el('p', { class: 'muted no-print', id: `${id}-dismiss-hint` }, ru.dismissHint)
-      : undefined,
   );
 }
 
@@ -408,7 +415,12 @@ export function renderReport(
     passportBlock(report),
     el('h2', { class: 'findings-title' }, ru.findingsTitle),
     ordered.length === 0
-      ? el('p', {}, ru.noFindings)
+      ? el(
+          'div',
+          { class: 'clean' },
+          el('span', { class: 'clean-sheet', 'aria-hidden': 'true' }),
+          el('p', {}, ru.noFindings),
+        )
       : el(
           'div',
           { class: 'cards' },
