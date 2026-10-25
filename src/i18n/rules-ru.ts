@@ -80,6 +80,11 @@ export const RULE_TEXTS: Record<string, RuleText> = {
     howToFixWord:
       'Выделите весь текст (Ctrl+A) → Макет → Поля → Настраиваемые поля → «Применить: ко всему документу».',
   },
+  'PG-07': {
+    title: 'Сумма полей',
+    why: 'По методичке левое и правое поля вместе дают 40 мм, верхнее и нижнее — тоже 40 мм. Тогда ширина и высота текста на странице такие, как ждёт учитель.',
+    howToFixWord: MARGIN_HOW,
+  },
   'FT-01': {
     title: 'Шрифт основного текста',
     why: 'Требование к гарнитуре одно для всей работы; другой шрифт сразу бросается в глаза.',
@@ -579,6 +584,13 @@ export const msg = {
   landscape: (): string => 'Раздел в альбомной ориентации, нужна книжная.',
   margin: (side: keyof typeof SIDE_NAMES, actual: number, expected: string): string =>
     `${capitalize(SIDE_NAMES[side])} поле ${fmt(actual, 1)} мм, нужно ${expected}.`,
+  marginSum: (
+    a: keyof typeof SIDE_NAMES,
+    b: keyof typeof SIDE_NAMES,
+    sum: number,
+    expected: number,
+  ): string =>
+    `${capitalize(SIDE_NAMES[a])} и ${SIDE_NAMES[b]} поля вместе ${fmt(sum, 1)} мм, нужно ${expected} мм.`,
   marginsDiffer: (section: number): string =>
     `Поля раздела ${section} отличаются от полей первого раздела.`,
   fonts: (fonts: string[], expected: string): string =>

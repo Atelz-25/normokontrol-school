@@ -23,6 +23,8 @@ const typicalRules: Record<string, RuleConfig> = {
   'PG-04': rule('error', { mode: 'equals', valueMm: 20, toleranceMm: 1 }),
   'PG-05': rule('error', { mode: 'equals', valueMm: 20, toleranceMm: 1 }),
   'PG-06': rule('warning'),
+  // PG-07 — из методички школы, во встроенных профилях выключено.
+  'PG-07': rule('info', { leftRightMm: 40, topBottomMm: 40, toleranceMm: 1 }, false),
   'FT-01': rule('error', { mode: 'oneOf', values: ['Times New Roman'] }),
   'FT-02': rule('error', { mode: 'equals', valuePt: 14, tolerancePt: 0 }),
   'FT-03': rule('warning', { allowedFonts: ['Times New Roman'], codeFonts: ['Courier New', 'Consolas'] }),
@@ -112,7 +114,7 @@ const typicalRules: Record<string, RuleConfig> = {
   'OUT-01': rule('info', { message: 'Перед сдачей сохраните работу в PDF и посмотрите, как она выглядит на телефоне.' }),
 };
 
-const NEW_SCHOOL_RULES = new Set(['PR-08', 'PR-09', 'PR-10', 'PB-01', 'ST-10', 'PS-01', 'FN-01', 'TH-01', 'VL-02', 'OUT-01', 'TH-02', 'TH-03', 'CN-01', 'CN-02', 'CN-03', 'CN-04', 'CN-05', 'AP-01']);
+const NEW_SCHOOL_RULES = new Set(['PG-07', 'PR-08', 'PR-09', 'PR-10', 'PB-01', 'ST-10', 'PS-01', 'FN-01', 'TH-01', 'VL-02', 'OUT-01', 'TH-02', 'TH-03', 'CN-01', 'CN-02', 'CN-03', 'CN-04', 'CN-05', 'AP-01']);
 
 const typical: Profile = {
   schemaVersion: 1,

@@ -1,4 +1,4 @@
-// Правила страницы: формат листа и поля (PG-01…PG-06). Проверяем каждый раздел.
+// Правила страницы: формат листа и поля (PG-01…PG-07). Проверяем каждый раздел.
 import { describeSpec, msg, summary } from '../../i18n/rules-ru.ts';
 import type { Section } from '../model/types.ts';
 import { finding } from './helpers.ts';
@@ -108,6 +108,37 @@ const consistentMargins: Rule = {
   },
 };
 
+// PG-07. Методичка школы: левое и правое поля вместе 40 мм, верхнее и нижнее — тоже 40 мм.
+// Даже если одно поле немного изменили, сумма показывает, что ширина текста осталась прежней.
+const marginSums: Rule = {
+  id: 'PG-07',
+  category: 'page',
+  stage: 3,
+  autoFixable: false,
+  defaultParams: { leftRightMm: 40, topBottomMm: 40, toleranceMm: 1 },
+  check(ctx, params) {
+    const tolerance = num(params, 'toleranceMm', 1);
+    const pairs = [
+      { sides: ['left', 'right'] as const, expected: num(params, 'leftRightMm', 40) },
+      { sides: ['top', 'bottom'] as const, expected: num(params, 'topBottomMm', 40) },
+    ];
+    const findings = ctx.doc.sections.flatMap((s) =>
+      pairs
+        .map(({ sides: [a, b], expected }) => ({
+          a,
+          b,
+          expected,
+          sum: s.marginsMm[a] + s.marginsMm[b],
+        }))
+        .filter(({ sum, expected }) => Math.abs(sum - expected) > tolerance)
+        .map(({ a, b, sum, expected }) =>
+          finding(ctx, false, msg.marginSum(a, b, sum, expected), { sectionIndex: s.index }),
+        ),
+    );
+    return { checked: ctx.doc.sections.length, findings, unit: 'sections' };
+  },
+};
+
 export const pageRules: Rule[] = [
   pageSize,
   marginRule('PG-02', 'left', { mode: 'equals', value: 30, tolerance: 1 }),
@@ -115,4 +146,5 @@ export const pageRules: Rule[] = [
   marginRule('PG-04', 'top', { mode: 'equals', value: 20, tolerance: 1 }),
   marginRule('PG-05', 'bottom', { mode: 'equals', value: 20, tolerance: 1 }),
   consistentMargins,
+  marginSums,
 ];
