@@ -3,7 +3,9 @@
 import type { Profile } from '../core/profiles/types.ts';
 import type {
   CheckResponse,
+  CheckStep,
   FixResponse,
+  WorkerMessage,
   WorkerRequest,
   WorkerResponse,
 } from '../worker/protocol.ts';
@@ -12,11 +14,19 @@ const worker = new Worker(new URL('../worker/check.worker.ts', import.meta.url),
   type: 'module',
 });
 const pending = new Map<number, (response: WorkerResponse) => void>();
+// Кому сообщать о ходе проверки (по номеру запроса).
+const progress = new Map<number, (step: CheckStep) => void>();
 let nextId = 0;
 
-worker.addEventListener('message', (event: MessageEvent<WorkerResponse>) => {
-  pending.get(event.data.id)?.(event.data);
-  pending.delete(event.data.id);
+worker.addEventListener('message', (event: MessageEvent<WorkerMessage>) => {
+  const message = event.data;
+  if (message.kind === 'progress') {
+    progress.get(message.id)?.(message.step);
+    return;
+  }
+  pending.get(message.id)?.(message);
+  pending.delete(message.id);
+  progress.delete(message.id);
 });
 
 // Если Worker упал целиком, все ожидающие запросы получают «файл не читается».
@@ -37,8 +47,10 @@ export function check(
   bytes: ArrayBuffer,
   profile: Profile,
   fileName: string,
+  onStep?: (step: CheckStep) => void,
 ): Promise<CheckResponse> {
   nextId += 1;
+  if (onStep) progress.set(nextId, onStep);
   return send({ kind: 'check', id: nextId, bytes: bytes.slice(0), profile, fileName });
 }
 

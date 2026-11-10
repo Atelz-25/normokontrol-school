@@ -4,8 +4,8 @@ import { checkModel, type CheckOptions, type Report } from '../core/engine/index
 import { fixDocx } from '../core/fixer/index.ts';
 import type { Profile } from '../core/profiles/types.ts';
 import { DocxError } from '../core/reader/errors.ts';
-import { readDocx } from '../core/reader/index.ts';
-import type { MapParagraph, WorkerRequest, WorkerResponse } from './protocol.ts';
+import { DEFAULT_LIMITS, readDocx } from '../core/reader/index.ts';
+import type { CheckStep, MapParagraph, WorkerMessage, WorkerRequest } from './protocol.ts';
 
 // То же, что checkDocx (checkModel(readDocx(bytes))), но модель остаётся у нас: после проверки
 // у абзацев уже проставлены роли, и из них собирается карта документа.
@@ -13,9 +13,11 @@ function checkWithMap(
   bytes: Uint8Array,
   profile: Profile,
   options: CheckOptions,
+  onStep?: (step: CheckStep) => void,
 ): { report: Report; map: MapParagraph[] } {
-  const doc = readDocx(bytes);
+  const doc = readDocx(bytes, DEFAULT_LIMITS, onStep);
   const report = checkModel(doc, profile, options);
+  onStep?.('rules');
   const map = doc.paragraphs.map((p) => ({
     index: p.index,
     role: p.role,
@@ -25,7 +27,7 @@ function checkWithMap(
   return { report, map };
 }
 
-const post = (message: WorkerResponse, transfer: Transferable[] = []): void => {
+const post = (message: WorkerMessage, transfer: Transferable[] = []): void => {
   self.postMessage(message, { transfer });
 };
 
@@ -41,7 +43,10 @@ self.addEventListener('message', (event: MessageEvent<WorkerRequest>) => {
         kind: 'check',
         id: request.id,
         ok: true,
-        ...checkWithMap(bytes, request.profile, { fileName: request.fileName }),
+        // Каждый законченный этап сразу уходит странице: там отмечается шаг в списке.
+        ...checkWithMap(bytes, request.profile, { fileName: request.fileName }, (step) => {
+          post({ kind: 'progress', id: request.id, step });
+        }),
       });
     } catch (error) {
       post({ kind: 'check', id: request.id, ok: false, code: codeOf(error) });

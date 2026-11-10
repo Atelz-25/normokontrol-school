@@ -30,8 +30,17 @@ function readRelationships(root: XmlElement | undefined): Map<string, string> {
   return map;
 }
 
-export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMITS): DocModel {
+// Этапы чтения — для строки хода проверки в интерфейсе. Ядро только сообщает, что этап
+// закончился; что с этим делать, решает вызывающий (Web Worker пересылает это странице).
+export type ReadStep = 'archive' | 'styles' | 'paragraphs';
+
+export function readDocx(
+  bytes: Uint8Array,
+  limits: ArchiveLimits = DEFAULT_LIMITS,
+  onStep?: (step: ReadStep) => void,
+): DocModel {
   const parts = readArchive(bytes, limits);
+  onStep?.('archive');
   try {
     const optional = (name: string): XmlElement | undefined => {
       const text = parts.get(name);
@@ -39,6 +48,7 @@ export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMI
     };
     const theme = readTheme(parts.get('word/theme/theme1.xml'), parseXml);
     const sheet = readStyleSheet(optional('word/styles.xml'), theme);
+    onStep?.('styles');
     const numbering = readNumbering(optional('word/numbering.xml'));
     const comments = optional('word/comments.xml');
     const core = optional('docProps/core.xml');
@@ -55,7 +65,7 @@ export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMI
       if (root) headerFooterRoots.set(target, root);
     }
 
-    return buildModel(documentRoot, sheet, numbering, {
+    const model = buildModel(documentRoot, sheet, numbering, {
       comments: comments ? comments.getElementsByTagNameNS(NS.w, 'comment').length : 0,
       title: first(core, NS.dc, 'title'),
       creator: first(core, NS.dc, 'creator'),
@@ -64,6 +74,8 @@ export function readDocx(bytes: Uint8Array, limits: ArchiveLimits = DEFAULT_LIMI
       rels,
       headerFooterRoots,
     });
+    onStep?.('paragraphs');
+    return model;
   } catch (error) {
     if (error instanceof DocxError) throw error;
     // Битый XML или неожиданная структура: понятная ошибка вместо падения.

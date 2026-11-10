@@ -41,4 +41,13 @@ export type FixResponse =
     }
   | { kind: 'fix'; id: number; ok: false; code: DocxErrorCode };
 
+// Ход проверки: этап закончился. 'rules' — проверены все правила.
+export type CheckStep = 'archive' | 'styles' | 'paragraphs' | 'rules';
+export interface ProgressMessage {
+  kind: 'progress';
+  id: number;
+  step: CheckStep;
+}
+
 export type WorkerResponse = CheckResponse | FixResponse;
+export type WorkerMessage = WorkerResponse | ProgressMessage;
