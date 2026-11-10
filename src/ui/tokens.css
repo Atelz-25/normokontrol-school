@@ -1,15 +1,35 @@
 /*
   Дизайн-токены «Нормоконтроля»: всё, из чего собран внешний вид, в одном месте.
-  Образ — рабочий стол корректора: лист бумаги с полями, красный карандаш для ошибок,
-  охра для замечаний, графит для советов, синие чернила для действий (это единственный
-  акцентный цвет). Подробно — docs/DESIGN.md.
+  Образ — школьная доска и лист на ней: страница цвета зелёной доски, на ней белые листы
+  (зона загрузки, отчёт, текст работы). Красная ручка учителя — ошибка, охра — замечание,
+  серый — совет. Отдельного «фирменного» цвета нет: акцент — это сам зелёный цвет доски.
+  Подробно — docs/DESIGN.md.
 
-  Цвета подобраны с контрастом текста не ниже 4,5 : 1 (WCAG 2.1 AA) на бумаге и на столе
+  Цвета подобраны с контрастом текста не ниже 4,5 : 1 (WCAG 2.1 AA) на доске и на листе
   в обеих темах; проверку делает axe в e2e-тестах.
 */
 
 /* --- Шрифты: лежат в проекте (src/ui/fonts, лицензия SIL OFL 1.1), внешних запросов нет.
-   Каждое начертание разбито на кириллицу и латиницу: браузер скачивает только нужное. --- */
+   Golos Text — интерфейс и заголовки, PT Serif — только текст самой работы.
+   Каждый шрифт разбит на кириллицу и латиницу: браузер скачивает только нужное. --- */
+@font-face {
+  font-family: 'Golos Text';
+  font-style: normal;
+  font-weight: 400 900; /* вариативный шрифт: один файл на все насыщенности */
+  font-display: swap;
+  src: url('./fonts/golos-text-cyrillic-wght-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Golos Text';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('./fonts/golos-text-latin-wght-normal.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 @font-face {
   font-family: 'PT Serif';
   font-style: normal;
@@ -24,24 +44,6 @@
   font-weight: 400;
   font-display: swap;
   src: url('./fonts/pt-serif-latin-400-normal.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Serif';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-serif-cyrillic-400-italic.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Serif';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-serif-latin-400-italic.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
@@ -64,90 +66,48 @@
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
     U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face {
-  font-family: 'PT Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-sans-cyrillic-400-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-sans-latin-400-normal.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./fonts/pt-sans-cyrillic-700-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('./fonts/pt-sans-latin-700-normal.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'PT Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-mono-cyrillic-400-normal.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'PT Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/pt-mono-latin-400-normal.woff2') format('woff2');
-  unicode-range:
-    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
-    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
 
 :root {
-  /* Цвет: светлая тема — лист на столе днём. */
-  --desk: #ebe5d9; /* стол: фон страницы */
-  --paper: #fbf8f1; /* лист: зона загрузки, текст работы, отчёт */
-  --graphite: #2a2826; /* основной текст, не чистый чёрный */
-  --graphite-soft: #5d5953; /* подписи, второстепенный текст; он же «совет» */
-  --rule: #d5cdbf; /* тонкие линии: поля, разделители строк */
-  --rule-strong: #b9ae9c; /* штрихи абзацев на карте документа */
-  --margin-line: #dc9a93; /* красная линия полей, как в тетради */
-  --pencil: #b3261e; /* красный карандаш: ошибка */
-  --ochre: #855a00; /* охра: замечание */
-  --ink: #23508f; /* синие чернила: кнопки, ссылки, фокус — единственный акцент */
-  --ink-on: #fbf8f1; /* текст на синей кнопке */
-  --highlight: #f4dc8a; /* подсветка места в тексте работы */
-  --sheet-shadow: 0 1px 1px rgb(42 40 38 / 8%), 0 6px 18px -8px rgb(42 40 38 / 30%);
+  /* Цвет: светлая тема — доска днём. */
+  --desk: #1f5a45; /* доска: фон страницы */
+  --desk-deep: #174534; /* тень листа, когда его приподняли */
+  --on-desk: #f4f8f3; /* текст прямо на доске */
+  --on-desk-soft: #c9dccf; /* подписи на доске */
+  --paper: #ffffff; /* лист: зона загрузки, отчёт, текст работы */
+  --graphite: #16211b; /* основной текст на листе */
+  --graphite-soft: #55635a; /* подписи на листе; он же «совет» */
+  --rule: #dfe5e0; /* тонкие линии на листе */
+  --rule-strong: #b4c0b7; /* штрихи абзацев на карте документа, рамки полей ввода */
+  --margin-line: #e9a39c; /* красная линия полей, как в тетради */
+  --pencil: #c2261b; /* красная ручка учителя: ошибка */
+  --ochre: #855800; /* охра: замечание */
+  --ink: #1b6146; /* действия на листе: кнопки, ссылки, фокус — тот же зелёный */
+  --ink-on: #ffffff; /* текст на зелёной кнопке */
+  --highlight: #ffe27a; /* подсветка места в тексте работы */
 
-  /* Шрифты: засечки — голос документа, рубленый — голос инструмента, моноширинный — числа. */
+  /* «Текущая поверхность». По умолчанию мы на доске; внутри листов (см. styles.css,
+     блок «Поверхности») эти же имена получают значения для бумаги. Кнопкам и ссылкам
+     поэтому не нужно знать, где они лежат. */
+  --surface: var(--desk);
+  --fg: var(--on-desk);
+  --fg-soft: var(--on-desk-soft);
+  --line: color-mix(in srgb, var(--on-desk) 28%, transparent);
+  --line-strong: color-mix(in srgb, var(--on-desk) 55%, transparent);
+  --accent: var(--on-desk);
+  --accent-on: var(--desk);
+
+  /* Шрифты: Golos Text — голос инструмента, PT Serif — голос документа. */
+  --font-ui: 'Golos Text', 'Segoe UI', Arial, sans-serif;
   --font-doc: 'PT Serif', 'Times New Roman', serif;
-  --font-ui: 'PT Sans', 'Segoe UI', Arial, sans-serif;
-  --font-num: 'PT Mono', 'Consolas', monospace;
 
-  /* Пять ступеней размера, не больше. */
-  --fs-1: 0.8125rem; /* 13 px: подписи на полях, единицы */
+  /* Пять ступеней размера, не больше. Самая крупная растёт вместе с шириной окна. */
+  --fs-1: 0.875rem; /* 14 px: подписи, номера правил */
   --fs-2: 1rem; /* 16 px: текст */
-  --fs-3: 1.25rem; /* 20 px: заголовки блоков */
-  --fs-4: 1.75rem; /* 28 px: заголовки разделов страницы */
-  --fs-5: 2.5rem; /* 40 px: название и оценка */
+  --fs-3: 1.25rem; /* 20 px: вводный абзац, заголовки блоков */
+  --fs-4: 1.875rem; /* 30 px: заголовки разделов страницы */
+  --fs-5: clamp(2.75rem, 7vw, 4.75rem); /* 44–76 px: название и оценка */
   --lh-text: 1.5;
-  --lh-tight: 1.2;
+  --lh-tight: 1.15;
 
   /* Отступы: шаг 4 px. */
   --sp-1: 0.25rem;
@@ -157,10 +117,14 @@
   --sp-5: 1.5rem;
   --sp-6: 2.5rem;
 
-  /* Ширина колонки полей в отчёте (номер правила, знак). */
+  /* Ширина колонки слева от замечания (серьёзность и номер правила). */
   --margin-col: 6.5rem;
 
-  --radius: 3px;
+  /* Скругление зависит от того, что это: лист бумаги почти острый, кнопка мягче,
+     большая панель — ещё мягче. Одинаковое скругление на всём выглядит шаблонно. */
+  --radius-sheet: 2px;
+  --radius-control: 8px;
+  --radius-panel: 14px;
 
   /* Движение: одна кривая на весь сайт, без пружин. */
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -171,22 +135,24 @@
   color-scheme: light;
 }
 
-/* Тёмная тема — лист под настольной лампой: тёплый тёмно-серый, тот же смысл цветов. */
+/* Тёмная тема — та же доска вечером: глубокий зелёный, листы темнее, смысл цветов тот же. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --desk: #1b1916;
-    --paper: #262320;
-    --graphite: #ece5d7;
-    --graphite-soft: #b2a999;
-    --rule: #433d36;
-    --rule-strong: #6a6157;
-    --margin-line: #7c4741;
-    --pencil: #f08a7e;
-    --ochre: #e3b456;
-    --ink: #9fbcec;
-    --ink-on: #1b1916;
-    --highlight: #6a5418;
-    --sheet-shadow: 0 1px 1px rgb(0 0 0 / 40%), 0 10px 24px -10px rgb(0 0 0 / 70%);
+    --desk: #12231c;
+    --desk-deep: #0a1611;
+    --on-desk: #eaf2ec;
+    --on-desk-soft: #a9bdb0;
+    --paper: #1d2f28;
+    --graphite: #e8efe9;
+    --graphite-soft: #a9bdb0;
+    --rule: #33483f;
+    --rule-strong: #5b7267;
+    --margin-line: #8a4d46;
+    --pencil: #ff9a8d;
+    --ochre: #ecc063;
+    --ink: #8ed6b1;
+    --ink-on: #12231c;
+    --highlight: #5d4c12;
     color-scheme: dark;
   }
 }

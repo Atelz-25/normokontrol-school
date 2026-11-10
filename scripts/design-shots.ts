@@ -11,7 +11,8 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { chromium, type Page } from '@playwright/test';
 
-const BASE = 'http://127.0.0.1:4173/normokontrol-school/';
+// Если порт 4173 занят, адрес можно задать переменной окружения SHOTS_BASE.
+const BASE = process.env.SHOTS_BASE ?? 'http://127.0.0.1:4173/normokontrol-school/';
 const OUT = 'docs/design';
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const sample = existsSync('fixtures/real/sample-v2.docx')
