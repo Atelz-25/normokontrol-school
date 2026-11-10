@@ -26,6 +26,18 @@ body {
   font-size: var(--fs-2);
 }
 
+/* Полос прокрутки не показываем: страница и текст работы прокручиваются колесом, пальцем
+   и клавишами, а где ты в тексте, показывает карта документа. */
+html,
+.preview {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+.preview::-webkit-scrollbar {
+  display: none;
+}
+
 main {
   max-width: 78rem;
   margin: 0 auto;
@@ -206,6 +218,64 @@ input[type='text']:hover,
 input[type='number']:hover,
 textarea:hover {
   border-color: var(--graphite-soft);
+}
+
+/* Выпадающий список. Там, где браузер это умеет (Chrome и Edge с 2025 года), раскрытый
+   список тоже рисуем сами: белый лист с отметкой выбранного пункта, без системной синей
+   подсветки. Остальные браузеры показывают обычный системный список — это не ошибка. */
+@supports (appearance: base-select) {
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  select {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+  }
+
+  /* Стрелка поворачивается, когда список открыт. */
+  select::picker-icon {
+    content: '\25BE';
+    color: var(--graphite-soft);
+    transition: transform var(--dur-ui) var(--ease);
+  }
+
+  select:open::picker-icon {
+    transform: rotate(180deg);
+  }
+
+  ::picker(select) {
+    margin-top: var(--sp-1);
+    padding: var(--sp-1);
+    color: var(--graphite);
+    background: var(--paper);
+    border: 1.5px solid var(--rule-strong);
+    border-radius: var(--radius-control);
+  }
+
+  option {
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: calc(var(--radius-control) - 3px);
+  }
+
+  option:hover,
+  option:focus-visible {
+    background: color-mix(in srgb, var(--ink) 12%, transparent);
+    outline: none;
+  }
+
+  option:checked {
+    font-weight: 600;
+  }
+
+  option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--ink);
+  }
 }
 
 textarea.json {
