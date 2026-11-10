@@ -212,7 +212,7 @@ export const ru = {
   navLabel: 'Разделы сайта',
   startTitle: 'Проверьте работу до того, как её проверит учитель',
   startLead:
-    'Перетащите файл .docx на лист. Программа найдёт поля, шрифты и пустые строки не по требованиям и покажет, как исправить их в Word.',
+    'Перетащите файл .docx на лист. Программа найдёт поля, шрифты и пустые строки не по требованиям и покажет, как исправить их в Word. PDF тоже можно: по нему проверка короче.',
   dropHint: 'или перетащите его на лист',
   requirementsLine: 'Требования:',
   requirementsChange: 'изменить',
@@ -319,6 +319,22 @@ export const ru = {
       'Номера страниц она берёт только из отметок Word, поэтому пишет «примерно». Некоторые проверки сделаны по признакам (эвристики) и могут ошибаться: у таких пунктов есть кнопка «Здесь это есть».',
     ],
   ] as readonly (readonly [string, string])[],
+  // Проверка PDF
+  pdfTitle: 'Что проверено по PDF',
+  pdfIntro:
+    'В PDF нет абзацев и стилей, только буквы на страницах. Красную строку, пустые строки, интервалы и стили проверит только файл .docx.',
+  pdfPages: (n: number): string => `${n}\u00a0${plural(n, ['страница', 'страницы', 'страниц'])}`,
+  pdfLine: (failed: number, total: number): string =>
+    failed === 0
+      ? `Все ${total} проверок по PDF пройдены.`
+      : `${failed} из ${total} проверок по PDF не пройдены.`,
+  pdfPassed: 'в порядке',
+  pdfHeuristic: 'эвристика: измерено по краю текста',
+  pdfChecking: (name: string): string => `Читаю PDF «${name}»`,
+  pdfPassword: 'PDF защищён паролем. Сохраните его из Word заново без пароля.',
+  pdfBroken:
+    'PDF повреждён и не читается. Сохраните его из Word заново (Файл → Сохранить как → PDF).',
+  pdfLoadFailed: 'Не удалось загрузить модуль чтения PDF. Обновите страницу и попробуйте ещё раз.',
   profileTitle: 'Требования',
   profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;
@@ -353,7 +369,7 @@ export function docxErrorText(code: DocxErrorCode): string {
     case 'doc-or-encrypted':
       return 'Это старый формат .doc или документ с паролем. Откройте его в Word, снимите пароль (Файл → Сведения → Защита документа) и сохраните как «Документ Word (*.docx)».';
     case 'pdf':
-      return 'Это PDF. Оформление в нём уже «запечено», проверить его нельзя. Загрузите исходный файл .docx.';
+      return 'Это PDF, хотя имя файла заканчивается на .docx. Переименуйте его в .pdf или загрузите исходный файл .docx.';
     case 'rtf':
       return 'Это файл RTF. Откройте его в Word и сохраните как «Документ Word (*.docx)».';
     case 'odt':
@@ -373,7 +389,6 @@ export function docxErrorText(code: DocxErrorCode): string {
 export function extensionHint(name: string): string | undefined {
   const ext = name.toLowerCase().split('.').pop() ?? '';
   if (ext === 'doc') return docxErrorText('doc-or-encrypted');
-  if (ext === 'pdf') return docxErrorText('pdf');
   if (ext === 'odt') return docxErrorText('odt');
   if (ext === 'rtf') return docxErrorText('rtf');
   return undefined;

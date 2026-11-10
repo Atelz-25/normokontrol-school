@@ -1771,3 +1771,12 @@ mark {
     break-inside: avoid;
   }
 }
+
+/* --- Результат проверки PDF ------------------------------------------------------ */
+.pdf-check.passed .mark-slot {
+  color: var(--ink);
+}
+
+.pdf-check.passed h3 {
+  font-weight: 500;
+}

@@ -10,6 +10,8 @@ import { docxErrorText, extensionHint, ru } from './i18n/ru.ts';
 import { el } from './ui/dom.ts';
 import { copyText, downloadFile, findingsAsText } from './ui/export.ts';
 import { durations, reducedMotion, revealInOrder, unfold } from './ui/motion.ts';
+import type { PdfDocument } from './core/pdf/analyze.ts';
+import { renderPdfResult } from './ui/pdf-view.ts';
 import { renderProfileEditor } from './ui/profile-editor.ts';
 import { renderResult } from './ui/result-view.ts';
 import { renderSheet } from './ui/sheet.ts';
@@ -51,6 +53,10 @@ let compareNext = false; // следующий файл сравнить с те
 const dismissed = new Set<string>();
 const done = new Set<string>();
 let requestId = 0;
+// Проверенный PDF: держим уже прочитанные страницы, чтобы при смене требований не читать заново.
+let lastPdf: { name: string; doc: PdfDocument } | undefined;
+// Модуль чтения и проверки PDF (загружается при первом PDF).
+let pdfTools: typeof import('./ui/pdf-reader.ts') | undefined;
 
 // --- навигация -------------------------------------------------------------
 type Route = 'check' | 'teacher' | 'profile' | 'how';
@@ -79,7 +85,7 @@ const status = el('p', { class: 'status quiet', role: 'status', 'aria-live': 'po
 const input = el('input', {
   type: 'file',
   id: 'file',
-  accept: '.docx',
+  accept: '.docx,.pdf',
   class: 'visually-hidden',
   'aria-label': ru.chooseFile,
   tabindex: '-1',
@@ -355,8 +361,72 @@ async function runFix(ruleIds: string[]): Promise<void> {
   document.getElementById('report-title')?.focus();
 }
 
+// --- проверка PDF -----------------------------------------------------------
+function showPdfResult(): void {
+  if (!lastPdf || !pdfTools) return;
+  const view = renderPdfResult(pdfTools.checkPdf(lastPdf.doc, profile), lastPdf.name, {
+    onOtherFile: () => {
+      compareNext = false;
+      input.click();
+    },
+  });
+  results.replaceChildren(view);
+}
+
+async function runPdfCheck(file: File): Promise<void> {
+  requestId += 1;
+  const id = requestId;
+  lastReport = undefined;
+  lastFile = undefined;
+  showMessage(ru.checking(file.name));
+  checkingTitle.textContent = ru.pdfChecking(file.name);
+  markStep(undefined);
+  setCheckState('checking');
+  drop.classList.add('busy');
+  drop.classList.remove('failed');
+  sheet.startScan();
+  let doc: PdfDocument | undefined;
+  let error = '';
+  try {
+    // Модуль чтения PDF загружается только сейчас: для .docx он не нужен.
+    pdfTools = await import('./ui/pdf-reader.ts');
+    const { readPdf, PdfReadError } = pdfTools;
+    try {
+      doc = await readPdf(await file.arrayBuffer());
+    } catch (e) {
+      error = e instanceof PdfReadError && e.code === 'password' ? ru.pdfPassword : ru.pdfBroken;
+    }
+  } catch {
+    error = ru.pdfLoadFailed;
+  }
+  if (id !== requestId) return;
+  sheet.stopScan(doc !== undefined);
+  drop.classList.remove('busy');
+  if (!doc) {
+    lastPdf = undefined;
+    setCheckState('start');
+    showMessage(error, true);
+    drop.classList.add('failed');
+    return;
+  }
+  lastPdf = { name: file.name, doc };
+  showMessage(ru.checked(file.name));
+  withTransition(() => {
+    setCheckState('result');
+    showPdfResult();
+    window.scrollTo({ top: 0 });
+    document.getElementById('report-title')?.focus({ preventScroll: true });
+  });
+}
+
 async function acceptFile(file: File): Promise<void> {
   navigate('check');
+  if (/\.pdf$/i.test(file.name)) {
+    previousReport = undefined;
+    await runPdfCheck(file);
+    return;
+  }
+  lastPdf = undefined;
   const hint = extensionHint(file.name);
   if (hint) {
     showMessage(hint, true);
@@ -380,7 +450,8 @@ function selectProfile(next: Profile): void {
   profile = next;
   saveSelectedId(profile.id);
   fillProfiles();
-  runCheck();
+  if (lastPdf && !lastFile) showPdfResult();
+  else runCheck();
 }
 
 // --- экран «Требования»: редактор ------------------------------------------
@@ -459,7 +530,7 @@ function showRoute(focus: boolean): void {
   if (!focus) return;
   // После перехода фокус — на заголовок экрана: экранный диктор сразу говорит, где мы.
   const title =
-    route === 'check' && lastReport
+    route === 'check' && start.hidden
       ? 'report-title'
       : route === 'check' && !start.hidden && checkingText.hidden
         ? TITLES.check
