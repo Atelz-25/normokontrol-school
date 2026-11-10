@@ -1,10 +1,15 @@
-// Предпросмотр: упрощённый текст работы по абзацам с подсветкой мест из отчёта.
+// Лист «Текст работы»: упрощённый текст по абзацам с подсветкой мест из отчёта, линейка
+// левого поля сверху и карта документа справа вместо полосы прокрутки.
 // Это не копия Word: только текст, пустые абзацы видны как «¶». Текст вставляется
 // через textContent и <mark>, никогда через innerHTML.
 import type { Report } from '../core/engine/index.ts';
-import type { Severity } from '../core/profiles/types.ts';
+import type { Profile, Severity } from '../core/profiles/types.ts';
 import { SEVERITY_NAMES, ru } from '../i18n/ru.ts';
+import type { MapParagraph } from '../worker/protocol.ts';
+import { renderDocMap } from './doc-map.ts';
 import { el } from './dom.ts';
+import { underline } from './marks.ts';
+import { reducedMotion } from './motion.ts';
 
 const ORDER: Severity[] = ['error', 'warning', 'info'];
 
@@ -45,16 +50,63 @@ function highlighted(text: string, ranges: [number, number][]): (Node | string)[
   return parts.filter((part) => part !== '');
 }
 
-export interface PreviewView {
+// Линейка левого поля: серая метка — «как надо», красная — «как сейчас». Когда в плане
+// выбран пункт про поля, красная метка доезжает до серой: видно, что изменится.
+const RULER_MM = 50; // линейка показывает первые 50 мм листа
+
+function marginRuler(report: Report, profile: Profile): HTMLElement | undefined {
+  const params = profile.rules['PG-02']?.params as { valueMm?: unknown } | undefined;
+  const need = typeof params?.valueMm === 'number' ? params.valueMm : undefined;
+  if (need === undefined || !profile.rules['PG-02']?.enabled) return undefined;
+  const actualText = report.results
+    .find((r) => r.ruleId === 'PG-02')
+    ?.findings.find((f) => f.actual)?.actual;
+  const now = actualText ? parseFloat(actualText.replace(',', '.')) : undefined;
+  const at = (mm: number): string => `${Math.min(100, (mm / RULER_MM) * 100)}%`;
+
+  const needTick = el('span', { class: 'tick need' });
+  needTick.style.left = at(need);
+  const needLabel = el('span', { class: 'label need' }, ru.rulerNeed(need));
+  needLabel.style.left = at(need);
+  const ruler = el(
+    'div',
+    {
+      class: 'ruler',
+      role: 'img',
+      'aria-label': `${ru.rulerLabel}: ${ru.rulerNeed(need)}${now !== undefined ? `, ${ru.rulerNow(now)}` : ''}`,
+    },
+    needTick,
+    needLabel,
+  );
+  if (now !== undefined && Number.isFinite(now) && now !== need) {
+    const nowTick = el('span', { class: 'tick now' });
+    nowTick.style.left = at(now);
+    const nowLabel = el('span', { class: 'label now' }, ru.rulerNow(now));
+    nowLabel.style.right = `calc(100% - ${at(now)})`;
+    ruler.append(nowTick, nowLabel);
+    // Сдвиг до серой метки в пикселях: проценты в transform считаются от самой метки.
+    ruler.dataset.shift = String((need - now) / RULER_MM);
+  }
+  return ruler;
+}
+
+export interface SheetView {
   element: HTMLElement;
-  show: (paragraphIndex: number) => void;
+  show: (paragraphIndex: number, focus: boolean) => void;
+  alignRuler: (active: boolean) => void; // наведение на пункт плана про поля
 }
 
 // Сколько абзацев добавлять за один шаг. Между шагами браузер успевает обработать
 // клики и прокрутку, поэтому даже работа на 3 000 абзацев не «замораживает» страницу.
 const CHUNK = 150;
 
-export function renderPreview(report: Report, dismissed: ReadonlySet<string>): PreviewView {
+export function renderPreview(
+  report: Report,
+  profile: Profile,
+  map: MapParagraph[],
+  dismissed: ReadonlySet<string>,
+  onShowMark: (paragraphIndex: number) => void,
+): SheetView {
   const marks = collectMarks(report, dismissed);
   const item = (index: number): HTMLElement => {
     const p = report.preview[index];
@@ -82,13 +134,8 @@ export function renderPreview(report: Report, dismissed: ReadonlySet<string>): P
   };
 
   const list = el('ol', { class: 'preview-list' });
-  const element = el(
-    'section',
-    { class: 'preview', 'aria-labelledby': 'preview-title' },
-    el('h2', { id: 'preview-title' }, ru.previewTitle),
-    el('p', { class: 'muted' }, ru.previewHint),
-    list,
-  );
+  const scroller = el('div', { class: 'sheet-scroll' }, list);
+  const ruler = marginRuler(report, profile);
 
   // Добавляет абзацы до номера until (не включая) — порциями или сразу.
   let rendered = 0;
@@ -104,19 +151,40 @@ export function renderPreview(report: Report, dismissed: ReadonlySet<string>): P
   };
   step();
 
-  const show = (index: number): void => {
+  const show = (index: number, focus: boolean): void => {
     // Если до абзаца ещё не дошла очередь, дорисовываем сразу (номера абзацев идут с 1).
     renderUntil(index);
     const target = list.querySelector<HTMLElement>(`#para-${index}`);
     if (!target) return;
-    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
-    target.focus({ preventScroll: true });
-    target.classList.add('pulse');
-    setTimeout(() => {
-      target.classList.remove('pulse');
-    }, 1500);
+    target.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+    if (focus) target.focus({ preventScroll: true });
+    list.querySelector('.target')?.classList.remove('target');
+    target.classList.add('target');
+    underline(target); // «карандаш» подчёркивает место
   };
 
-  return { element, show };
+  const docMap = renderDocMap(map, report, dismissed, scroller, {
+    onShowParagraph: (index) => {
+      show(index, true);
+    },
+    onShowMark,
+  });
+
+  const element = el(
+    'section',
+    { class: 'preview', 'aria-labelledby': 'preview-title', id: 'sheet' },
+    el('h2', { id: 'preview-title' }, ru.previewTitle),
+    el('p', { class: 'soft hint' }, ru.previewHint),
+    ruler,
+    el('div', { class: `sheet-body${docMap ? ' with-map' : ''}` }, scroller, docMap),
+  );
+
+  const alignRuler = (active: boolean): void => {
+    if (!ruler?.dataset.shift) return;
+    const now = ruler.querySelector<HTMLElement>('.tick.now');
+    const shift = Number(ruler.dataset.shift) * ruler.clientWidth;
+    if (now) now.style.transform = active ? `translateX(${shift}px)` : '';
+  };
+
+  return { element, show, alignRuler };
 }

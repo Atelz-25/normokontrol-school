@@ -18,20 +18,21 @@ test.beforeEach(({ page }) => {
 test('новая версия файла: блок «было / стало» с исправленными замечаниями', async ({ page }) => {
   await page.goto('./');
   await upload(page, 'версия-1.docx', FIXTURES['PR-06']!.bad());
-  await expect(page.getByRole('heading', { name: 'Сравнение с прошлой версией' })).toHaveCount(0);
+  await expect(page.locator('.compare')).toHaveCount(0);
   await upload(page, 'версия-2.docx', FIXTURES['PR-06']!.good());
   const block = page.locator('.compare');
   // 3 пустых абзаца (PR-06) и доля пустых абзацев (VL-02).
   await expect(block).toContainText('Исправлено: 4');
-  await expect(block).toContainText('Оценка: было');
+  await expect(block).toContainText('Оценка');
+  await expect(block.locator('.strike')).toHaveCount(1); // старое число зачёркнуто
 });
 
 test('редактор: «Темы проекта» включают подсказку TH-03', async ({ page }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: 'Редактор требований' }).click();
+  await page.getByRole('link', { name: 'Требования' }).click();
   await page.getByLabel('Темы проекта').fill('История кино: люмьер, немое кино');
   await page.getByRole('button', { name: 'Применить' }).click();
-  await expect(page.getByRole('status')).toContainText('применён');
+  await expect(page.getByRole('status')).toContainText('применены');
   await upload(page, 'работа.docx', FIXTURES['TH-02']!.good());
-  await expect(page.locator('#rule-TH-03')).toContainText('История кино');
+  await expect(page.locator('.plan-item[data-rules~="TH-03"]')).toContainText('История кино');
 });

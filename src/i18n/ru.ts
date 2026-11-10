@@ -129,23 +129,23 @@ export const ru = {
   closeEditor: 'Закрыть редактор',
   editorTitle: 'Редактор требований',
   editorIntro:
-    'Здесь можно включить или выключить правило, поменять серьёзность и числа. Изменения сохраняются в этом браузере как ваш профиль.',
-  editorName: 'Название профиля',
+    'Здесь можно включить или выключить правило, поменять серьёзность и числа. Изменения сохраняются в этом браузере как ваши требования.',
+  editorName: 'Название',
   editorEnabled: 'включено',
   editorSeverity: 'серьёзность',
   editorParams: 'параметры',
   editorJsonHint: 'список или объект в формате JSON',
   editorListHint: 'по одному значению в строке',
-  editorPending: 'Пока не проверяются (значения сохраняются в профиле)',
+  editorPending: 'Пока не проверяются (значения сохраняются)',
   editorApply: 'Применить',
   editorReset: 'Сбросить по умолчанию',
   editorSave: 'Сохранить в файл',
   editorLoad: 'Загрузить из файла',
-  editorShare: 'Скопировать ссылку на профиль',
+  editorShare: 'Скопировать ссылку на требования',
   editorShared:
-    'Ссылка на профиль скопирована. Профиль записан в адресе после «#» и не отправляется на сервер.',
-  editorApplied: (title: string): string => `Профиль «${title}» применён.`,
-  editorInvalid: 'В профиле есть ошибки:',
+    'Ссылка скопирована. Требования записаны в адресе после «#» и не отправляются на сервер.',
+  editorApplied: (title: string): string => `Требования «${title}» применены.`,
+  editorInvalid: 'В требованиях есть ошибки:',
   editorBadJson: (name: string): string => `Параметр «${name}»: это не JSON.`,
   customSuffix: '(мой)',
   editorTopics: 'Темы проекта',
@@ -180,7 +180,7 @@ export const ru = {
   // Режим учителя (этап 4)
   teacherOpen: 'Режим учителя',
   teacherClose: 'Закрыть режим учителя',
-  teacherTitle: 'Режим учителя: несколько работ',
+  teacherTitle: 'Проверка нескольких работ',
   teacherIntro:
     'Выберите сразу несколько файлов .docx. Каждая работа проверяется по выбранным требованиям; файлы никуда не отправляются.',
   teacherChoose: 'Выбрать файлы',
@@ -199,8 +199,128 @@ export const ru = {
   teacherBroken: 'не читается',
   teacherCsv: 'Скачать таблицу CSV',
   teacherCsvName: 'работы-нормоконтроль.csv',
-  hashProfile: (title: string): string => `Профиль из ссылки: «${title}».`,
-  hashProfileBroken: 'Ссылка на профиль повреждена, профиль не загружен.',
+  hashProfile: (title: string): string => `Требования из ссылки: «${title}».`,
+  hashProfileBroken: 'Ссылка на требования повреждена, они не загружены.',
+
+  // --- Структура v2: навигация, экраны, вердикт и план исправления ---
+  nav: {
+    check: 'Проверить работу',
+    teacher: 'Для учителя',
+    profile: 'Требования',
+    how: 'Как это работает',
+  },
+  navLabel: 'Разделы сайта',
+  startTitle: 'Проверьте работу до того, как её проверит учитель',
+  startLead:
+    'Перетащите файл .docx на лист. Программа найдёт поля, шрифты и пустые строки не по требованиям и покажет, как исправить их в Word.',
+  dropHint: 'или перетащите его на лист',
+  requirementsLine: 'Требования:',
+  requirementsChange: 'изменить',
+  requirementsDone: 'готово',
+  privacyShort: 'Файл не покидает компьютер: проверка идёт прямо в браузере.',
+  checkingTitle: (name: string): string => `Проверяю «${name}»`,
+  stepsLabel: 'Ход проверки',
+  steps: {
+    archive: 'Читаю файл',
+    styles: 'Разбираю стили',
+    paragraphs: 'Собираю абзацы',
+    rules: 'Проверяю по требованиям',
+  },
+  stepDone: 'готово',
+  fileMeta: (paragraphs: number, pages?: number): string =>
+    (pages
+      ? `примерно ${pages}\u00a0${plural(pages, ['страница', 'страницы', 'страниц'])}, `
+      : '') + `${paragraphs}\u00a0${plural(paragraphs, ['абзац', 'абзаца', 'абзацев'])}`,
+  otherFile: 'Другой файл',
+  compareWith: 'Сравнить с прошлой версией',
+  verdict: {
+    early: 'Пока рано сдавать',
+    almost: 'Почти готово',
+    ready: 'Можно сдавать',
+  },
+  verdictLine: (problems: number, self: number): string =>
+    `${problems}\u00a0${plural(problems, ['проблема', 'проблемы', 'проблем'])}` +
+    (self === 0
+      ? ', исправлять придётся вручную.'
+      : self === problems
+        ? problems === 1
+          ? ', программа исправит её сама.'
+          : ', все программа исправит сама.'
+        : `, ${self} из них программа исправит сама.`),
+  verdictReady: 'Поля, шрифт, интервалы, пустые строки и части работы — по требованиям.',
+  verdictAdvice: (n: number): string =>
+    n === 0
+      ? ''
+      : ` ${n === 1 ? 'Остался' : 'Осталось'} ${n}\u00a0${plural(n, ['совет', 'совета', 'советов'])}.`,
+  fixHint: 'Получится новый файл, ваш останется как был.',
+  scoreSmall: 'оценка',
+  planTitle: 'План исправления',
+  planIntroPriority:
+    'Сначала то, за что учитель уже снижал баллы, потом остальные ошибки и замечания.',
+  planIntro: 'Сначала ошибки, потом замечания и советы.',
+  placesCount: (n: number): string => `${n}\u00a0${plural(n, ['место', 'места', 'мест'])}`,
+  selfAll: 'исправлю сам',
+  selfSome: 'частично исправлю сам',
+  placeOf: (i: number, n: number): string => `${i} из ${n}`,
+  prevPlace: 'Предыдущее место',
+  nextPlace: 'Следующее место',
+  whyShort: 'Почему',
+  howShort: 'Как в Word',
+  allPlaces: 'Все места',
+  done: 'Сделал',
+  undo: 'Вернуть в план',
+  copySearch: 'Скопировать для поиска',
+  copiedSearch: 'Скопировано: вставьте в поиск Word (Ctrl+F).',
+  placePage: (n: number): string => `стр. ${n}`,
+  placeNear: { in: 'абзац', after: 'после', before: 'перед' },
+  morePlan: (n: number): string => `Ещё ${n}\u00a0${plural(n, ['пункт', 'пункта', 'пунктов'])}`,
+  placesColumns: ['Где', 'Рядом с текстом', 'Что не так'] as readonly string[],
+  showPlace: 'Показать',
+  moreRows: (n: number): string => `Показать ещё ${n}`,
+  goodTitle: (n: number): string => `Что уже хорошо (${n})`,
+  titlePageTitle: 'Титульный лист: на усмотрение учителя',
+  titlePageIntro:
+    'Требования к титульному листу у учителей разные, поэтому эти замечания не входят в план.',
+  exportTitle: 'Сохранить отчёт: печать, PDF, JSON',
+  tabsLabel: 'Что показать',
+  tabPlan: 'План',
+  tabText: 'Текст работы',
+  barPrev: '‹ Назад',
+  barNext: 'Дальше ›',
+  barCounter: (i: number, n: number): string => `место ${i} из ${n}`,
+  keysTitle: 'Клавиши',
+  keysList: [
+    'J — следующее место',
+    'K — предыдущее место',
+    '? — эта подсказка',
+    'Esc — закрыть',
+  ] as readonly string[],
+  keysClose: 'Закрыть',
+  whyPause: 'Пауза',
+  whyPlay: 'Показать ещё раз',
+  whyFrame: (i: number): string => (i === 0 ? 'у тебя в Word' : 'у учителя'),
+  rulerLabel: 'Левое поле',
+  rulerNeed: (mm: number): string => `нужно ${mm}\u00a0мм`,
+  rulerNow: (mm: number): string => `сейчас ${mm}\u00a0мм`,
+  compareShort: (fixed: number, remaining: number, added: number): string =>
+    `Исправлено: ${fixed}, осталось: ${remaining}, новых: ${added}.`,
+  compareScoreLabel: 'Оценка',
+  howSections: [
+    [
+      'Файл не покидает компьютер',
+      'Проверка идёт прямо в браузере, в отдельном потоке. Сайту запрещено отправлять что-либо в сеть: так настроена политика безопасности страницы.',
+    ],
+    [
+      'Что проверяется',
+      'Программа читает файл .docx так же, как Word: поля, стили, шрифты, отступы, пустые абзацы, части работы и список литературы. Каждое правило сверяется с выбранными требованиями.',
+    ],
+    [
+      'Чего программа не знает',
+      'Номера страниц она берёт только из отметок Word, поэтому пишет «примерно». Некоторые проверки сделаны по признакам (эвристики) и могут ошибаться: у таких пунктов есть кнопка «Здесь это есть».',
+    ],
+  ] as readonly (readonly [string, string])[],
+  profileTitle: 'Требования',
+  profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;
 
 export const SEVERITY_NAMES: Record<Severity, string> = {

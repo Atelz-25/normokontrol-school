@@ -1,5 +1,5 @@
-// Оформление и движение (docs/DESIGN.md): доступность с анимациями, клавиатура в отчёте,
-// карта документа.
+// Оформление и движение (docs/DESIGN.md): доступность с анимациями, клавиатура в плане,
+// карта документа, клавиши J/K/?, «Сделал» и маршруты.
 import { expect, test, type Page } from '@playwright/test';
 import { FIXTURES } from '../../scripts/lib/fixtures.ts';
 import { seriousViolations } from './axe.ts';
@@ -25,11 +25,13 @@ test('тёмная тема с анимациями: после появлени
   expect(await seriousViolations(page)).toEqual([]);
 });
 
-test('с клавиатуры по отчёту: «Показать в тексте» и «Почему это важно»', async ({ page }) => {
+test('с клавиатуры по плану: «Почему», «Все места» и переход к месту на листе', async ({
+  page,
+}) => {
   await page.goto('./');
   await checkFile(page, FIXTURES['PR-06']!.bad());
-  // После проверки фокус стоит на заголовке отчёта, дальше идём клавишей Tab.
-  await expect(page.locator(':focus')).toHaveText('Результат проверки');
+  // После проверки фокус стоит на вердикте, дальше идём клавишей Tab.
+  await expect(page.locator(':focus')).toHaveText('Пока рано сдавать');
   const tabTo = async (pattern: RegExp): Promise<void> => {
     for (let i = 0; i < 60; i++) {
       await page.keyboard.press('Tab');
@@ -38,24 +40,58 @@ test('с клавиатуры по отчёту: «Показать в текс�
     }
     throw new Error(`Tab не дошёл до ${String(pattern)}`);
   };
-  await tabTo(/^Показать в тексте$/);
+  await tabTo(/^Почему$/);
   await page.keyboard.press('Enter');
-  await expect(page.locator('.preview-list li:focus')).toHaveCount(1);
+  await expect(page.locator('button[aria-expanded="true"]:focus')).toHaveCount(1);
 
-  await tabTo(/^Почему это важно$/);
+  await tabTo(/^Все места$/);
   await page.keyboard.press('Enter');
-  await expect(page.locator('details[open] > summary:focus')).toHaveCount(1);
+  await tabTo(/^Показать$/);
+  await page.keyboard.press('Enter');
+  // Фокус после перехода к месту — на листе с текстом работы.
+  await expect(page.locator('.preview-list li:focus')).toHaveCount(1);
 });
 
-test('карта документа: засечка ведёт к карточке замечания', async ({ page }) => {
+test('карта документа: засечка ведёт к пункту плана', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('./');
   // В файле: абзац, пустой, абзац, пустой, абзац, пустой, абзац — пустые №2, 4, 6 (PR-06).
   await checkFile(page, FIXTURES['PR-06']!.bad());
   const canvas = page.locator('.doc-map-canvas');
   await expect(canvas).toBeVisible();
-  await expect(canvas).toHaveAttribute('aria-hidden', 'true');
   // Строка карты — 3 px; абзац №2 — вторая строка.
   await canvas.click({ position: { x: 4, y: 4 } });
-  await expect(page.locator('#rule-PR-06')).toBeFocused();
+  await expect(page.locator('.plan-item[data-rules~="PR-06"]')).toBeFocused();
+});
+
+test('клавиши: J ведёт к месту на листе, ? открывает подсказку', async ({ page }) => {
+  await page.goto('./');
+  await checkFile(page, FIXTURES['PR-06']!.bad());
+  await page.keyboard.press('j');
+  await expect(page.locator('.preview-list li:focus')).toHaveCount(1);
+  await page.keyboard.press('Shift+?');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+});
+
+test('«Сделал»: пункт уходит в конец плана и возвращается', async ({ page }) => {
+  await page.goto('./');
+  await checkFile(page, FIXTURES['PR-06']!.bad());
+  const first = page.locator('.plan-item').first();
+  const id = await first.getAttribute('id');
+  await first.getByRole('button', { name: 'Сделал' }).click();
+  await expect(page.locator('.plan-item').last()).toHaveAttribute('id', id ?? '');
+  await expect(page.locator(`#${id}`)).toHaveClass(/done/);
+  await page.locator(`#${id}`).getByRole('button', { name: 'Вернуть в план' }).click();
+  await expect(page.locator('.plan-item').first()).toHaveAttribute('id', id ?? '');
+});
+
+test('маршруты: «Назад» в браузере возвращает на прошлый экран', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('link', { name: 'Как это работает' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Как это работает' })).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole('heading', { level: 1, name: /Проверьте работу/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 });

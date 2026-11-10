@@ -22,7 +22,7 @@ test('без сети: после первого открытия сайт за�
 
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Нормоконтроль' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Проверьте работу/ })).toBeVisible();
   await page.locator('#file').setInputFiles({
     name: 'работа.docx',
     mimeType: DOCX,

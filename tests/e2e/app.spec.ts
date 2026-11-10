@@ -18,15 +18,15 @@ test.beforeEach(({ page }) => {
   });
 });
 
-test('загрузка → отчёт с блоками школы и карточкой замечания', async ({ page }) => {
+test('загрузка → вердикт и план исправления', async ({ page }) => {
   await page.goto('./');
   await upload(page, 'работа.docx', FIXTURES['PR-06']!.bad());
   await expect(page.getByRole('status')).toContainText('Готово');
-  await expect(
-    page.getByRole('heading', { name: 'Из-за чего в прошлый раз снижали баллы' }),
-  ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Базовые пять пунктов' })).toBeVisible();
-  await expect(page.locator('#rule-PR-06')).toContainText('Пустой абзац между абзацами');
+  await expect(page.getByRole('heading', { level: 1, name: 'Пока рано сдавать' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'План исправления' })).toBeVisible();
+  await expect(page.locator('.plan-item[data-rules~="PR-06"]')).toContainText(
+    'Убрать пустые строки между абзацами',
+  );
 });
 
 test('смена профиля перепроверяет тот же файл', async ({ page }) => {
@@ -34,9 +34,12 @@ test('смена профиля перепроверяет тот же файл'
   await upload(page, 'работа.docx', FIXTURES['FT-02']!.good());
   await expect(page.getByRole('status')).toContainText('Готово');
   // В типовом профиле размер шрифта 14 pt, а файл набран 12 pt.
-  await page.getByLabel('Требования').selectOption('school-default');
-  await expect(page.locator('#rule-FT-02')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Базовые пять пунктов' })).toHaveCount(0);
+  await expect(page.locator('.plan-item[data-rules~="FT-02"]')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Проверить работу' }).click();
+  // После проверки зона загрузки свёрнута: требования меняют через «Другой файл» не нужно —
+  // выбор требований остаётся на месте, хоть и скрыт; меняем его напрямую.
+  await page.getByLabel('Требования').selectOption('school-default', { force: true });
+  await expect(page.locator('.plan-item[data-rules~="FT-02"]')).toBeVisible();
 });
 
 test('повреждённый и чужой файл: понятное сообщение, без падения', async ({ page }) => {

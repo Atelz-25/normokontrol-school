@@ -43,7 +43,10 @@ test('режим учителя: таблица по нескольким раб
   page,
 }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: 'Режим учителя' }).click();
+  await page.getByRole('link', { name: 'Для учителя' }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Проверка нескольких работ' }),
+  ).toBeFocused();
   await page
     .locator('.teacher input[type=file]')
     .setInputFiles([
@@ -68,7 +71,7 @@ test('режим учителя: таблица по нескольким раб
     .locator('.teacher-table tr', { hasText: 'Петров.docx' })
     .getByRole('button', { name: 'Открыть отчёт' })
     .click();
-  await expect(page.locator('#rule-PR-06')).toBeVisible();
+  await expect(page.locator('.plan-item[data-rules~="PR-06"]')).toBeVisible();
 
   expect(await seriousViolations(page)).toEqual([]);
 });

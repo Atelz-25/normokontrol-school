@@ -100,10 +100,9 @@ a {
 
 /* Числа — цифрами одной ширины: столбцы не прыгают, когда значение меняется. */
 .num,
-.rule-id,
-.margin-note,
-.score-value,
-.tally strong,
+.score strong,
+.counter,
+.bar-counter,
 .dim {
   font-variant-numeric: tabular-nums;
 }
@@ -111,12 +110,15 @@ a {
 /* --- Поверхности -------------------------------------------------------------
    Всё, что лежит на доске, — белые листы. Внутри листа «текущая поверхность» (tokens.css)
    переключается на бумагу: текст тёмный, акцент зелёный. */
-.report,
+.verdict,
+.plan,
 .preview,
+.folds,
 .editor,
 .teacher,
-.doc-map,
-.status.error {
+.how,
+.keys,
+.status:not(.quiet) {
   --surface: var(--paper);
   --fg: var(--graphite);
   --fg-soft: var(--graphite-soft);
@@ -128,11 +130,18 @@ a {
   color: var(--fg);
 }
 
-.report,
+.verdict,
+.plan,
 .preview,
+.folds,
 .editor,
-.teacher {
+.teacher,
+.how {
   border-radius: var(--radius-panel);
+}
+
+.soft {
+  color: var(--fg-soft);
 }
 
 /* --- Кнопки и поля --------------------------------------------------------- */
@@ -325,69 +334,106 @@ details[open] > summary::before {
   content: '\2212';
 }
 
-/* --- Шапка ------------------------------------------------------------------ */
-.masthead {
+/* --- Шапка и навигация ------------------------------------------------------- */
+.topbar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-4) var(--sp-6);
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: clamp(1.5rem, 5vw, 3.5rem) 0 0;
+  align-items: baseline;
+  gap: var(--sp-2) var(--sp-5);
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: var(--sp-4) clamp(1rem, 4vw, 3rem);
 }
 
-.subtitle {
-  margin: var(--sp-3) 0 0;
+.brand {
+  margin-right: auto;
+  color: var(--fg);
   font-size: var(--fs-3);
-  line-height: 1.35;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.topbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-5);
+}
+
+.topbar nav a {
+  padding-bottom: 2px;
   color: var(--fg-soft);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
 }
 
-.privacy {
-  max-width: 21rem;
-  padding-top: var(--sp-2);
-  font-size: var(--fs-1);
+.topbar nav a:hover {
+  color: var(--fg);
 }
 
-.privacy p {
-  margin: 0;
+/* Текущий экран: подчёркнут, как выбранная вкладка в тетради. */
+.topbar nav a[aria-current='page'] {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
 }
 
-.privacy details p {
-  color: var(--fg-soft);
+/* Атрибут hidden сильнее любых правил display: иначе display: grid показал бы скрытое. */
+[hidden] {
+  display: none !important;
 }
 
-/* --- Доска: лист для файла и требования ---------------------------------------- */
-.desk {
+.start-text h1 {
+  font-size: clamp(2.25rem, 4.6vw, 3.75rem);
+}
+
+/* --- Экран «Проверить работу»: старт и проверка ------------------------------------ */
+.start {
   display: grid;
   gap: var(--sp-5) clamp(2rem, 6vw, 5rem);
-  align-items: start;
-  padding: var(--sp-6) 0 var(--sp-5);
+  align-items: center;
+  padding: var(--sp-5) 0 var(--sp-6);
 }
 
 @media (min-width: 860px) {
-  .desk {
+  .start {
     grid-template-columns: auto minmax(0, 1fr);
   }
 }
 
-.tools {
+.start-text {
   display: grid;
-  gap: var(--sp-5);
+  gap: var(--sp-4);
   align-content: start;
-  max-width: 36rem;
-  padding-top: var(--sp-6);
+  max-width: 40rem;
+}
+
+.start-text p {
+  margin: 0;
 }
 
 .lead {
-  margin: 0;
   font-size: var(--fs-3);
   font-weight: 500;
   line-height: 1.4;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+  margin-top: var(--sp-2);
+}
+
+.requirements b {
+  font-weight: 600;
+}
+
 .field {
   display: grid;
   gap: var(--sp-2);
+  max-width: 28rem;
 }
 
 .field label {
@@ -399,13 +445,56 @@ details[open] > summary::before {
   border-color: transparent; /* на доске белому полю рамка не нужна */
 }
 
-.field p {
-  margin: 0;
+.privacy {
   font-size: var(--fs-1);
 }
 
-.tools .toolbar {
+/* Ход проверки: шаг отмечается, когда Worker его закончил. */
+.steps {
+  display: grid;
+  gap: var(--sp-2);
   margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-3);
+}
+
+.steps li {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
+  transition: color var(--dur-ui) var(--ease);
+}
+
+.steps li::before {
+  content: '';
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.steps li.wait {
+  color: var(--fg-soft);
+}
+
+.steps li.now {
+  font-weight: 600;
+}
+
+/* Сделанный шаг: кружок заполнен и отмечен галочкой. */
+.steps li.done::before {
+  content: '\2713';
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--desk);
+  background: var(--on-desk);
+  border-color: var(--on-desk);
+  opacity: 1;
 }
 
 /* Зона загрузки — лист А4 (210 × 297). Поля — переменные --m-left и др. в процентах листа,
@@ -642,108 +731,580 @@ details[open] > summary::before {
   );
 }
 
-.drop-text {
-  display: grid;
-  justify-items: center;
-  gap: var(--sp-1);
-  text-align: center;
-}
-
-.drop-text p {
-  margin: 0;
-}
-
-.drop-title {
-  font-size: var(--fs-3);
-  font-weight: 600;
-}
-
-.drop-text button.primary {
-  margin-top: var(--sp-2);
-}
-
 /* --- Статус ------------------------------------------------------------------ */
-.status {
-  min-height: 1.5em;
-  margin: 0 0 var(--sp-4);
-  font-weight: 500;
+/* Обычные сообщения («Готово») читает только экранный диктор: на экране их заменяет отчёт. */
+.status.quiet {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-/* Ошибка — записка на листке: красный текст прямо на доске читался бы плохо. */
-.status.error {
+/* Видимое сообщение — записка на листке поверх доски. */
+.status:not(.quiet) {
   width: fit-content;
+  max-width: min(72rem, calc(100% - 2rem));
+  margin: 0 auto var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
-  color: var(--pencil);
+  font-weight: 500;
   border-radius: var(--radius-control);
 }
 
-/* --- Отчёт рядом с текстом работы ----------------------------------------------- */
-.results-grid {
-  display: grid;
-  gap: var(--sp-5);
+.status.error {
+  color: var(--pencil);
 }
 
-/* Карта документа видна, когда рядом есть место; на узком экране её роль играют карточки. */
-.doc-map {
+/* --- Результат: строка файла и вердикт ------------------------------------------ */
+.filebar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) 0;
+  background: var(--desk);
+  border-bottom: 1px solid var(--line);
+}
+
+.file-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.filebar .push {
+  margin-left: auto;
+}
+
+.verdict {
+  display: grid;
+  gap: var(--sp-4) var(--sp-6);
+  align-items: end;
+  margin: var(--sp-4) 0;
+  padding: var(--sp-5) var(--sp-6);
+}
+
+@media (min-width: 700px) {
+  .verdict {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.verdict h1 {
+  width: fit-content; /* рамка фокуса — по слову, а не во всю ширину */
+  font-size: var(--fs-4);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.verdict-main > p {
+  margin: var(--sp-2) 0 0;
+}
+
+.verdict-line {
+  font-size: var(--fs-3);
+  line-height: 1.35;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-5);
+  align-items: center;
+  margin-top: var(--sp-4);
+}
+
+.score {
+  display: grid;
+  justify-items: end;
+  font-size: var(--fs-1);
+}
+
+.score strong {
+  font-size: var(--fs-4);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-how > summary {
+  margin-top: var(--sp-1);
+}
+
+.score-how[open] {
+  justify-self: stretch;
+  max-width: 28rem;
+}
+
+/* «Оценка: 59 → 92»: старое число зачёркнуто карандашом. */
+.compare .old {
+  position: relative;
+  display: inline-block;
+}
+
+.compare .new {
+  display: inline-block;
+  font-weight: 700;
+}
+
+.strike {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 30%;
+  width: calc(100% + 4px);
+  height: 0.6em;
+  color: var(--pencil);
+  overflow: visible;
+}
+
+/* --- Две колонки: план и лист ---------------------------------------------------- */
+.views {
+  display: grid;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .views {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .result .view-switch {
+    display: none;
+  }
+}
+
+/* Узкий экран: видна одна колонка, переключатель «План / Текст работы» над ними. */
+@media (max-width: 1023px) {
+  .views[data-view='plan'] > .preview,
+  .views[data-view='text'] > .plan {
+    display: none;
+  }
+}
+
+.view-switch {
+  display: flex;
+  margin-bottom: var(--sp-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.view-switch button {
+  flex: 1;
+  padding: 0.55rem;
+  color: var(--fg);
+  font-weight: 600;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.view-switch button[aria-pressed='true'] {
+  color: var(--desk);
+  background: var(--on-desk);
+}
+
+/* --- План исправления ------------------------------------------------------------ */
+.plan {
+  padding: var(--sp-5) var(--sp-5) var(--sp-3);
+}
+
+.plan .intro {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-1);
+}
+
+.plan-items {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  container-type: inline-size; /* пункт перестраивается по ширине колонки, а не окна */
+}
+
+.plan-item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0 var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+  scroll-margin: 5rem;
+}
+
+.plan-item.folded {
   display: none;
 }
 
-@media (min-width: 1100px) {
-  .results-grid {
-    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-    align-items: start;
-  }
-
-  .results-grid.with-map {
-    grid-template-columns: 3.75rem minmax(0, 3fr) minmax(0, 2fr);
-    gap: var(--sp-4);
-  }
-
-  .doc-map {
-    position: sticky;
-    top: var(--sp-3);
-    display: grid;
-    gap: var(--sp-1);
-    justify-items: stretch;
-    padding: var(--sp-2) var(--sp-1) var(--sp-1);
-    border-radius: var(--radius-control);
-  }
-
-  .preview {
-    position: sticky;
-    top: var(--sp-3);
-    max-height: calc(100vh - 1.5rem);
-    overflow: auto;
-  }
+.plan-item:focus {
+  outline: none;
 }
 
-.report {
-  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+.plan-item:focus-visible .plan-body h3 {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.report-head {
+.mark-slot {
+  color: var(--pencil);
+}
+
+.sev-warning .mark-slot {
+  color: var(--ochre);
+}
+
+.sev-info .mark-slot,
+.plan-item.done .mark-slot {
+  color: var(--fg-soft);
+}
+
+.mark-icon,
+.check-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.check-icon {
+  padding: 0.4rem;
+  color: var(--ink);
+}
+
+.plan-body h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.plan-body p {
+  margin: 0;
+}
+
+.plan-body .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  margin-top: 2px;
+  font-size: var(--fs-1);
+}
+
+.meta .self {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.meta .sev-warning {
+  color: var(--ochre);
+  font-weight: 600;
+}
+
+.meta .sev-info,
+.ids {
+  color: var(--fg-soft);
+}
+
+.plan-body .place {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-1);
+}
+
+.plan-body .details {
+  margin: var(--sp-1) 0 0;
+  padding-left: var(--sp-4);
+  font-size: var(--fs-1);
+}
+
+.plan-body > .soft {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-1);
+}
+
+.controls {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2) var(--sp-4);
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: var(--sp-2);
-}
-
-.report-head h2 {
-  font-size: var(--fs-4);
-  letter-spacing: -0.025em;
-}
-
-.report-head .toolbar {
-  margin: 0;
-}
-
-.doc-map-label {
-  margin: 0;
+  align-items: center;
+  margin-top: var(--sp-2);
   font-size: var(--fs-1);
+}
+
+.controls .secondary {
+  padding: 0.3rem 0.75rem;
+}
+
+.done-button {
+  margin-left: auto;
+}
+
+/* В узкой колонке «Сделал» не прижимается вправо: строка кнопок и так переносится. */
+@container (max-width: 26rem) {
+  .done-button {
+    margin-left: 0;
+  }
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-control);
+}
+
+.stepper button {
+  padding: 0.15rem 0.6rem;
+  color: var(--fg);
+  font-weight: 700;
+  background: none;
+  border: none;
+}
+
+.stepper button:hover {
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.counter {
+  padding: 0 0.2rem;
+  white-space: nowrap;
+}
+
+/* Сделано: пункт сереет и уезжает в конец списка (plan-view.ts, FLIP). */
+.plan-item.done h3 {
   color: var(--fg-soft);
-  text-align: center;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.plan-item.done .place,
+.plan-item.done .stepper {
+  display: none;
+}
+
+.plan-item.dismissed h3 {
+  color: var(--fg-soft);
+}
+
+.more-plan {
+  margin: var(--sp-2) 0 var(--sp-2);
+  font-weight: 500;
+}
+
+/* Раскрытые «Почему», «Как в Word», «Все места». */
+.panel {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: color-mix(in srgb, var(--rule) 45%, transparent);
+  border-radius: var(--radius-control);
+}
+
+.panel p {
+  margin: var(--sp-2) 0;
+}
+
+.panel h4 {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-2);
+}
+
+.places-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-1);
+}
+
+.places-table th,
+.places-table td {
+  padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.places-table th {
+  font-weight: 600;
+}
+
+.places-table td.num {
+  white-space: nowrap;
+}
+
+.places-table td.near {
+  max-width: 14rem;
+  color: var(--fg-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Мини-иллюстрация «Почему»: два кадра, сменяются прозрачностью. */
+.why {
+  display: grid;
+  gap: var(--sp-1);
+  justify-items: start;
+}
+
+.why-anim {
+  display: grid;
+  width: 100%;
+}
+
+.why-frame {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: center;
+  margin: 0;
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--ease);
+}
+
+.why-frame.current {
+  opacity: 1;
+}
+
+.why-anim.side {
+  gap: var(--sp-3);
+}
+
+.why-anim.side .why-frame {
+  grid-area: auto;
+  opacity: 1;
+}
+
+.why-frame svg {
+  width: 6rem;
+  height: auto;
+}
+
+.why-frame figcaption {
+  font-size: var(--fs-1);
+}
+
+.w-page {
+  fill: var(--paper);
+  stroke: var(--rule-strong);
+}
+
+.w-line {
+  fill: var(--rule-strong);
+}
+
+.w-head {
+  fill: var(--graphite);
+}
+
+.w-bad {
+  fill: none;
+  stroke: var(--pencil);
+  stroke-width: 1.2;
+}
+
+.w-clip {
+  fill: var(--graphite-soft);
+  opacity: 0.6;
+}
+
+/* --- Лист «Текст работы»: линейка, текст, карта вместо полосы прокрутки ---------------- */
+.preview {
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5);
+}
+
+.preview > h2 {
+  font-size: var(--fs-3);
+}
+
+.preview .hint {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-1);
+}
+
+@media (min-width: 1024px) {
+  .preview {
+    position: sticky;
+    top: 4.5rem; /* под строкой файла */
+  }
+}
+
+/* Линейка левого поля (первые 50 мм листа). */
+.ruler {
+  position: relative;
+  height: 2rem;
+  margin: var(--sp-3) 2rem var(--sp-2) 0;
+  border-bottom: 1px solid var(--line-strong);
+  font-size: 0.75rem;
+}
+
+.ruler .tick {
+  position: absolute;
+  bottom: -1px;
+  width: 2px;
+  height: 0.9rem;
+  margin-left: -1px;
+}
+
+.ruler .tick.need {
+  background: var(--graphite-soft);
+}
+
+/* Красная метка доезжает до серой, когда в плане выбран пункт про поля. */
+.ruler .tick.now {
+  background: var(--pencil);
+  transition: transform 300ms var(--ease);
+}
+
+.ruler .label {
+  position: absolute;
+  top: 0;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.ruler .label.need {
+  color: var(--fg-soft);
+}
+
+.ruler .label.now {
+  color: var(--pencil);
+}
+
+.sheet-body {
+  display: grid;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  timeline-scope: --sheet; /* рамка карты следит за прокруткой листа */
+}
+
+.sheet-body.with-map {
+  grid-template-columns: minmax(0, 1fr) 1.75rem;
+}
+
+.sheet-scroll {
+  scroll-timeline: --sheet y;
+}
+
+@media (min-width: 1024px) {
+  /* Лист прокручивается сам, полосы прокрутки нет: её роль играет карта. */
+  .sheet-scroll {
+    max-height: calc(100vh - 13rem);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .sheet-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.doc-map {
+  position: relative;
+  display: none;
+  align-self: start;
+}
+
+@media (min-width: 1024px) {
+  .doc-map {
+    display: block;
+  }
 }
 
 .doc-map-canvas {
@@ -752,300 +1313,30 @@ details[open] > summary::before {
   cursor: pointer;
 }
 
-/* Блоки отчёта разделены линиями: это один документ, а не набор коробок. */
-.block {
-  padding: var(--sp-5) 0;
-  border-bottom: 1px solid var(--line);
-}
-
-.block > h2 {
-  margin-bottom: var(--sp-2);
-}
-
-.block > p {
-  margin: var(--sp-2) 0;
-}
-
-/* Под последним блоком листа линия не нужна: дальше край листа. */
-.report > .block:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-/* «Исправить автоматически» лежит под листом, прямо на доске. */
-.block.fix {
-  border-bottom: none;
-  padding: var(--sp-5) var(--sp-6) 0;
-}
-
-/* Режим учителя и редактор требований — отдельные листы на доске. */
-.editor,
-.block.teacher {
-  margin: 0 0 var(--sp-5);
-  padding: var(--sp-5) var(--sp-6);
-  border-bottom: none;
-}
-
-.score-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4) var(--sp-6);
-  align-items: flex-end;
-}
-
-.score-value {
-  margin: 0;
-  font-size: var(--fs-5);
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-}
-
-.score-value.none {
-  font-size: var(--fs-2);
-  font-weight: 400;
-  line-height: var(--lh-text);
-  letter-spacing: 0;
-}
-
-.tally {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: var(--sp-2) var(--sp-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tally li {
-  display: grid;
-  line-height: var(--lh-tight);
-}
-
-.tally strong {
-  font-size: var(--fs-4);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.tally span {
-  font-size: var(--fs-1);
-  color: var(--fg-soft);
-}
-
-.tally-error strong {
-  color: var(--pencil);
-}
-
-.tally-warning strong {
-  color: var(--ochre);
-}
-
-.tally-info strong,
-.tally li.zero strong {
-  color: var(--fg-soft);
-}
-
-.checklist {
-  margin: var(--sp-2) 0 0;
-  padding-left: var(--sp-5);
-}
-
-.checklist li {
-  margin: var(--sp-1) 0;
-}
-
-/* «Из-за чего снижали баллы»: номер правила в левой колонке, текст справа. */
-.margin-list {
-  padding: 0;
-  list-style: none;
-}
-
-.margin-list li {
-  position: relative;
-  max-width: none;
-  margin: 0;
-  padding: var(--sp-1) 0 var(--sp-1) var(--margin-col);
-}
-
-.margin-note {
+/* Рамка «где я»: высоту задаёт doc-map.ts, сдвиг — прокрутка листа. */
+.doc-map-frame {
   position: absolute;
-  left: 0;
-  font-size: var(--fs-1);
-  font-weight: 600;
-  line-height: 1.72;
-  color: var(--fg-soft);
+  top: 0;
+  left: -3px;
+  right: -3px;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+  animation: map-frame linear both;
+  animation-timeline: --sheet;
 }
 
-.mark {
-  display: inline-block;
-  width: 1.1em;
-  font-weight: 700;
+@keyframes map-frame {
+  to {
+    transform: translateY(var(--travel, 0));
+  }
 }
 
-.mark-ok {
-  color: var(--fg-soft);
-}
-
-.mark-bad {
-  color: var(--pencil);
-}
-
-.mark-later {
-  color: var(--fg-soft);
-}
-
-.findings-title {
-  margin: var(--sp-6) 0 var(--sp-3);
-  font-size: var(--fs-4);
-  letter-spacing: -0.025em;
-}
-
-/* Замечание: слева серьёзность словом и номер правила, справа текст.
-   Цветной полосы сбоку нет: серьёзность названа словом, цвет только помогает. */
-.card {
-  display: grid;
-  grid-template-columns: var(--margin-col) minmax(0, 1fr);
-  border-top: 1px solid var(--line);
-  scroll-margin-top: var(--sp-4);
-}
-
-.card-margin {
-  display: grid;
-  align-content: start;
-  gap: 2px;
-  padding: var(--sp-4) var(--sp-3) var(--sp-4) 0;
-}
-
-.rule-id {
-  font-size: var(--fs-1);
-  color: var(--fg-soft);
-}
-
-.severity {
-  font-size: var(--fs-1);
-  font-weight: 700;
-}
-
-.severity-error {
-  color: var(--pencil);
-}
-
-.severity-warning {
-  color: var(--ochre);
-}
-
-.severity-info {
-  color: var(--fg-soft);
-}
-
-.card-body {
-  min-width: 0;
-  padding: var(--sp-4) var(--sp-3);
-  border-radius: var(--radius-control);
-}
-
-.card-body > p {
-  margin: var(--sp-1) 0;
-}
-
-.card h3 {
-  font-size: 1.0625rem;
-}
-
-.card h3 .group {
-  margin-left: var(--sp-2);
-  font-size: var(--fs-1);
-  font-weight: 400;
-  color: var(--fg-soft);
-}
-
-.card:focus {
-  outline: none;
-}
-
-.card:focus .card-body,
-.card:target .card-body {
-  background: color-mix(in srgb, var(--highlight) 35%, transparent);
-}
-
-.card.dismissed {
-  color: var(--fg-soft);
-}
-
-.note {
-  font-size: var(--fs-1);
-  color: var(--fg-soft);
-}
-
-.places {
-  margin: var(--sp-2) 0;
-  padding-left: var(--sp-4);
-}
-
-.places li {
-  margin: var(--sp-1) 0;
-}
-
-.places li.extra {
-  display: none;
-}
-
-.places.expanded li.extra {
-  display: list-item;
-}
-
-.place {
-  margin-right: var(--sp-1);
-  font-weight: 600;
-}
-
-.excerpt {
-  color: var(--fg-soft);
-  overflow-wrap: anywhere;
-}
-
-button.link.show {
-  font-size: var(--fs-1);
-}
-
-/* Замечаний нет: чистый лист из тех же линий, без пометок. */
-.clean {
-  display: flex;
-  gap: var(--sp-4);
-  align-items: center;
-  padding: var(--sp-4) 0;
-}
-
-.clean p {
-  margin: 0;
-}
-
-.clean-sheet {
-  flex: none;
-  width: 3rem;
-  aspect-ratio: 210 / 297;
-  background:
-    repeating-linear-gradient(to bottom, var(--rule) 0 2px, transparent 2px 7px) 14% 12% / 78% 70%
-      no-repeat,
-    var(--paper);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-sheet);
-}
-
-/* --- Текст работы: набран шрифтом с засечками, как сама работа; слева поля тетради ---- */
-.preview {
-  padding: var(--sp-5) var(--sp-5) var(--sp-5) 0;
-}
-
-.preview > h2,
-.preview > p {
-  margin-left: var(--sp-5);
-}
-
+/* Текст работы: набран шрифтом с засечками, как сама работа; слева поля тетради. */
 .preview-list {
   position: relative;
-  padding-left: 3.75rem;
+  margin: 0;
+  padding-left: 3.25rem;
   font-family: var(--font-doc);
 }
 
@@ -1054,17 +1345,17 @@ button.link.show {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 3.1rem;
+  left: 2.6rem;
   width: 1px;
   background: var(--margin-line);
 }
 
 .preview-list li {
   position: relative;
-  isolation: isolate; /* подсветка ::after ложится под текст, но над листом */
   margin: 0;
   padding: 2px var(--sp-2);
   overflow-wrap: anywhere;
+  scroll-margin: 3rem;
   /* Полоса на полях — пометка «здесь замечание», как черта учителя напротив строки. */
   border-left: 3px solid transparent;
 }
@@ -1102,32 +1393,153 @@ button.link.show {
   border-left-color: var(--graphite-soft);
 }
 
-/* «Показать в тексте»: абзац обведён, подсветка под ним гаснет — глаз сразу находит место.
-   Анимируется только прозрачность, поэтому работает и при «уменьшить движение». */
-.preview-list li.pulse {
+/* Место, к которому перешли: обведено, под ним карандашная черта (marks.ts). */
+.preview-list li.target {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-.preview-list li.pulse::after {
-  content: '';
+.pencil {
   position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--highlight);
-  opacity: 0;
-  animation: flash var(--dur-reveal) var(--ease);
-}
-
-@keyframes flash {
-  from {
-    opacity: 0.9;
-  }
+  left: var(--sp-2);
+  bottom: -4px;
+  width: calc(100% - 1rem);
+  height: 8px;
+  color: var(--pencil);
+  overflow: visible;
+  pointer-events: none;
 }
 
 mark {
   color: var(--graphite);
   background: var(--highlight);
+}
+
+/* --- Свёрнутые блоки под планом ----------------------------------------------------- */
+.folds {
+  margin-top: var(--sp-5);
+  padding: var(--sp-2) var(--sp-5);
+}
+
+.fold {
+  margin: 0;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+}
+
+.fold:first-child {
+  border-top: none;
+}
+
+.fold > summary {
+  font-weight: 500;
+}
+
+.fold p,
+.fold ul {
+  margin: var(--sp-2) 0 0;
+}
+
+.good-list {
+  columns: 2 16rem;
+  font-size: var(--fs-1);
+}
+
+.reminder {
+  margin: 0;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--line);
+}
+
+/* --- Нижняя панель на телефоне и подсказка клавиш --------------------------------- */
+.bottombar {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .bottombar:not([hidden]) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--desk-deep);
+  }
+
+  .result:has(.bottombar:not([hidden])) {
+    padding-bottom: 4rem;
+  }
+}
+
+.keys {
+  padding: var(--sp-5);
+  border: none;
+  border-radius: var(--radius-panel);
+}
+
+.keys::backdrop {
+  background: color-mix(in srgb, var(--desk-deep) 70%, transparent);
+}
+
+.keys ul {
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding-left: var(--sp-4);
+}
+
+/* --- Экраны «Требования» и «Как это работает» ------------------------------------- */
+.profile-head {
+  padding: var(--sp-5) 0;
+}
+
+.profile-head h1,
+.how h1,
+.teacher h1 {
+  font-size: var(--fs-4);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.profile-head p {
+  margin: var(--sp-2) 0 0;
+}
+
+.how,
+.teacher {
+  margin-top: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6);
+}
+
+.how {
+  max-width: 48rem;
+}
+
+.how h2 {
+  margin-top: var(--sp-5);
+}
+
+.editor {
+  padding: var(--sp-5) var(--sp-6);
+}
+
+/* --- Лист «переезжает» из зоны загрузки в колонку «Текст работы» (View Transitions) --- */
+.drop .sheet,
+.preview {
+  view-transition-name: doc-sheet;
+}
+
+::view-transition-group(doc-sheet) {
+  animation-duration: var(--dur-reveal);
+  animation-timing-function: var(--ease);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 240ms;
 }
 
 /* --- Редактор требований и режим учителя --------------------------------------- */
@@ -1191,35 +1603,82 @@ mark {
   content: ' \25BC';
 }
 
-/* --- Планшет и телефон ---------------------------------------------------------- */
-@media (max-width: 859px) {
-  .tools {
-    padding-top: 0;
-  }
-}
-
-@media (max-width: 559px) {
-  :root {
-    --margin-col: 5.25rem;
+/* --- Телефон ---------------------------------------------------------------------- */
+@media (max-width: 699px) {
+  .brand {
+    width: 100%;
   }
 
-  .subtitle,
+  /* На телефоне сначала текст и кнопка, лист — под ними. */
+  .start .drop {
+    order: 2;
+  }
+
+  /* Строка файла не прилипает: на узком экране она заняла бы четверть высоты. */
+  .filebar {
+    position: static;
+  }
+
+  .topbar nav {
+    gap: var(--sp-1) var(--sp-4);
+  }
+
+  .start-text h1 {
+    font-size: 2.5rem;
+  }
+
   .lead {
     font-size: 1.0625rem;
   }
 
-  .desk {
-    padding-top: var(--sp-5);
+  .start {
+    padding-top: var(--sp-3);
   }
 
-  /* Лист меньше и стоит рядом с кнопкой выбора файла. */
-  .drop {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
+  .verdict {
+    padding: var(--sp-4);
+  }
+
+  .verdict h1 {
+    font-size: 1.75rem;
+  }
+
+  .verdict-line {
+    font-size: var(--fs-2);
+  }
+
+  .score {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-2);
+    align-items: baseline;
     justify-items: start;
   }
 
-  /* Вынос не уменьшаем: в него должна помещаться подпись «30 мм». */
+  .score strong {
+    font-size: var(--fs-3);
+  }
+
+  .plan,
+  .preview,
+  .folds,
+  .how,
+  .teacher,
+  .editor {
+    padding: var(--sp-4);
+  }
+
+  .preview-list {
+    padding-left: 2.75rem;
+  }
+
+  .preview-list::before {
+    left: 2.2rem;
+  }
+}
+
+@media (max-width: 559px) {
+  /* Лист меньше; вынос не уменьшаем: в него должна помещаться подпись «30 мм». */
   .sheet-figure {
     --out: 2.9rem;
     margin-left: -0.75rem;
@@ -1227,10 +1686,6 @@ mark {
 
   .sheet {
     width: 6.5rem;
-  }
-
-  .drop-title {
-    font-size: var(--fs-2);
   }
 
   .sheet-area {
@@ -1241,26 +1696,12 @@ mark {
     height: 2px;
   }
 
-  .drop-text {
+  .drop {
     justify-items: start;
-    text-align: left;
   }
 
-  .report {
-    padding: var(--sp-5) var(--sp-4);
-  }
-
-  .block.fix {
-    padding-inline: var(--sp-4);
-  }
-
-  .editor,
-  .block.teacher {
-    padding: var(--sp-4);
-  }
-
-  .tally {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .filebar .push {
+    margin-left: 0;
   }
 }
 
@@ -1279,36 +1720,54 @@ mark {
   .drop.busy .scan {
     transform: translateY(40%);
   }
+
+  .ruler .tick.now {
+    transition: none;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
 }
 
-/* --- Печать: только отчёт, все места раскрыты ----------------------------------- */
+/* --- Печать: вердикт и весь план, без кнопок и текста работы -------------------- */
 @media print {
   .no-print,
   .preview,
-  .editor-slot,
+  .controls,
+  .more-plan,
+  .panel,
+  .view-switch,
+  .keys,
   summary::before {
     display: none !important;
   }
 
-  .places li.extra {
-    display: list-item;
+  .plan-item.folded {
+    display: grid;
   }
 
-  .results-grid {
+  .views {
     display: block;
   }
 
   body,
-  .report {
+  .verdict,
+  .plan,
+  .folds {
     background: #fff;
     color: #000;
   }
 
-  .report {
+  .verdict,
+  .plan,
+  .folds {
     padding: 0;
   }
 
-  .card {
+  .plan-item {
     break-inside: avoid;
   }
 }

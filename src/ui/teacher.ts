@@ -176,8 +176,8 @@ export function renderTeacher(
 
   return el(
     'section',
-    { class: 'block teacher', 'aria-labelledby': 'teacher-title' },
-    el('h2', { id: 'teacher-title', tabindex: '-1' }, ru.teacherTitle),
+    { class: 'teacher', 'aria-labelledby': 'teacher-title' },
+    el('h1', { id: 'teacher-title', tabindex: '-1' }, ru.teacherTitle),
     el('p', { class: 'muted' }, ru.teacherIntro),
     el('div', { class: 'toolbar' }, choose, csvButton, input),
     status,

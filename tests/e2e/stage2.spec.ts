@@ -24,32 +24,37 @@ test('образцовая работа: замечаний нет, оценка
   await page.goto('./');
   const model = readFileSync(new URL('../../fixtures/good/model-note.docx', import.meta.url));
   await upload(page, 'Иванов, И. Пояснительная записка.docx', model);
-  await expect(page.getByText(/^Замечаний нет\./)).toBeVisible();
-  await expect(page.locator('.score-value')).toHaveText('100 из 100');
+  await expect(page.getByRole('heading', { level: 1, name: 'Можно сдавать' })).toBeVisible();
+  await expect(page.locator('.score strong')).toHaveText('100 из 100');
 });
 
-test('оценка и «Показать в тексте» переводят к абзацу в предпросмотре', async ({ page }) => {
+test('«Все места» → «Показать» переводит к абзацу на листе', async ({ page }) => {
   await page.goto('./');
   await upload(page, 'работа.docx', FIXTURES['PR-06']!.bad());
-  await expect(page.getByRole('heading', { name: 'Оценка оформления' })).toBeVisible();
-  await page
-    .locator('#rule-PR-06')
-    .getByRole('button', { name: /Показать в тексте/ })
+  await expect(page.locator('.score strong')).toContainText('из 100');
+  const action = page.locator('.plan-item[data-rules~="PR-06"]');
+  await action.getByRole('button', { name: 'Все места' }).click();
+  await action
+    .getByRole('button', { name: /^Показать/ })
     .first()
     .click();
   await expect(page.locator('.preview-list li:focus')).toHaveCount(1);
+  // Переключатель «‹ 1 из 3 ›» ведёт по местам, не уводя фокус с кнопки.
+  await action.getByRole('button', { name: 'Следующее место' }).click();
+  await expect(action.locator('.counter')).toHaveText('2 из 3');
 });
 
 test('редактор: выключенное правило пропадает из отчёта и запоминается', async ({ page }) => {
   await page.goto('./');
-  await page.getByRole('button', { name: 'Редактор требований' }).click();
+  await page.getByRole('link', { name: 'Требования' }).click();
   await page.locator('#en-PR-06').uncheck();
   await page.getByRole('button', { name: 'Применить' }).click();
-  await expect(page.getByRole('status')).toContainText('применён');
+  await expect(page.getByRole('status')).toContainText('применены');
   await expect(page.getByLabel('Требования')).toHaveValue('school-custom-my');
 
   await upload(page, 'работа.docx', FIXTURES['PR-06']!.bad());
-  await expect(page.locator('#rule-PR-06')).toHaveCount(0);
+  await expect(page.locator('.plan')).toBeVisible();
+  await expect(page.locator('.plan-item[data-rules~="PR-06"]')).toHaveCount(0);
 
   // После перезагрузки профиль на месте (localStorage этого браузера).
   await page.reload();
@@ -66,17 +71,26 @@ test('профиль из ссылки #profile=… выбирается сам'
 test('эвристика: отметка «здесь это есть» убирает правило из оценки', async ({ page }) => {
   await page.goto('./');
   await upload(page, 'работа.docx', FIXTURES['HD-01']!.bad());
-  const card = page.locator('#rule-HD-01');
-  await card.getByRole('button', { name: 'Здесь это есть' }).click();
-  await expect(page.locator('#rule-HD-01')).toContainText('Вы отметили');
+  await page
+    .locator('.plan-item[data-rules~="HD-01"]')
+    .getByRole('button', { name: 'Здесь это есть' })
+    .click();
+  await expect(page.locator('.plan-item[data-rules~="HD-01"]')).toContainText('Вы отметили');
   await expect(
-    page.locator('#rule-HD-01').getByRole('button', { name: 'Вернуть замечание' }),
+    page
+      .locator('.plan-item[data-rules~="HD-01"]')
+      .getByRole('button', { name: 'Вернуть замечание' }),
   ).toBeVisible();
 });
 
 test('доступность: отчёт с предпросмотром и открытый редактор', async ({ page }) => {
   await page.goto('./');
   await upload(page, 'работа.docx', FIXTURES['PB-01']!.bad());
-  await page.getByRole('button', { name: 'Редактор требований' }).click();
+  // Раскрываем всё, что раскрывается в пункте плана, и проверяем ещё раз.
+  for (const name of ['Почему', 'Как в Word', 'Все места'])
+    await page.locator('.plan-item').first().getByRole('button', { name }).click();
+  expect(await seriousViolations(page)).toEqual([]);
+  await page.getByRole('link', { name: 'Требования' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Требования' })).toBeFocused();
   expect(await seriousViolations(page)).toEqual([]);
 });
