@@ -25,7 +25,8 @@
     "test:e2e": "playwright test",
     "evaluate": "node scripts/evaluate.ts",
     "evaluate:synthetic": "node scripts/evaluate-synthetic.ts",
-    "design:shots": "node scripts/design-shots.ts"
+    "design:shots": "node scripts/design-shots.ts",
+    "design:mockups": "node scripts/design-mockups.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

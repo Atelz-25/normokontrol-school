@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Нормоконтроль — схема экранов v2</title>
+    <!--
+      Схема экранов новой структуры (docs/design/v2). Это не сайт, а макет для обсуждения:
+      статичная разметка на настоящих токенах. Экран выбирается параметром ?s=…
+      (start, checking, result, ready, teacher), на телефоне вкладка — ?tab=text.
+      Цифры взяты из проверки sample-v2 (только количества), тексты абзацев вымышленные.
+      Снимки: npm run design:mockups.
+    -->
+    <link rel="stylesheet" href="/src/ui/tokens.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        font-family: var(--font-ui);
+        line-height: var(--lh-text);
+        scrollbar-width: none;
+      }
+      body {
+        margin: 0;
+        background: var(--desk);
+        color: var(--fg);
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border-radius: var(--radius-control);
+      }
+      .screen {
+        display: none;
+      }
+      body[data-s='start'] .s-start,
+      body[data-s='checking'] .s-checking,
+      body[data-s='result'] .s-result,
+      body[data-s='ready'] .s-ready,
+      body[data-s='teacher'] .s-teacher {
+        display: block;
+      }
+
+      /* Поверхности: как в styles.css */
+      .paper {
+        --fg: var(--graphite);
+        --fg-soft: var(--graphite-soft);
+        --line: var(--rule);
+        --line-strong: var(--rule-strong);
+        --accent: var(--ink);
+        --accent-on: var(--ink-on);
+        background: var(--paper);
+        color: var(--fg);
+        border-radius: var(--radius-panel);
+      }
+      .soft {
+        color: var(--fg-soft);
+      }
+      .primary {
+        padding: 0.7rem 1.25rem;
+        font-weight: 600;
+        color: var(--accent-on);
+        background: var(--accent);
+        border: 1.5px solid var(--accent);
+      }
+      .secondary {
+        padding: 0.4rem 0.85rem;
+        font-weight: 500;
+        color: var(--fg);
+        background: transparent;
+        border: 1.5px solid var(--line-strong);
+      }
+      .link {
+        padding: 0;
+        color: var(--accent);
+        background: none;
+        border: none;
+        text-decoration: underline;
+        text-underline-offset: 0.18em;
+      }
+
+      /* --- Навигация --- */
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--sp-2) var(--sp-5);
+        max-width: 78rem;
+        margin: 0 auto;
+        padding: var(--sp-4) clamp(1rem, 4vw, 3rem);
+      }
+      .brand {
+        margin-right: auto;
+        font-size: var(--fs-3);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .nav a {
+        color: var(--fg-soft);
+        font-weight: 500;
+        text-decoration: none;
+        padding-bottom: 2px;
+      }
+      .nav a[aria-current='page'] {
+        color: var(--fg);
+        border-bottom: 2px solid var(--fg);
+      }
+      main {
+        max-width: 78rem;
+        margin: 0 auto;
+        padding: 0 clamp(1rem, 4vw, 3rem) var(--sp-6);
+      }
+
+      /* --- Старт --- */
+      .start {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: clamp(2rem, 6vw, 5rem);
+        align-items: center;
+        padding-top: var(--sp-6);
+      }
+      .start h1 {
+        font-size: var(--fs-5);
+        font-weight: 800;
+        line-height: 0.95;
+        letter-spacing: -0.035em;
+      }
+      .start .lead {
+        margin-top: var(--sp-4);
+        max-width: 32rem;
+        font-size: var(--fs-3);
+        line-height: 1.4;
+      }
+      .start .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-3);
+        align-items: center;
+        margin-top: var(--sp-5);
+      }
+      .req {
+        margin-top: var(--sp-5);
+      }
+      .req b {
+        font-weight: 600;
+      }
+      .privacy {
+        margin-top: var(--sp-3);
+        font-size: var(--fs-1);
+      }
+
+      /* Лист A4 */
+      .a4 {
+        position: relative;
+        width: 15rem;
+        aspect-ratio: 210 / 297;
+        background: var(--paper);
+        border-radius: var(--radius-sheet);
+      }
+      .a4 .area {
+        position: absolute;
+        inset: 6.7% 4.8% 6.7% 14.3%;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        outline: 1px dashed var(--rule-strong);
+        padding-top: 3px;
+      }
+      .a4 .area i {
+        display: block;
+        height: 3px;
+        background: var(--rule);
+      }
+      .a4 .scan {
+        position: absolute;
+        inset: 38% 0 auto 0;
+        border-top: 3px solid var(--desk);
+      }
+      .dimlabel {
+        position: absolute;
+        font-size: var(--fs-1);
+        font-weight: 500;
+        color: var(--on-desk);
+      }
+
+      /* --- Проверка: шаги --- */
+      .steps {
+        display: grid;
+        gap: var(--sp-2);
+        margin: var(--sp-5) 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: var(--fs-3);
+      }
+      .steps li {
+        display: flex;
+        gap: var(--sp-3);
+        align-items: center;
+      }
+      .steps .wait {
+        color: var(--fg-soft);
+      }
+      .tick {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex: none;
+      }
+
+      /* --- Результат --- */
+      .filebar {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--sp-2) var(--sp-4);
+        padding: var(--sp-3) 0;
+        background: var(--desk);
+        border-bottom: 1px solid var(--line);
+      }
+      .filebar .name {
+        font-weight: 600;
+      }
+      .filebar .gap {
+        margin-left: auto;
+      }
+      .verdict {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: var(--sp-4) var(--sp-6);
+        align-items: end;
+        margin: var(--sp-5) 0;
+        padding: var(--sp-5) var(--sp-6);
+      }
+      .verdict h1 {
+        font-size: var(--fs-4);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+      .verdict p {
+        margin-top: var(--sp-2);
+        font-size: var(--fs-3);
+      }
+      .verdict .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-3) var(--sp-5);
+        align-items: center;
+        margin-top: var(--sp-4);
+      }
+      .score {
+        text-align: right;
+        font-size: var(--fs-1);
+      }
+      .score strong {
+        display: block;
+        font-size: var(--fs-4);
+        font-weight: 700;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .ok-mark {
+        color: var(--ink);
+      }
+
+      .cols {
+        display: grid;
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        gap: var(--sp-5);
+        align-items: start;
+      }
+      .plan {
+        padding: var(--sp-5) var(--sp-5) var(--sp-3);
+      }
+      .plan > h2,
+      .sheetcol > h2 {
+        font-size: var(--fs-3);
+      }
+      .plan > .soft {
+        margin-top: var(--sp-1);
+        font-size: var(--fs-1);
+      }
+      .items {
+        margin: var(--sp-3) 0 0;
+        padding: 0;
+        list-style: none;
+        container-type: inline-size;
+      }
+      .item {
+        display: grid;
+        grid-template-columns: 2.25rem minmax(0, 1fr);
+        gap: 0 var(--sp-3);
+        padding: var(--sp-4) 0;
+        border-top: 1px solid var(--line);
+      }
+      .item .mark {
+        width: 2.25rem;
+        height: 2.25rem;
+        color: var(--pencil);
+      }
+      .item.warn .mark {
+        color: var(--ochre);
+      }
+      .item h3 {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      .item .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-1) var(--sp-3);
+        margin-top: 2px;
+        font-size: var(--fs-1);
+      }
+      .item .self {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .item .ids {
+        color: var(--fg-soft);
+      }
+      .item .place {
+        margin-top: var(--sp-2);
+        font-size: var(--fs-1);
+      }
+      .item .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-2) var(--sp-4);
+        align-items: center;
+        margin-top: var(--sp-2);
+        font-size: var(--fs-1);
+      }
+      .stepper {
+        display: inline-flex;
+        align-items: center;
+        border: 1.5px solid var(--line-strong);
+        border-radius: var(--radius-control);
+        font-variant-numeric: tabular-nums;
+      }
+      .stepper button {
+        padding: 0.15rem 0.55rem;
+        color: var(--fg);
+        background: none;
+        border: none;
+      }
+      .stepper span {
+        padding: 0 0.25rem;
+      }
+      .done {
+        margin-left: auto;
+      }
+      .item.current {
+        background: color-mix(in srgb, var(--highlight) 30%, transparent);
+        margin: 0 calc(-1 * var(--sp-3));
+        padding-inline: var(--sp-3);
+        border-radius: var(--radius-control);
+        border-top-color: transparent;
+      }
+      @container (max-width: 26rem) {
+        .done {
+          margin-left: 0;
+        }
+      }
+      .more {
+        padding: var(--sp-3) 0;
+        border-top: 1px solid var(--line);
+        font-weight: 500;
+        color: var(--accent);
+      }
+
+      /* Лист с текстом работы, линейкой и картой */
+      .sheetcol {
+        position: sticky;
+        top: 4rem;
+        padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5);
+      }
+      .ruler {
+        position: relative;
+        height: 1.75rem;
+        margin: var(--sp-3) 2rem var(--sp-2) 0;
+        border-bottom: 1px solid var(--line-strong);
+        font-size: 0.75rem;
+      }
+      .ruler .need,
+      .ruler .now {
+        position: absolute;
+        bottom: -1px;
+        width: 2px;
+        height: 0.9rem;
+      }
+      .ruler .need {
+        left: 60%;
+        background: var(--graphite-soft);
+      }
+      .ruler .now {
+        left: 40%;
+        background: var(--pencil);
+      }
+      .ruler .lbl {
+        position: absolute;
+        top: -2px;
+        white-space: nowrap;
+      }
+      .doc {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 1.5rem;
+        gap: var(--sp-3);
+      }
+      .text {
+        position: relative;
+        margin: 0;
+        padding: 0 0 0 3rem;
+        list-style: none;
+        font-family: var(--font-doc);
+        font-size: 0.9375rem;
+        max-height: 34rem;
+        overflow: hidden;
+      }
+      .text::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 2.4rem;
+        width: 1px;
+        background: var(--margin-line);
+      }
+      .text li {
+        position: relative;
+        padding: 1px var(--sp-2);
+        border-left: 3px solid transparent;
+      }
+      .text li .n {
+        position: absolute;
+        left: -3rem;
+        width: 2rem;
+        text-align: right;
+        font-family: var(--font-ui);
+        font-size: 0.75rem;
+        color: var(--fg-soft);
+        line-height: 1.9;
+      }
+      .text li.flag {
+        border-left-color: var(--pencil);
+      }
+      .text li.empty {
+        color: var(--fg-soft);
+      }
+      .text li.h {
+        font-weight: 700;
+        margin-top: var(--sp-2);
+      }
+      .text li.target {
+        outline: 2px solid var(--ink);
+        outline-offset: 1px;
+      }
+      .text svg.pencil {
+        position: absolute;
+        left: 0.25rem;
+        right: 0.25rem;
+        bottom: -3px;
+        width: calc(100% - 0.5rem);
+        height: 8px;
+        color: var(--pencil);
+      }
+      .map {
+        position: relative;
+        display: grid;
+        gap: 2px;
+        align-content: start;
+        max-height: 34rem;
+      }
+      .map i {
+        display: block;
+        height: 3px;
+        background: var(--rule-strong);
+      }
+      .map i.e {
+        background: transparent;
+      }
+      .map i.f {
+        background: var(--pencil);
+      }
+      .map .view {
+        position: absolute;
+        left: -3px;
+        right: -3px;
+        top: 18%;
+        height: 22%;
+        border: 2px solid var(--ink);
+        border-radius: 3px;
+      }
+
+      .folded {
+        margin-top: var(--sp-5);
+        padding: var(--sp-2) var(--sp-5);
+      }
+      .folded div {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--sp-3) 0;
+        border-top: 1px solid var(--line);
+        font-weight: 500;
+      }
+      .folded div:first-child {
+        border-top: none;
+      }
+      .folded span:first-child::before {
+        content: '+';
+        display: inline-block;
+        width: 1.1em;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      /* Телефон: вкладки и нижняя панель */
+      .tabs,
+      .bottombar {
+        display: none;
+      }
+
+      /* --- Учитель --- */
+      .teacher {
+        margin-top: var(--sp-5);
+        padding: var(--sp-5) var(--sp-6);
+      }
+      .teacher h1 {
+        font-size: var(--fs-4);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .tdrop {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--sp-3);
+        align-items: center;
+        margin: var(--sp-4) 0;
+        padding: var(--sp-4);
+        border: 1.5px dashed var(--rule-strong);
+        border-radius: var(--radius-control);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        font-weight: 600;
+      }
+      td.num {
+        font-weight: 700;
+      }
+
+      @media (max-width: 1023px) {
+        .cols {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sheetcol {
+          position: static;
+        }
+      }
+      @media (max-width: 699px) {
+        .nav {
+          gap: var(--sp-1) var(--sp-4);
+          padding-block: var(--sp-3);
+        }
+        .brand {
+          width: 100%;
+        }
+        .nav .how {
+          display: none;
+        }
+        .start {
+          grid-template-columns: minmax(0, 1fr);
+          padding-top: var(--sp-4);
+        }
+        .start .a4 {
+          width: 8rem;
+        }
+        .start h1 {
+          font-size: 2.5rem;
+        }
+        .start .lead {
+          font-size: 1.0625rem;
+        }
+        .start .sheetwrap {
+          order: 2;
+        }
+        .verdict {
+          grid-template-columns: minmax(0, 1fr);
+          padding: var(--sp-4);
+        }
+        .verdict h1 {
+          font-size: 1.75rem;
+        }
+        .verdict p {
+          font-size: var(--fs-2);
+        }
+        .score {
+          text-align: left;
+          display: flex;
+          gap: var(--sp-2);
+          align-items: baseline;
+        }
+        .score strong {
+          display: inline;
+          font-size: var(--fs-3);
+        }
+        .filebar .gap {
+          margin-left: 0;
+        }
+        .filebar .cmp {
+          display: none;
+        }
+        .tabs {
+          display: flex;
+          margin-bottom: var(--sp-3);
+          border: 1.5px solid var(--line-strong);
+          border-radius: var(--radius-control);
+          overflow: hidden;
+        }
+        .tabs button {
+          flex: 1;
+          padding: 0.55rem;
+          color: var(--fg);
+          background: none;
+          border: none;
+          border-radius: 0;
+          font-weight: 600;
+        }
+        .tabs button[aria-selected='true'] {
+          color: var(--desk);
+          background: var(--on-desk);
+        }
+        body:not([data-tab='text']) .sheetcol,
+        body[data-tab='text'] .plan {
+          display: none;
+        }
+        .plan,
+        .sheetcol {
+          padding: var(--sp-4);
+        }
+        .bottombar {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: var(--sp-2);
+          padding: var(--sp-2) var(--sp-4);
+          background: var(--desk-deep);
+          font-variant-numeric: tabular-nums;
+        }
+        .bottombar .secondary {
+          padding: 0.4rem 0.7rem;
+        }
+        .teacher {
+          padding: var(--sp-4);
+        }
+        .teacher table .top3 {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body data-s="start">
+    <!-- Корректурные знаки (по мотивам ГОСТ 7.62): рисуем сами, каждый означает действие. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <!-- «Удалить» (делеатур): петля с хвостом -->
+        <symbol id="m-delete" viewBox="0 0 36 36">
+          <path
+            d="M6 26c6-2 10-8 13-14 1.6-3.2 5.5-3.2 6 0 .6 3.6-3.6 6.2-7 4.6-2.6-1.3-1.6-5 1.5-4.4 3.5.6 6.5 5.5 10.5 7.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <!-- «Абзацный отступ»: уголок -->
+        <symbol id="m-indent" viewBox="0 0 36 36">
+          <path
+            d="M8 10h12v18M20 28H8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M24 14h6M24 20h6"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <!-- «Перенос на новую страницу»: скобка со стрелкой вниз -->
+        <symbol id="m-page" viewBox="0 0 36 36">
+          <path
+            d="M7 9h22M18 9v18m-6-6 6 6 6-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <!-- «Поля»: отступ от края -->
+        <symbol id="m-margin" viewBox="0 0 36 36">
+          <path
+            d="M9 6v24M27 6v24M13 12h10M13 18h10M13 24h7"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <!-- «Вставить / дописать текст»: галочка вставки -->
+        <symbol id="m-insert" viewBox="0 0 36 36">
+          <path
+            d="M8 26 18 10l10 16M14 30h8"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <!-- «Сблизить / убрать пробел»: две дуги -->
+        <symbol id="m-close" viewBox="0 0 36 36">
+          <path
+            d="M6 14c4 8 8 8 12 0M18 14c4 8 8 8 12 0M6 26c4-8 8-8 12 0M18 26c4-8 8-8 12 0"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </symbol>
+        <symbol id="m-check" viewBox="0 0 20 20">
+          <path
+            d="M3.5 10.5 8 15l8.5-10"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+      </defs>
+    </svg>
+
+    <nav class="nav">
+      <span class="brand">Нормоконтроль</span>
+      <a href="#" class="n-check" aria-current="page">Проверить работу</a>
+      <a href="#" class="n-teacher">Для учителя</a>
+      <a href="#">Требования</a>
+      <a href="#" class="how">Как это работает</a>
+    </nav>
+
+    <main>
+      <!-- ============ 1. Старт ============ -->
+      <section class="screen s-start">
+        <div class="start">
+          <div class="sheetwrap">
+            <div class="a4">
+              <div class="area">
+                <i
+                  style="
+                    width: 40%;
+                    align-self: center;
+                    height: 4px;
+                    background: var(--graphite-soft);
+                  "
+                ></i>
+                <i style="width: 92%; margin-top: 6px"></i><i></i><i></i><i style="width: 64%"></i>
+                <i style="width: 90%; margin-top: 6px"></i><i></i><i></i><i style="width: 72%"></i>
+                <i style="width: 90%; margin-top: 6px"></i><i></i><i style="width: 58%"></i>
+                <i style="width: 90%; margin-top: 6px"></i><i></i><i style="width: 81%"></i>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h1>Проверьте работу до того, как её проверит учитель</h1>
+            <p class="lead">
+              Перетащите файл .docx на лист. Программа найдёт поля, шрифты и пустые строки не по
+              требованиям и покажет, как исправить их в Word.
+            </p>
+            <div class="actions">
+              <button class="primary">Выбрать файл</button>
+              <span class="soft">или перетащите его на лист</span>
+            </div>
+            <p class="req">Требования: <b>Наша школа</b> <button class="link">изменить</button></p>
+            <p class="privacy soft">
+              Файл не покидает компьютер: проверка идёт прямо в браузере.
+              <button class="link">Как это проверить</button>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2. Проверка ============ -->
+      <section class="screen s-checking">
+        <div class="start">
+          <div class="sheetwrap">
+            <div class="a4">
+              <div class="area">
+                <i
+                  style="
+                    width: 40%;
+                    align-self: center;
+                    height: 4px;
+                    background: var(--graphite-soft);
+                  "
+                ></i>
+                <i style="width: 92%; margin-top: 6px"></i><i></i><i></i><i style="width: 64%"></i>
+                <i style="width: 90%; margin-top: 6px"></i><i></i><i></i><i style="width: 72%"></i>
+                <i style="width: 90%; margin-top: 6px"></i><i></i><i style="width: 58%"></i>
+              </div>
+              <span class="scan"></span>
+            </div>
+          </div>
+          <div>
+            <h1>Проверяю «работа.docx»</h1>
+            <ol class="steps" aria-label="Ход проверки">
+              <li>
+                <svg class="tick"><use href="#m-check" /></svg>Читаю файл
+              </li>
+              <li>
+                <svg class="tick"><use href="#m-check" /></svg>Разбираю стили
+              </li>
+              <li><svg class="tick" style="opacity: 0"></svg><b>Собираю абзацы</b></li>
+              <li class="wait">
+                <svg class="tick" style="opacity: 0"></svg>Проверяю по требованиям
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3. Результат: есть что исправить ============ -->
+      <section class="screen s-result">
+        <div class="filebar">
+          <span class="name">работа.docx</span>
+          <span class="soft">примерно 9 страниц, 313 абзацев</span>
+          <button class="secondary gap">Другой файл</button>
+          <button class="secondary cmp">Сравнить с прошлой версией</button>
+        </div>
+
+        <div class="verdict paper">
+          <div>
+            <h1>Пока рано сдавать</h1>
+            <p>18 проблем, 8 из них программа исправит сама.</p>
+            <div class="cta">
+              <button class="primary">Исправить и скачать</button>
+              <span class="soft">Получится новый файл, ваш останется как был.</span>
+            </div>
+          </div>
+          <div class="score">
+            <span class="soft">оценка</span>
+            <strong>70 из 100</strong>
+            <button class="link">Как считается</button>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button role="tab" class="t-plan" aria-selected="true">План</button>
+          <button role="tab" class="t-text" aria-selected="false">Текст работы</button>
+        </div>
+
+        <div class="cols">
+          <section class="plan paper">
+            <h2>План исправления</h2>
+            <p class="soft">
+              Сначала то, за что учитель уже снижал баллы, потом остальные ошибки и замечания.
+            </p>
+            <ol class="items">
+              <li class="item current">
+                <svg class="mark"><use href="#m-delete" /></svg>
+                <div>
+                  <h3>Убрать пустые строки между абзацами</h3>
+                  <p class="meta">
+                    <span>73 места</span><span class="self">исправлю сам</span
+                    ><span class="ids">PR-06, PR-10</span>
+                  </p>
+                  <p class="place">
+                    стр. 4, после «Цель моей работы — собрать…»
+                    <button class="link">Скопировать для поиска</button>
+                  </p>
+                  <div class="controls">
+                    <span class="stepper"
+                      ><button aria-label="Предыдущее место">‹</button><span>3 из 73</span
+                      ><button aria-label="Следующее место">›</button></span
+                    >
+                    <button class="link">Почему</button>
+                    <button class="link">Как в Word</button>
+                    <button class="link">Все места</button>
+                    <button class="secondary done">Сделал</button>
+                  </div>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-page" /></svg>
+                <div>
+                  <h3>Начинать каждую часть с новой страницы</h3>
+                  <p class="meta">
+                    <span>8 мест</span><span class="self">исправлю сам</span
+                    ><span class="ids">PB-01</span>
+                  </p>
+                  <div class="controls">
+                    <span class="stepper"
+                      ><button>‹</button><span>1 из 8</span><button>›</button></span
+                    >
+                    <button class="link">Почему</button>
+                    <button class="link">Как в Word</button>
+                    <button class="secondary done">Сделал</button>
+                  </div>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-margin" /></svg>
+                <div>
+                  <h3>Поставить поля: левое 30 мм, правое 10 мм</h3>
+                  <p class="meta">
+                    <span>весь документ</span><span class="self">исправлю сам</span
+                    ><span class="ids">PG-02, PG-03, PG-07</span>
+                  </p>
+                  <div class="controls">
+                    <button class="link">Почему</button>
+                    <button class="link">Как в Word</button>
+                    <button class="secondary done">Сделал</button>
+                  </div>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-indent" /></svg>
+                <div>
+                  <h3>Сделать красную строку 1,5 см</h3>
+                  <p class="meta">
+                    <span>37 мест</span><span class="self">исправлю сам</span
+                    ><span class="ids">PR-03</span>
+                  </p>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-close" /></svg>
+                <div>
+                  <h3>Убрать отступ абзацев справа</h3>
+                  <p class="meta">
+                    <span>74 места</span><span class="self">исправлю сам</span
+                    ><span class="ids">PR-09</span>
+                  </p>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-insert" /></svg>
+                <div>
+                  <h3>Дописать теоретическую часть</h3>
+                  <p class="meta">
+                    <span>сейчас меньше нужного</span><span class="ids">TH-01</span>
+                  </p>
+                </div>
+              </li>
+              <li class="item">
+                <svg class="mark"><use href="#m-insert" /></svg>
+                <div>
+                  <h3>Дописать в заключение три ответа</h3>
+                  <p class="meta">
+                    <span>что заменили, как вышли, что сделали бы иначе</span
+                    ><span class="ids">CN-03, CN-04, CN-05</span>
+                  </p>
+                </div>
+              </li>
+            </ol>
+            <p class="more">Ещё 11 пунктов</p>
+          </section>
+
+          <section class="sheetcol paper" aria-label="Текст работы">
+            <h2>Текст работы</h2>
+            <div class="ruler" aria-hidden="true">
+              <span class="lbl soft" style="left: calc(60% + 6px)">нужно 30 мм</span>
+              <span class="lbl" style="right: calc(60% + 6px); color: var(--pencil)"
+                >сейчас 20 мм</span
+              >
+              <span class="need"></span><span class="now"></span>
+            </div>
+            <div class="doc">
+              <ol class="text">
+                <li class="h"><span class="n">40</span>Введение</li>
+                <li class="flag empty"><span class="n">41</span>¶</li>
+                <li>
+                  <span class="n">42</span>Тема проекта выбрана потому, что в школе нет удобного
+                  способа заранее проверить оформление.
+                </li>
+                <li class="flag empty"><span class="n">43</span>¶</li>
+                <li>
+                  <span class="n">44</span>Цель моей работы — собрать требования к оформлению в
+                  одном месте.
+                </li>
+                <li class="flag empty target">
+                  <span class="n">45</span>¶<svg
+                    class="pencil"
+                    viewBox="0 0 100 8"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M1 5c20-3 40 2 60-1s30 1 38 0"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      vector-effect="non-scaling-stroke"
+                    />
+                  </svg>
+                </li>
+                <li class="flag empty"><span class="n">46</span>¶</li>
+                <li>
+                  <span class="n">47</span>Задачи: изучить требования, сравнить их с работами
+                  прошлых лет, составить памятку.
+                </li>
+                <li>
+                  <span class="n">48</span>Объект исследования — школьные проекты, предмет — их
+                  оформление.
+                </li>
+                <li class="flag empty"><span class="n">49</span>¶</li>
+                <li class="h"><span class="n">50</span>1. Теоретическая часть</li>
+                <li>
+                  <span class="n">51</span>Требования к оформлению обычно задаёт школа или стандарт.
+                </li>
+                <li class="flag empty"><span class="n">52</span>¶</li>
+                <li>
+                  <span class="n">53</span>В разных школах поля и шрифты отличаются, поэтому важно
+                  знать свои.
+                </li>
+              </ol>
+              <div class="map" aria-hidden="true">
+                <i></i><i class="e"></i><i></i><i class="f"></i><i></i><i class="f"></i><i></i
+                ><i></i><i class="f"></i><i></i><i></i><i class="f"></i><i></i><i class="e"></i
+                ><i></i><i></i><i class="f"></i><i></i><i></i><i></i><i class="f"></i><i></i
+                ><i class="e"></i><i></i><i></i><i class="f"></i><i></i><i></i><i></i><i></i
+                ><i class="f"></i><i></i><i></i><i class="e"></i><i></i><i></i><i class="f"></i
+                ><i></i><i></i><i></i><i></i><i class="f"></i><i></i><i></i><i></i><i class="e"></i
+                ><i></i><i></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i class="f"></i
+                ><i></i><i></i><i></i><i class="e"></i><i></i><i></i><i></i><i class="f"></i><i></i
+                ><i></i><i></i><i></i><i></i><i></i><i></i><i class="f"></i><i></i><i></i><i></i
+                ><i></i><i></i><i></i><i></i><i></i><i></i><i class="f"></i><i></i><i></i><i></i
+                ><i></i>
+                <span class="view"></span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="folded paper">
+          <div><span>Что уже хорошо</span><span class="soft">50</span></div>
+          <div><span>Титульный лист: на усмотрение учителя</span><span></span></div>
+          <div><span>Паспорт документа</span><span></span></div>
+          <div><span>Сохранить отчёт: печать, PDF, JSON</span><span></span></div>
+        </div>
+
+        <div class="bottombar">
+          <button class="secondary">‹ Назад</button>
+          <span>место 3 из 73</span>
+          <button class="secondary">Дальше ›</button>
+        </div>
+      </section>
+
+      <!-- ============ 4. Результат: можно сдавать ============ -->
+      <section class="screen s-ready">
+        <div class="filebar">
+          <span class="name">образцовая-работа.docx</span>
+          <span class="soft">примерно 18 страниц</span>
+          <button class="secondary gap">Другой файл</button>
+          <button class="secondary cmp">Сравнить с прошлой версией</button>
+        </div>
+        <div class="verdict paper">
+          <div>
+            <h1>Можно сдавать</h1>
+            <p>
+              Поля, шрифт, интервалы, пустые строки, части работы и список литературы — по
+              требованиям. Остался один совет.
+            </p>
+          </div>
+          <div class="score">
+            <span class="soft">оценка</span>
+            <strong>100 из 100</strong>
+            <button class="link">Как считается</button>
+          </div>
+        </div>
+        <section class="plan paper">
+          <h2>Совет</h2>
+          <ol class="items">
+            <li class="item warn">
+              <svg class="mark"><use href="#m-insert" /></svg>
+              <div>
+                <h3>Назвать файл по образцу: «Фамилия_Класс_Тема.docx»</h3>
+                <p class="meta"><span>имя файла</span><span class="ids">FN-01</span></p>
+              </div>
+            </li>
+          </ol>
+        </section>
+        <div class="folded paper">
+          <div><span>Что проверено</span><span class="soft">79</span></div>
+          <div><span>Паспорт документа</span><span></span></div>
+          <div><span>Сохранить отчёт: печать, PDF, JSON</span><span></span></div>
+        </div>
+      </section>
+
+      <!-- ============ 5. Учитель ============ -->
+      <section class="screen s-teacher">
+        <div class="teacher paper">
+          <h1>Проверка нескольких работ</h1>
+          <p class="soft" style="margin-top: var(--sp-2)">
+            Файлы проверяются по очереди прямо в браузере и никуда не отправляются.
+          </p>
+          <div class="tdrop">
+            <button class="primary">Выбрать файлы</button>
+            <span class="soft">или перетащите сюда несколько .docx</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Работа</th>
+                <th aria-sort="ascending">Оценка ▲</th>
+                <th>Проблем</th>
+                <th class="top3">Главное</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Работа 3.docx</td>
+                <td class="num" style="color: var(--pencil)">58</td>
+                <td>22</td>
+                <td class="top3">пустые строки, поля, нет заключения</td>
+              </tr>
+              <tr>
+                <td>Работа 1.docx</td>
+                <td class="num" style="color: var(--pencil)">70</td>
+                <td>18</td>
+                <td class="top3">пустые строки, новые страницы, поля</td>
+              </tr>
+              <tr>
+                <td>Работа 2.docx</td>
+                <td class="num" style="color: var(--ochre)">86</td>
+                <td>6</td>
+                <td class="top3">красная строка, заголовки</td>
+              </tr>
+              <tr>
+                <td>Работа 4.docx</td>
+                <td class="num">100</td>
+                <td>0</td>
+                <td class="top3">можно сдавать</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="cta" style="display: flex; gap: var(--sp-3); margin-top: var(--sp-4)">
+            <button class="secondary">Скачать таблицу для Excel</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      // Экран и вкладка — из адреса: ?s=result&tab=text
+      const params = new URLSearchParams(location.search);
+      const s = params.get('s') ?? 'start';
+      document.body.dataset.s = s;
+      document.body.dataset.tab = params.get('tab') ?? 'plan';
+      const isText = document.body.dataset.tab === 'text';
+      document.querySelector('.t-plan')?.setAttribute('aria-selected', String(!isText));
+      document.querySelector('.t-text')?.setAttribute('aria-selected', String(isText));
+      if (s === 'teacher') {
+        document.querySelector('.n-check')?.removeAttribute('aria-current');
+        document.querySelector('.n-teacher')?.setAttribute('aria-current', 'page');
+      }
+    </script>
+  </body>
+</html>
