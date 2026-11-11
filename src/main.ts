@@ -12,6 +12,7 @@ import { copyText, downloadFile, findingsAsText } from './ui/export.ts';
 import { durations, reducedMotion, revealInOrder, unfold } from './ui/motion.ts';
 import type { PdfDocument } from './core/pdf/analyze.ts';
 import { renderPdfResult } from './ui/pdf-view.ts';
+import { renderMemo } from './ui/memo.ts';
 import { renderProfileEditor } from './ui/profile-editor.ts';
 import { buildTemplate } from './core/template/build.ts';
 import { renderResult } from './ui/result-view.ts';
@@ -517,6 +518,7 @@ function renderProfileScreen(): void {
       el('p', {}, ru.profileCurrent(profile.title)),
       el('p', {}, templateButton('secondary')),
     ),
+    renderMemo(profile),
     editor,
   );
 }

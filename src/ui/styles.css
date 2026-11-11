@@ -1836,3 +1836,65 @@ mark {
   color: var(--fg);
   font-weight: 600;
 }
+
+/* --- Памятка требований ---------------------------------------------------------- */
+.memo {
+  --fg: var(--graphite);
+  --fg-soft: var(--graphite-soft);
+  --line: var(--rule);
+  --line-strong: var(--rule-strong);
+  --accent: var(--ink);
+  --accent-on: var(--ink-on);
+  margin-bottom: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6);
+  color: var(--fg);
+  background: var(--paper);
+  border-radius: var(--radius-panel);
+}
+
+.memo dl {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-4) 0;
+}
+
+.memo dt {
+  font-weight: 600;
+}
+
+.memo dd {
+  margin: 0;
+}
+
+@media (max-width: 559px) {
+  .memo dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .memo dd {
+    margin-bottom: var(--sp-2);
+  }
+}
+
+.row-actions {
+  white-space: nowrap;
+}
+
+/* Печать памятки: на листе только она. */
+@media print {
+  body.printing-memo #main > :not(#screen-profile),
+  body.printing-memo .profile-head,
+  body.printing-memo .editor,
+  body.printing-memo .topbar,
+  body.printing-memo .status {
+    display: none !important;
+  }
+
+  body.printing-memo .memo {
+    padding: 0;
+    color: #000;
+    background: #fff;
+  }
+}

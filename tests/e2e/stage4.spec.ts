@@ -67,6 +67,14 @@ test('режим учителя: таблица по нескольким раб
   expect(csv.startsWith('\ufeff"Файл";"Оценка"')).toBe(true);
   expect(csv).toContain('"Петров.docx"');
 
+  // Отзыв ученику: готовый текст с оценкой и главными пунктами.
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'Скопировать отзыв о работе «Петров.docx»' }).click();
+  await expect(page.locator('.teacher [role=status]')).toContainText('Отзыв скопирован');
+  const text = await page.evaluate(() => navigator.clipboard.readText());
+  expect(text).toContain('Работа «Петров»');
+  expect(text).toContain('пустые строки');
+
   await page
     .locator('.teacher-table tr', { hasText: 'Петров.docx' })
     .getByRole('button', { name: 'Открыть отчёт' })
@@ -85,4 +93,9 @@ test('шаблон: скачивается .docx, который читаетс�
   const doc = readDocx(readFileSync(await saved.path()));
   expect(doc.sections[0]?.marginsMm.left).toBeCloseTo(30, 0);
   await expect(page.locator('#app > .status')).toContainText('Шаблон скачан');
+
+  // Памятка на экране «Требования» — из тех же чисел.
+  await page.getByRole('link', { name: 'Требования' }).click();
+  await expect(page.locator('.memo')).toContainText('слева 30 мм');
+  expect(await seriousViolations(page)).toEqual([]);
 });

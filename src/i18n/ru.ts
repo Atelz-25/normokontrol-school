@@ -349,6 +349,34 @@ export const ru = {
   historyHint: 'Оценки прошлых проверок этой работы. Хранятся только в этом браузере.',
   historyClear: 'Очистить историю',
   historyCleared: 'История попыток очищена.',
+  memo: {
+    title: (name: string): string => `Памятка: ${name}`,
+    print: 'Распечатать памятку',
+    margins: 'Поля',
+    font: 'Шрифт',
+    spacing: 'Межстрочный интервал',
+    indent: 'Красная строка',
+    align: 'Выравнивание',
+    empty: 'Пустые строки',
+    emptyRule: 'не ставить: расстояния — интервалами и разрывами страниц',
+    parts: 'Части по порядку',
+    pages: 'Новая страница',
+    pagesRule: 'каждая часть начинается с новой страницы (Ctrl+Enter)',
+    numbers: 'Номера страниц',
+    volume: 'Объём',
+    sources: 'Литература',
+    fileName: 'Имя файла',
+  },
+  teacherFeedback: 'Отзыв',
+  teacherFeedbackLabel: (name: string): string => `Скопировать отзыв о работе «${name}»`,
+  teacherFeedbackText: (name: string, score: number | undefined, items: string[]): string =>
+    `Работа «${name.replace(/\.docx$/i, '')}»` +
+    (score !== undefined ? `: оценка оформления ${score} из 100.` : '.') +
+    (items.length > 0
+      ? ` Главное исправить: ${items.map((t, i) => `${i + 1}) ${t.charAt(0).toLowerCase()}${t.slice(1)}`).join('; ')}.`
+      : ' Оформление по требованиям.') +
+    ' После правок проверьте файл в «Нормоконтроле» ещё раз.',
+  teacherFeedbackCopied: 'Отзыв скопирован: вставьте его в сообщение ученику.',
   profileTitle: 'Требования',
   profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;

@@ -6,7 +6,8 @@ import type { Profile } from '../core/profiles/types.ts';
 import { RULE_TEXTS } from '../i18n/rules-ru.ts';
 import { ru } from '../i18n/ru.ts';
 import { el } from './dom.ts';
-import { downloadFile } from './export.ts';
+import { copyText, downloadFile } from './export.ts';
+import { buildPlan } from './plan-model.ts';
 import type { MapParagraph } from '../worker/protocol.ts';
 import { check } from './worker-client.ts';
 
@@ -101,11 +102,28 @@ export function renderTeacher(
     });
     const body = sorted.map((row) => {
       let open: HTMLButtonElement | undefined;
+      let feedback: HTMLButtonElement | undefined;
       if (row.report) {
         const report = row.report;
         open = el('button', { type: 'button', class: 'link' }, ru.teacherOpenReport);
         open.addEventListener('click', () => {
           onOpen(row.name, row.bytes, report, row.map ?? []);
+        });
+        // Готовый текст для ученика: оценка и три главных действия из плана исправления.
+        feedback = el(
+          'button',
+          { type: 'button', class: 'link', 'aria-label': ru.teacherFeedbackLabel(row.name) },
+          ru.teacherFeedback,
+        );
+        feedback.addEventListener('click', () => {
+          const plan = buildPlan(report, getProfile(), new Set());
+          const items = plan.actions
+            .filter((a) => a.severity !== 'info')
+            .slice(0, 3)
+            .map((a) => a.title);
+          void copyText(ru.teacherFeedbackText(row.name, row.score, items)).then((ok) => {
+            status.textContent = ok ? ru.teacherFeedbackCopied : ru.copyFailed;
+          });
         });
       }
       return el(
@@ -116,7 +134,7 @@ export function renderTeacher(
         el('td', {}, String(row.errors)),
         el('td', {}, String(row.warnings)),
         el('td', {}, row.top.join('; ')),
-        el('td', {}, open),
+        el('td', { class: 'row-actions' }, open, ' ', feedback),
       );
     });
     tableSlot.replaceChildren(
