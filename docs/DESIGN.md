@@ -138,6 +138,8 @@
 
 Источники: [925studios](https://www.925studios.co/blog/ai-slop-design-tells), [Adrian Krebs](https://adriankrebs.ch/blog/design-slop/), [ux-skill wiki](https://github.com/Laith0003/ux-skill/wiki/How-to-detect-AI-slop-in-your-design), [Noqta](https://noqta.tn/en/blog/ai-design-slop-overused-ui-patterns-fix-2026), [dev.to](https://dev.to/alanwest/why-every-ai-built-website-looks-the-same-blame-tailwinds-indigo-500-3h2p), [MindStudio](https://www.mindstudio.ai/blog/avoid-vibecoded-landing-pages).
 
+Новые элементы этапа 7 сделаны из тех же деталей, без новых приёмов: фильтр плана — сегментированная кнопка (`aria-pressed`), «По одному» показывает один пункт и строку «Осталось N»; результат PDF — тот же план, только пункты — проверки с галочкой или знаком; памятка — белый лист со списком «что — как надо»; строка «Попытки: 61 → 73 → 92» под вердиктом мелким шрифтом.
+
 Клавиши на экране результата: J — следующее место, K — предыдущее (на русской раскладке О и Л), ? — подсказка. В полях ввода не действуют.
 
 ## Цифры (2026-11-10, после новой структуры)
