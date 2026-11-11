@@ -75,3 +75,14 @@ test('режим учителя: таблица по нескольким раб
 
   expect(await seriousViolations(page)).toEqual([]);
 });
+
+test('шаблон: скачивается .docx, который читается и оформлен по требованиям', async ({ page }) => {
+  await page.goto('./');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Скачать шаблон' }).click();
+  const saved = await download;
+  expect(saved.suggestedFilename()).toMatch(/^Шаблон пояснительной записки/);
+  const doc = readDocx(readFileSync(await saved.path()));
+  expect(doc.sections[0]?.marginsMm.left).toBeCloseTo(30, 0);
+  await expect(page.locator('#app > .status')).toContainText('Шаблон скачан');
+});

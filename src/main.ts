@@ -6,13 +6,14 @@ import { BUILTIN_PROFILES, DEFAULT_PROFILE_ID } from './core/profiles/builtin.ts
 import { loadProfile } from './core/profiles/load.ts';
 import { profileFromHash } from './core/profiles/share.ts';
 import type { Profile } from './core/profiles/types.ts';
-import { docxErrorText, extensionHint, ru } from './i18n/ru.ts';
+import { docxErrorText, extensionHint, ru, templateTexts } from './i18n/ru.ts';
 import { el } from './ui/dom.ts';
 import { copyText, downloadFile, findingsAsText } from './ui/export.ts';
 import { durations, reducedMotion, revealInOrder, unfold } from './ui/motion.ts';
 import type { PdfDocument } from './core/pdf/analyze.ts';
 import { renderPdfResult } from './ui/pdf-view.ts';
 import { renderProfileEditor } from './ui/profile-editor.ts';
+import { buildTemplate } from './core/template/build.ts';
 import { renderResult } from './ui/result-view.ts';
 import { renderSheet } from './ui/sheet.ts';
 import {
@@ -139,6 +140,7 @@ const startText = el(
   el('div', { class: 'actions' }, chooseButton, el('span', { class: 'soft' }, ru.dropHint), input),
   el('p', { class: 'requirements' }, `${ru.requirementsLine} `, requirementName, ' ', changeButton),
   profileField,
+  el('p', { class: 'template-line' }, ru.templateHint, ' ', templateButton()),
   el(
     'p',
     { class: 'privacy soft' },
@@ -454,6 +456,24 @@ function selectProfile(next: Profile): void {
   else runCheck();
 }
 
+// --- шаблон по требованиям ---------------------------------------------------
+// Пустой .docx, где поля, шрифт, интервал и части уже настроены по выбранным требованиям.
+function downloadTemplate(): void {
+  downloadFile(
+    ru.templateName(profile.title),
+    // Копия байтов в собственном буфере: downloadFile принимает ArrayBuffer.
+    buildTemplate(profile, templateTexts).slice().buffer,
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  );
+  showMessage(ru.templateDone, false, true);
+}
+
+function templateButton(className = 'link'): HTMLButtonElement {
+  const button = el('button', { type: 'button', class: className }, ru.templateButton);
+  button.addEventListener('click', downloadTemplate);
+  return button;
+}
+
 // --- экран «Требования»: редактор ------------------------------------------
 function renderProfileScreen(): void {
   const editor = renderProfileEditor(profile, {
@@ -478,6 +498,7 @@ function renderProfileScreen(): void {
       { class: 'profile-head' },
       el('h1', { id: 'profile-title', tabindex: '-1' }, ru.profileTitle),
       el('p', {}, ru.profileCurrent(profile.title)),
+      el('p', {}, templateButton('secondary')),
     ),
     editor,
   );

@@ -335,6 +335,10 @@ export const ru = {
   pdfBroken:
     'PDF повреждён и не читается. Сохраните его из Word заново (Файл → Сохранить как → PDF).',
   pdfLoadFailed: 'Не удалось загрузить модуль чтения PDF. Обновите страницу и попробуйте ещё раз.',
+  templateButton: 'Скачать шаблон',
+  templateHint: 'Файла ещё нет? Начните с шаблона: поля, шрифт и части работы уже настроены.',
+  templateName: (title: string): string => `Шаблон пояснительной записки (${title}).docx`,
+  templateDone: 'Шаблон скачан. Откройте его в Word и впишите свой текст.',
   profileTitle: 'Требования',
   profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;
