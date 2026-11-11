@@ -1311,6 +1311,7 @@ details[open] > summary::before {
   display: block;
   width: 100%;
   cursor: pointer;
+  touch-action: none; /* на планшете карту тянут пальцем, страница при этом не едет */
 }
 
 /* Рамка «где я»: высоту задаёт doc-map.ts, сдвиг — прокрутка листа. */

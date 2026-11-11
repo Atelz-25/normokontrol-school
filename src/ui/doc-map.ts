@@ -14,7 +14,7 @@ import { el } from './dom.ts';
 const ORDER: Severity[] = ['error', 'warning', 'info'];
 const ROW = 3; // высота строки карты в пикселях, если документ короткий
 const MARGIN = 7; // поле слева под засечки
-const HIT = 6; // насколько близко к засечке нужно щёлкнуть, в пикселях
+const DRAG = 4; // сдвиг мыши в пикселях, после которого щелчок считается перетаскиванием
 
 // Самое серьёзное замечание у каждого абзаца.
 function collectMarks(report: Report, dismissed: ReadonlySet<string>): Map<number, Severity> {
@@ -32,8 +32,8 @@ function collectMarks(report: Report, dismissed: ReadonlySet<string>): Map<numbe
 }
 
 export interface DocMapActions {
-  onShowParagraph: (index: number) => void; // щелчок по абзацу без замечаний
-  onShowMark: (index: number) => void; // щелчок по засечке: пункт плана с этим местом
+  onShowParagraph: (index: number) => void; // щелчок: показать этот абзац на листе
+  onShowMark: (index: number) => void; // щёлкнули по абзацу с замечанием: отметить пункт плана
 }
 
 // scroller — лист с текстом работы, у которого карта служит полосой прокрутки.
@@ -114,21 +114,42 @@ export function renderDocMap(
   if (!scrollDriven) scroller.addEventListener('scroll', placeFrame, { passive: true });
 
   // Щелчок: ближайшая засечка ведёт к пункту плана, иначе — к абзацу в тексте работы.
-  canvas.addEventListener('click', (event) => {
-    const y = event.clientY - canvas.getBoundingClientRect().top;
-    const row = Math.floor(y / rowHeight);
-    const reach = Math.ceil(HIT / rowHeight);
-    for (let d = 0; d <= reach; d++) {
-      for (const i of [row - d, row + d]) {
-        const p = map[i];
-        if (p && marks.has(p.index)) {
-          actions.onShowMark(p.index);
-          return;
-        }
-      }
-    }
+  // Карта работает как полоса прокрутки: щелчок ведёт к этому месту листа,
+  // а если зажать кнопку и вести мышь, лист прокручивается следом.
+  // Раньше щелчок рядом с засечкой уводил к пункту плана, а не к тексту, — из-за густых
+  // засечек казалось, что карта срабатывает через раз.
+  let pressedAt: number | undefined;
+  let dragging = false;
+  const scrollTo = (clientY: number): void => {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientY - rect.top) / Math.max(1, rect.height)));
+    scroller.scrollTop = ratio * scroller.scrollHeight - scroller.clientHeight / 2;
+  };
+  canvas.addEventListener('pointerdown', (event) => {
+    pressedAt = event.clientY;
+    dragging = false;
+    canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (pressedAt === undefined) return;
+    if (!dragging && Math.abs(event.clientY - pressedAt) < DRAG) return;
+    dragging = true;
+    scrollTo(event.clientY);
+  });
+  canvas.addEventListener('pointerup', (event) => {
+    const wasDrag = dragging;
+    pressedAt = undefined;
+    dragging = false;
+    if (wasDrag) return;
+    const row = Math.floor((event.clientY - canvas.getBoundingClientRect().top) / rowHeight);
     const p = map[Math.min(map.length - 1, Math.max(0, row))];
-    if (p) actions.onShowParagraph(p.index);
+    if (!p) return;
+    actions.onShowParagraph(p.index);
+    if (marks.has(p.index)) actions.onShowMark(p.index);
+  });
+  canvas.addEventListener('pointercancel', () => {
+    pressedAt = undefined;
+    dragging = false;
   });
 
   // Рисуем, когда карта попала на страницу, и заново при смене размера листа или темы.

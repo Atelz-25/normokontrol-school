@@ -52,16 +52,26 @@ test('с клавиатуры по плану: «Почему», «Все мес
   await expect(page.locator('.preview-list li:focus')).toHaveCount(1);
 });
 
-test('карта документа: засечка ведёт к пункту плана', async ({ page }) => {
+test('карта документа: щелчок всегда ведёт к месту на листе', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('./');
   // В файле: абзац, пустой, абзац, пустой, абзац, пустой, абзац — пустые №2, 4, 6 (PR-06).
   await checkFile(page, FIXTURES['PR-06']!.bad());
   const canvas = page.locator('.doc-map-canvas');
   await expect(canvas).toBeVisible();
-  // Строка карты — 3 px; абзац №2 — вторая строка.
+  // Строка карты — 3 px; абзац №2 — вторая строка, на ней засечка (пустой абзац).
   await canvas.click({ position: { x: 4, y: 4 } });
-  await expect(page.locator('.plan-item[data-rules~="PR-06"]')).toBeFocused();
+  await expect(page.locator('#para-2')).toBeFocused();
+  // Щелчок по строке без засечки тоже ведёт к абзацу — каждый раз, а не через раз.
+  for (const [y, n] of [
+    [1, 1],
+    [7, 3],
+    [4, 2],
+    [10, 4],
+  ] as const) {
+    await canvas.click({ position: { x: 20, y } });
+    await expect(page.locator(`#para-${n}`)).toBeFocused();
+  }
 });
 
 test('клавиши: J ведёт к месту на листе, ? открывает подсказку', async ({ page }) => {

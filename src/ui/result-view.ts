@@ -176,10 +176,7 @@ export function renderResult(ctx: ResultContext): HTMLElement {
   const bar = el('div', { class: 'bottombar no-print', hidden: '' });
   const sheet = renderPreview(report, profile, ctx.map, dismissed, (index) => {
     const actionId = planView.actionOfParagraph(index);
-    if (actionId) {
-      showView('plan');
-      planView.focusAction(actionId);
-    }
+    if (actionId) planView.setCurrent(actionId);
   });
   const planView = renderPlan(plan, report.preview, {
     done: ctx.done,

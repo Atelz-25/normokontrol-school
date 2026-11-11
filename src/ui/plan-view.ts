@@ -29,6 +29,7 @@ export interface PlanView {
   element: HTMLElement;
   step: (delta: 1 | -1, focusSheet: boolean) => void; // J / K и нижняя панель
   focusAction: (actionId: string) => void;
+  setCurrent: (actionId: string) => void; // J/K дальше пойдут по этому пункту
   actionOfParagraph: (paragraphIndex: number) => string | undefined;
 }
 
@@ -489,6 +490,9 @@ export function renderPlan(
       if (id === undefined) return;
       current = id;
       steppers.get(id)?.(delta, focusSheet);
+    },
+    setCurrent: (actionId) => {
+      current = actionId;
     },
     focusAction: (actionId) => {
       const target = reveal(actionId);
