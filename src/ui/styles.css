@@ -1826,3 +1826,13 @@ mark {
   margin: var(--sp-3) 0 0;
   font-weight: 600;
 }
+
+.history {
+  font-size: var(--fs-1);
+  color: var(--fg-soft);
+}
+
+.history .num {
+  color: var(--fg);
+  font-weight: 600;
+}

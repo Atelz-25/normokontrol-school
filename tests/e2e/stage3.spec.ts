@@ -25,6 +25,11 @@ test('новая версия файла: блок «было / стало» с 
   await expect(block).toContainText('Исправлено: 4');
   await expect(block).toContainText('Оценка');
   await expect(block.locator('.strike')).toHaveCount(1); // старое число зачёркнуто
+  // История попыток: «версия-1» и «версия-2» — разные имена, а исправленная версия — та же работа.
+  await upload(page, 'версия-2_исправлено.docx', FIXTURES['PR-06']!.good());
+  await expect(page.locator('.history')).toContainText('→');
+  await page.getByRole('button', { name: 'Очистить историю' }).click();
+  await expect(page.locator('.history')).toHaveCount(0);
 });
 
 test('редактор: «Темы проекта» включают подсказку TH-03', async ({ page }) => {

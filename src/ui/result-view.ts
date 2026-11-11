@@ -31,6 +31,8 @@ export interface ResultContext {
   onDownload: () => void;
   onCopyList: () => void;
   notify: (text: string, isError?: boolean) => void;
+  history: number[]; // оценки прошлых проверок этой работы, последняя — текущая
+  onClearHistory: () => void;
 }
 
 // Оценка «докручивается» от прошлого значения к новому; первый раз — от нуля.
@@ -49,6 +51,24 @@ function fold(summary: string, ...content: (Node | undefined)[]): HTMLDetailsEle
     el('summary', {}, summary),
     ...(content.filter(Boolean) as Node[]),
   );
+}
+
+// «Попытки: 61 → 73 → 92» — только если работу уже проверяли раньше.
+function historyLine(ctx: ResultContext): HTMLElement | undefined {
+  if (ctx.history.length < 2) return undefined;
+  const clear = button(ru.historyClear, 'link', () => {
+    ctx.onClearHistory();
+    line.remove();
+  });
+  const line = el(
+    'p',
+    { class: 'history', title: ru.historyHint },
+    `${ru.historyLabel}: `,
+    el('span', { class: 'num' }, ctx.history.join(' → ')),
+    ' ',
+    clear,
+  );
+  return line;
 }
 
 // Клавиши J / K / ? действуют на экране результата; при перерисовке обработчик меняется.
@@ -135,6 +155,7 @@ export function renderResult(ctx: ResultContext): HTMLElement {
           : ru.verdictLine(plan.problems, plan.selfFixable),
       ),
       compare,
+      historyLine(ctx),
       plan.fixRuleIds.length > 0
         ? el(
             'div',

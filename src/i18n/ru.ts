@@ -345,6 +345,10 @@ export const ru = {
   planLeft: (n: number): string =>
     `${plural(n, ['Остался', 'Осталось', 'Осталось'])} ${n}\u00a0${plural(n, ['пункт', 'пункта', 'пунктов'])}. Нажмите «Сделал» — появится следующий.`,
   planAllDone: 'Всё отмечено как сделанное. Проверьте исправленный файл ещё раз.',
+  historyLabel: 'Попытки',
+  historyHint: 'Оценки прошлых проверок этой работы. Хранятся только в этом браузере.',
+  historyClear: 'Очистить историю',
+  historyCleared: 'История попыток очищена.',
   profileTitle: 'Требования',
   profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;

@@ -16,7 +16,11 @@ import { renderProfileEditor } from './ui/profile-editor.ts';
 import { buildTemplate } from './core/template/build.ts';
 import { renderResult } from './ui/result-view.ts';
 import { renderSheet } from './ui/sheet.ts';
+import { computeScore } from './core/engine/score.ts';
 import {
+  addAttempt,
+  clearAttempts,
+  loadAttemptsFor,
   loadCustomProfiles,
   loadSelectedId,
   saveCustomProfiles,
@@ -274,12 +278,23 @@ function renderResults(reveal = false): void {
         showMessage(ok ? ru.copied : ru.copyFailed, !ok, true);
       });
     },
+    history: loadAttemptsFor(lastFile.name, profile.id).map((a) => a.score),
+    onClearHistory: () => {
+      clearAttempts();
+      showMessage(ru.historyCleared, false, true);
+    },
     notify: (text, isError = false) => {
       showMessage(text, isError, true);
     },
   });
   results.replaceChildren(view);
   if (reveal) revealInOrder([...view.children].slice(2, 6));
+}
+
+// --- история попыток ----------------------------------------------------------
+function rememberAttempt(fileName: string, report: Report): void {
+  const total = computeScore(report).total;
+  if (total !== undefined) addAttempt(fileName, profile.id, total);
 }
 
 // --- проверка -------------------------------------------------------------
@@ -314,6 +329,7 @@ function runCheck(): void {
     const left = durations().ui - (performance.now() - started);
     if (left > 0) await new Promise((r) => setTimeout(r, left));
     lastReport = response.report;
+    rememberAttempt(file.name, response.report);
     lastMap = response.map;
     showMessage(ru.checked(file.name));
     // Фокус ставим внутри перехода: при View Transitions новая страница строится чуть позже.
@@ -356,6 +372,7 @@ async function runFix(ruleIds: string[]): Promise<void> {
   previousReport = before;
   lastFile = { name, bytes: response.bytes };
   lastReport = response.report;
+  rememberAttempt(name, response.report);
   lastMap = response.map;
   dismissed.clear();
   done.clear();
