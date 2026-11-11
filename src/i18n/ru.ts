@@ -339,6 +339,12 @@ export const ru = {
   templateHint: 'Файла ещё нет? Начните с шаблона: поля, шрифт и части работы уже настроены.',
   templateName: (title: string): string => `Шаблон пояснительной записки (${title}).docx`,
   templateDone: 'Шаблон скачан. Откройте его в Word и впишите свой текст.',
+  planFilterLabel: 'Какие пункты показать',
+  planFilter: { all: 'Все', errors: 'Только ошибки', self: 'Исправлю сам' },
+  planSingle: 'По одному',
+  planLeft: (n: number): string =>
+    `${plural(n, ['Остался', 'Осталось', 'Осталось'])} ${n}\u00a0${plural(n, ['пункт', 'пункта', 'пунктов'])}. Нажмите «Сделал» — появится следующий.`,
+  planAllDone: 'Всё отмечено как сделанное. Проверьте исправленный файл ещё раз.',
   profileTitle: 'Требования',
   profileCurrent: (title: string): string => `Сейчас выбраны: «${title}».`,
 } as const;

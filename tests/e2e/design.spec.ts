@@ -95,3 +95,22 @@ test('маршруты: «Назад» в браузере возвращает 
   await expect(page.getByRole('heading', { level: 1, name: /Проверьте работу/ })).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
 });
+
+test('фильтр плана и «по одному»', async ({ page }) => {
+  await page.goto('./');
+  await checkFile(page, FIXTURES['PR-06']!.bad());
+  const visible = page.locator('.plan-item:not(.folded)');
+  const all = await visible.count();
+  await page.getByRole('button', { name: 'Исправлю сам' }).click();
+  await expect(visible).toHaveCount(1); // только пустые строки
+  await page.getByRole('button', { name: 'Все', exact: true }).click();
+  await expect(visible).toHaveCount(all);
+
+  await page.getByRole('button', { name: 'По одному' }).click();
+  await expect(visible).toHaveCount(1);
+  await expect(page.locator('.left-count')).toContainText(`Осталось ${all}`);
+  const first = await visible.getAttribute('id');
+  await visible.getByRole('button', { name: 'Сделал' }).click();
+  await expect(visible).toHaveCount(1);
+  await expect(visible).not.toHaveAttribute('id', first ?? '');
+});

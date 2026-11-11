@@ -374,19 +374,76 @@ export function renderPlan(
     'aria-expanded': 'false',
   });
   let expanded = false;
+
+  // Фильтр: все пункты, только ошибки или то, что программа исправит сама.
+  type Filter = 'all' | 'errors' | 'self';
+  let filter: Filter = 'all';
+  const matches = (action: PlanAction): boolean =>
+    filter === 'all' || (filter === 'errors' ? action.severity === 'error' : action.fix !== 'none');
+  // «По одному»: виден только первый несделанный пункт и сколько осталось.
+  let single = false;
+  const left = el('p', { class: 'left-count', 'aria-live': 'polite' });
+
   function arrange(): void {
     const ordered = [
       ...items.filter((i) => !callbacks.done.has(i.action.id)),
       ...items.filter((i) => callbacks.done.has(i.action.id)),
     ];
     list.replaceChildren(...ordered.map((i) => i.item));
-    ordered.forEach((i, n) => {
-      i.item.classList.toggle('folded', !expanded && n >= VISIBLE);
-    });
-    const hidden = expanded ? 0 : Math.max(0, ordered.length - VISIBLE);
+    const shown = ordered.filter((i) => matches(i.action));
+    const todo = shown.filter((i) => !callbacks.done.has(i.action.id));
+    for (const i of ordered) {
+      const position = shown.indexOf(i);
+      const visible = single ? i === todo[0] : position >= 0 && (expanded || position < VISIBLE);
+      i.item.classList.toggle('folded', !visible);
+    }
+    const hidden = single || expanded ? 0 : Math.max(0, shown.length - VISIBLE);
     moreButton.hidden = hidden === 0;
     moreButton.textContent = ru.morePlan(hidden);
+    left.hidden = !single;
+    left.textContent = todo.length > 0 ? ru.planLeft(todo.length) : ru.planAllDone;
   }
+
+  const filterButtons = (['all', 'errors', 'self'] as const).map((value) => {
+    const button = el(
+      'button',
+      { type: 'button', 'aria-pressed': String(value === filter) },
+      ru.planFilter[value],
+    );
+    button.addEventListener('click', () => {
+      filter = value;
+      filterButtons.forEach((b, n) => {
+        b.setAttribute('aria-pressed', String(['all', 'errors', 'self'][n] === value));
+      });
+      arrange();
+    });
+    return button;
+  });
+  const singleButton = el(
+    'button',
+    { type: 'button', class: 'secondary', 'aria-pressed': 'false' },
+    ru.planSingle,
+  );
+  singleButton.addEventListener('click', () => {
+    single = !single;
+    singleButton.setAttribute('aria-pressed', String(single));
+    arrange();
+    const first = [...list.children].find((c) => !c.classList.contains('folded'));
+    if (single && first instanceof HTMLElement) {
+      unfold([first]);
+      first.focus();
+    }
+  });
+  const tools = el(
+    'div',
+    { class: 'plan-tools no-print' },
+    el(
+      'div',
+      { class: 'segmented', role: 'group', 'aria-label': ru.planFilterLabel },
+      ...filterButtons,
+    ),
+    singleButton,
+  );
   moreButton.addEventListener('click', () => {
     expanded = true;
     arrange();
@@ -401,6 +458,8 @@ export function renderPlan(
     { class: 'plan', 'aria-labelledby': 'plan-title', id: 'plan' },
     el('h2', { id: 'plan-title' }, ru.planTitle),
     el('p', { class: 'soft intro' }, callbacks.priority ? ru.planIntroPriority : ru.planIntro),
+    plan.actions.length > 1 ? tools : undefined,
+    left,
     list,
     moreButton,
   );
@@ -408,6 +467,13 @@ export function renderPlan(
   const reveal = (actionId: string): HTMLElement | undefined => {
     const target = items.find((i) => i.action.id === actionId)?.item;
     if (target?.classList.contains('folded')) {
+      // Чтобы показать пункт, снимаем фильтр и режим «по одному».
+      filter = 'all';
+      single = false;
+      singleButton.setAttribute('aria-pressed', 'false');
+      filterButtons.forEach((b, n) => {
+        b.setAttribute('aria-pressed', String(n === 0));
+      });
       expanded = true;
       arrange();
     }

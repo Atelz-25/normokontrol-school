@@ -1780,3 +1780,49 @@ mark {
 .pdf-check.passed h3 {
   font-weight: 500;
 }
+
+/* --- Фильтр плана и «по одному» ---------------------------------------------- */
+.plan-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+  margin-top: var(--sp-3);
+  font-size: var(--fs-1);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.segmented button {
+  padding: 0.3rem 0.75rem;
+  color: var(--fg);
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.segmented button + button {
+  border-left: 1.5px solid var(--line-strong);
+}
+
+.segmented button[aria-pressed='true'],
+.plan-tools .secondary[aria-pressed='true'] {
+  color: var(--accent-on);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.plan-tools .secondary {
+  padding: 0.3rem 0.75rem;
+}
+
+.left-count {
+  margin: var(--sp-3) 0 0;
+  font-weight: 600;
+}
